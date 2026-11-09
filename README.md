@@ -18,10 +18,23 @@ Die Library ist komplett in den Footer Code eingebettet. Ein Webflow-Projekt hä
 Statt des langen Footer Codes reicht diese eine Zeile (Head Code und GSAP-Integration bleiben gleich):
 
 ```html
-<script src="https://cdn.jsdelivr.net/gh/rakete13/wf-anim@1.0.0/src/wf-anim.min.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/rakete13/wf-anim@1.1.0/src/wf-anim.min.js"></script>
 ```
 
 Bequem für eigene und betreute Projekte. Die Seite hängt dann aber an diesem Repo und an jsDelivr, und die IP-Adresse der Besucher geht an jsDelivr (in der Datenschutzerklärung erwähnen). Bei Übergabe an einen Kunden besser auf den eingebetteten Footer Code wechseln.
+
+## Startbildschirm und Intro
+
+Elemente, die beim Laden schon im sichtbaren Bereich (oder darüber) liegen, bleiben ruhig und sind sofort sichtbar. Animiert wird nur, was beim Scrollen neu ins Bild kommt. Das verhindert Aufblitzen, verbessert die Ladezeit-Werte und ist besser für Screenreader.
+
+Soll ein Element im Startbildschirm trotzdem animieren (z. B. die Hero-Headline), bekommt es zusätzlich das Attribut `data-anim-intro`. Dafür ist der Head Code nötig.
+
+## Barrierefreiheit
+
+- Noch nicht eingeblendete Elemente sind nur durchsichtig (`opacity: 0`), nicht versteckt. Screenreader lesen sie vor, die Browser-Suche findet sie.
+- Bekommt ein Link oder Button in einem noch unsichtbaren Element den Tastatur-Fokus, erscheint das Element sofort.
+- `counter` und `scramble` geben Screenreadern immer den fertigen Text.
+- Bei aktivierter Systemeinstellung „Bewegung reduzieren“ wird nichts animiert.
 
 ## Animationen
 
@@ -33,7 +46,7 @@ Bequem für eigene und betreute Projekte. Die Seite hängt dann aber an diesem R
 | Scroll | `parallax` `parallax-element` `image-zoom` `text-fill` `progress-bar` `pin` `horizontal` |
 | Funktional | `counter` `marquee` `draw-svg` `magnetic` `tilt` |
 
-Globale Modifier: `data-anim-delay`, `data-anim-duration`, `data-anim-ease`, `data-anim-start`, `data-anim-end`, `data-anim-distance`, `data-anim-stagger`, `data-anim-repeat`, `data-anim-scrub`, `data-anim-mobile="false"`. Details und alle Optionen je Animation stehen in der Doku.
+Globale Modifier: `data-anim-intro`, `data-anim-delay`, `data-anim-duration`, `data-anim-ease`, `data-anim-start`, `data-anim-end`, `data-anim-distance`, `data-anim-stagger`, `data-anim-repeat`, `data-anim-scrub`, `data-anim-mobile="false"`. Details und alle Optionen je Animation stehen in der Doku.
 
 ## Aufbau
 

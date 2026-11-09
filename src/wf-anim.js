@@ -1,5 +1,5 @@
 /*!
- * WF Anim v1.0.0
+ * WF Anim v1.1.0
  * Attribut-basierte GSAP-Animationen für Webflow
  *
  * Benötigt: gsap + ScrollTrigger
@@ -29,6 +29,7 @@
       locale: 'de-DE',
       mobileBreakpoint: 768,
       autoInit: true,
+      staticOnLoad: true, // Elemente im Startbildschirm ohne data-anim-intro nicht animieren
     },
     window.WFAnimConfig || {}
   );
@@ -101,11 +102,29 @@
     return marked.length ? Array.from(marked) : Array.from(el.children);
   };
 
-  // Element (und markierte Items) sichtbar machen – für reduced motion, mobile aus, Fehler
+  // Sichtbar machen, falls der Head Code das Element versteckt hat (data-anim-intro)
+  const unhide = (el) => {
+    if (el && getComputedStyle(el).opacity === '0') gsap.set(el, { opacity: 1 });
+  };
+  // Element und markierte Items sichtbar machen – für reduced motion, mobile aus, Fehler
   const show = (el) => {
-    gsap.set(el, { visibility: 'visible' });
-    const it = el.querySelectorAll('[data-anim-item]');
-    if (it.length) gsap.set(it, { visibility: 'visible' });
+    unhide(el);
+    el.querySelectorAll('[data-anim-item]').forEach(unhide);
+  };
+
+  // Echter Text für Screenreader, animierter Text nur fürs Auge (counter, scramble)
+  const SR_STYLE = 'position:absolute;width:1px;height:1px;margin:-1px;padding:0;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0';
+  const srSplit = (el) => {
+    const raw = el.textContent;
+    const sr = document.createElement('span');
+    sr.setAttribute('style', SR_STYLE);
+    sr.textContent = raw.trim();
+    const vis = document.createElement('span');
+    vis.setAttribute('aria-hidden', 'true');
+    vis.textContent = raw;
+    el.textContent = '';
+    el.append(sr, vis);
+    return { raw, vis, restore: () => (el.textContent = raw) };
   };
 
   const need = (name, el) => {
@@ -128,24 +147,24 @@
     const d = o.distance;
     const ds = el.dataset;
     switch (type) {
-      case 'fade-in':    return { autoAlpha: 0 };
-      case 'fade-up':    return { autoAlpha: 0, y: d };
-      case 'fade-down':  return { autoAlpha: 0, y: -d };
-      case 'fade-left':  return { autoAlpha: 0, x: d };
-      case 'fade-right': return { autoAlpha: 0, x: -d };
-      case 'scale-in':   return { autoAlpha: 0, scale: num(ds.animScale, cfg.scale) };
-      case 'blur-in':    return { autoAlpha: 0, filter: `blur(${num(ds.animBlur, cfg.blur)}px)` };
-      case 'clip-up':    return { autoAlpha: 1, clipPath: 'inset(100% 0% 0% 0%)' };
-      case 'clip-down':  return { autoAlpha: 1, clipPath: 'inset(0% 0% 100% 0%)' };
-      case 'clip-left':  return { autoAlpha: 1, clipPath: 'inset(0% 0% 0% 100%)' };
-      case 'clip-right': return { autoAlpha: 1, clipPath: 'inset(0% 100% 0% 0%)' };
-      default:           return { autoAlpha: 0, y: d };
+      case 'fade-in':    return { opacity: 0 };
+      case 'fade-up':    return { opacity: 0, y: d };
+      case 'fade-down':  return { opacity: 0, y: -d };
+      case 'fade-left':  return { opacity: 0, x: d };
+      case 'fade-right': return { opacity: 0, x: -d };
+      case 'scale-in':   return { opacity: 0, scale: num(ds.animScale, cfg.scale) };
+      case 'blur-in':    return { opacity: 0, filter: `blur(${num(ds.animBlur, cfg.blur)}px)` };
+      case 'clip-up':    return { opacity: 1, clipPath: 'inset(100% 0% 0% 0%)' };
+      case 'clip-down':  return { opacity: 1, clipPath: 'inset(0% 0% 100% 0%)' };
+      case 'clip-left':  return { opacity: 1, clipPath: 'inset(0% 0% 0% 100%)' };
+      case 'clip-right': return { opacity: 1, clipPath: 'inset(0% 100% 0% 0%)' };
+      default:           return { opacity: 0, y: d };
     }
   };
 
-  const TO = { autoAlpha: 1, x: 0, y: 0, scale: 1, filter: 'blur(0px)', clipPath: 'inset(0% 0% 0% 0%)' };
+  const TO = { opacity: 1, x: 0, y: 0, scale: 1, filter: 'blur(0px)', clipPath: 'inset(0% 0% 0% 0%)' };
   const toState = (from) => {
-    const t = { autoAlpha: 1 };
+    const t = { opacity: 1 };
     Object.keys(from).forEach((k) => (t[k] = TO[k]));
     return t;
   };
@@ -185,7 +204,7 @@
     const list = items(el);
     if (!list.length) return show(el);
     const from = fromState(REVEALS.includes(type) ? type : 'fade-up', el, o);
-    gsap.set(el, { visibility: 'visible' });
+    unhide(el);
     gsap.fromTo(list, from, tweenVars(from, o, { stagger: staggerVal, scrollTrigger: st(el, o) }));
   };
 
@@ -217,7 +236,7 @@
         }));
       },
     });
-    gsap.set(el, { visibility: 'visible' });
+    unhide(el);
   };
 
   A['split-lines'] = (el, o) =>
@@ -227,35 +246,30 @@
     splitAnim(el, o, 'words', 'words', { yPercent: 110 }, { yPercent: 0 }, 0.05);
 
   A['split-chars'] = (el, o) =>
-    splitAnim(el, o, 'words,chars', null, { autoAlpha: 0, yPercent: 60 }, { autoAlpha: 1, yPercent: 0 }, 0.025);
+    splitAnim(el, o, 'words,chars', null, { opacity: 0, yPercent: 60 }, { opacity: 1, yPercent: 0 }, 0.025);
 
   /*@end*/
 
   /*@block scramble*/
   A['scramble'] = (el, o) => {
     if (!need('ScrambleTextPlugin', el)) return;
-    const text = el.textContent;
-    const placeholder = text.replace(/\S/g, '·');
-    el.setAttribute('aria-label', text.trim());
+    const { raw, vis, restore } = srSplit(el);
+    const placeholder = raw.replace(/\S/g, '·');
     const tl = gsap.timeline({ delay: o.scrub ? 0 : o.delay, scrollTrigger: st(el, o) });
-    tl.call(() => (el.textContent = placeholder), null, 0)
-      .fromTo(el, { autoAlpha: 0 }, { autoAlpha: 1, duration: 0.2 }, 0)
-      .to(el, {
+    tl.call(() => (vis.textContent = placeholder), null, 0)
+      .fromTo(el, { opacity: 0 }, { opacity: 1, duration: 0.2 }, 0)
+      .to(vis, {
         duration: Math.max(o.duration * 1.6, 1),
         ease: 'none',
         scrambleText: {
-          text,
+          text: raw,
           chars: el.dataset.animChars || 'upperCase',
           revealDelay: 0.2,
           speed: 0.6,
         },
       }, 0);
-    return () => {
-      el.textContent = text;
-      el.removeAttribute('aria-label');
-    };
+    return restore;
   };
-
   /*@end*/
 
   /*@block highlight*/
@@ -365,18 +379,19 @@
           scrollTrigger: { trigger: el, start: ds.animStart || 'top 80%', end: ds.animEnd || 'bottom 50%', scrub: true },
         }),
     });
-    gsap.set(el, { visibility: 'visible' });
+    unhide(el);
   };
 
   /*@end*/
 
   /*@block progress-bar*/
   A['progress-bar'] = (el) => {
+    unhide(el);
     const sel = el.dataset.animTrigger;
     const target = sel ? document.querySelector(sel) : null;
     gsap.fromTo(
       el,
-      { scaleX: 0, transformOrigin: 'left center', visibility: 'visible' },
+      { scaleX: 0, transformOrigin: 'left center' },
       {
         scaleX: 1,
         ease: 'none',
@@ -466,12 +481,12 @@
       maximumFractionDigits: dec,
       useGrouping: ds.animGrouping !== 'false',
     });
+    const { vis, restore } = srSplit(el);
     const state = { v: num(ds.animFrom, 0) };
-    const render = () => (el.textContent = prefix + fmt.format(state.v) + suffix);
-
-    el.setAttribute('aria-label', raw.trim());
+    const render = () => (vis.textContent = prefix + fmt.format(state.v) + suffix);
     render();
-    gsap.set(el, { visibility: 'visible', fontVariantNumeric: 'tabular-nums' });
+    unhide(el);
+    gsap.set(el, { fontVariantNumeric: 'tabular-nums' });
     gsap.to(state, {
       v: target,
       duration: num(ds.animDuration, 2),
@@ -480,10 +495,7 @@
       onUpdate: render,
       scrollTrigger: st(el, Object.assign({}, o, { scrub: false })),
     });
-    return () => {
-      el.textContent = raw;
-      el.removeAttribute('aria-label');
-    };
+    return restore;
   };
 
   /*@end*/
@@ -574,7 +586,7 @@
     const sel = 'path,line,polyline,polygon,circle,ellipse,rect';
     const shapes = el.matches(sel) ? [el] : Array.from(el.querySelectorAll(sel));
     if (!shapes.length) return show(el);
-    gsap.set(el, { visibility: 'visible' });
+    unhide(el);
     gsap.fromTo(shapes, { drawSVG: '0%' }, {
       drawSVG: '100%',
       duration: num(el.dataset.animDuration, 1.6),
@@ -649,6 +661,37 @@
   // an den Scroll gekoppelt bzw. für die Bedienung nötig sind.
   const RUN_IN_REDUCED = new Set(['progress-bar', 'horizontal']);
 
+  // Einblende-Animationen: Diese bleiben im Startbildschirm ruhig (außer mit data-anim-intro).
+  // Scroll-gekoppelte Effekte (parallax, pin, marquee …) laufen immer.
+  const ENTRY = new Set([
+    ...REVEALS, 'stagger', 'grid-stagger', 'split-lines', 'split-words', 'split-chars',
+    'scramble', 'highlight', 'counter', 'draw-svg',
+  ]);
+  const isIntro = (el) => el.hasAttribute('data-anim-intro') && el.dataset.animIntro !== 'false';
+  // im sichtbaren Bereich oder darüber (bereits vorbeigescrollt)
+  const onScreen = (el) => el.getBoundingClientRect().top < window.innerHeight;
+
+  // Animation eines Elements sofort ans Ende setzen
+  const finish = (el) => {
+    ScrollTrigger.getAll()
+      .filter((s) => s.trigger === el)
+      .forEach((s) => {
+        if (s.animation) s.animation.progress(1);
+        s.kill(false, true);
+      });
+  };
+
+  // Tastatur: Bekommt etwas in einem noch unsichtbaren Element den Fokus, sofort zeigen
+  const onFocus = (e) => {
+    const t = e.target;
+    if (!t || !t.closest || !t.closest('[data-anim]')) return;
+    ScrollTrigger.getAll().forEach((s) => {
+      const a = s.animation;
+      if (a && !s.vars.scrub && s.trigger && s.trigger.contains(t) && a.progress() < 1) a.progress(1);
+    });
+  };
+  let focusBound = false;
+
   const done = new WeakSet();
   const contexts = [];
   let registered = false;
@@ -666,6 +709,10 @@
         .filter(Boolean);
       gsap.registerPlugin(...plugins);
       registered = true;
+    }
+    if (!focusBound) {
+      document.addEventListener('focusin', onFocus);
+      focusBound = true;
     }
 
     const els = Array.from(scope.querySelectorAll('[data-anim]'));
@@ -697,9 +744,18 @@
             show(el);
             return;
           }
+          // data-anim-intro ergibt nur bei Einblende-Animationen Sinn – sonst nicht versteckt lassen
+          if (isIntro(el) && !ENTRY.has(type)) unhide(el);
+          // Startbildschirm: ruhig lassen, wie in Webflow gestaltet
+          const still = cfg.staticOnLoad && ENTRY.has(type) && !isIntro(el) && onScreen(el);
+          if (still && type !== 'highlight') {
+            show(el);
+            return;
+          }
           try {
             const c = fn(el, opts(el), ctx);
             if (typeof c === 'function') cleanups.push(c);
+            if (still) finish(el); // highlight: Markierung direkt fertig zeigen
           } catch (err) {
             warn(`Fehler bei "${type}"`, err, el);
             show(el);
@@ -718,6 +774,10 @@
       c.els.forEach((el) => done.delete(el));
     });
     contexts.length = 0;
+    if (focusBound) {
+      document.removeEventListener('focusin', onFocus);
+      focusBound = false;
+    }
   }
 
   function refresh() {
@@ -728,7 +788,7 @@
     A[name] = fn;
   }
 
-  window.WFAnim = { init, destroy, refresh, register, config: cfg, animations: A, version: '1.0.0' };
+  window.WFAnim = { init, destroy, refresh, register, config: cfg, animations: A, version: '1.1.0' };
 
   const start = () => {
     if (!cfg.autoInit) return;
