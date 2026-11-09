@@ -1,0 +1,1403 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<style>:root{color-scheme:light}body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style>
+<title>WF Anim Library</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<script>
+  document.documentElement.classList.add('js-anim');
+  setTimeout(function () { if (!window.WFAnim) document.documentElement.classList.remove('js-anim'); }, 3000);
+</script>
+<style>
+/* Layout: Seitenleiste mit Kategorien links, rechts je Animation eine Zeile aus Beschreibung + Bühne */
+:root {
+  --bg: #f3f4f7;
+  --surface: #ffffff;
+  --ink: #141824;
+  --muted: #5d6476;
+  --line: #dde0e8;
+  --accent: #2f4cf5;
+  --accent-ink: #ffffff;
+  --stage: #e9ebf2;
+  --mark: rgba(255, 205, 40, 0.6);
+  --code-bg: #eef0f6;
+  --font-display: "Bricolage Grotesque", "Helvetica Neue", Arial, sans-serif;
+  --font-body: "IBM Plex Sans", "Helvetica Neue", Arial, sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, Menlo, Consolas, monospace;
+  --anim-highlight: var(--mark);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0f121a; --surface: #171b26; --ink: #e8eaf2; --muted: #9aa1b4; --line: #272d3b;
+    --accent: #7f93ff; --accent-ink: #0f121a; --stage: #1d2230; --mark: rgba(255, 196, 0, 0.38); --code-bg: #1d2230;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0f121a; --surface: #171b26; --ink: #e8eaf2; --muted: #9aa1b4; --line: #272d3b;
+  --accent: #7f93ff; --accent-ink: #0f121a; --stage: #1d2230; --mark: rgba(255, 196, 0, 0.38); --code-bg: #1d2230;
+  color-scheme: dark;
+}
+
+/* Head-Code der Library (wie im Webflow-Head) */
+.js-anim [data-anim^="fade-"], .js-anim [data-anim^="clip-"], .js-anim [data-anim^="split-"],
+.js-anim [data-anim="scale-in"], .js-anim [data-anim="blur-in"], .js-anim [data-anim="stagger"],
+.js-anim [data-anim="grid-stagger"], .js-anim [data-anim="scramble"], .js-anim [data-anim="text-fill"],
+.js-anim [data-anim="counter"], .js-anim [data-anim="draw-svg"], .js-anim [data-anim="progress-bar"],
+.js-anim [data-anim="pin"] [data-anim-item] { visibility: hidden; }
+
+* { box-sizing: border-box; }
+body {
+  background: var(--bg); color: var(--ink);
+  font-family: var(--font-body); font-size: 16px; line-height: 1.6;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+}
+a { color: var(--accent); }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+h1, h2, h3 { font-family: var(--font-display); text-wrap: balance; line-height: 1.1; margin: 0; }
+code, pre { font-family: var(--font-mono); font-size: 0.86rem; }
+
+.progress { position: fixed; top: env(safe-area-inset-top, 0px); left: 0; right: 0; height: 3px; background: var(--accent); z-index: 20; }
+
+.shell { max-width: 1180px; margin: 0 auto; display: grid; grid-template-columns: 210px minmax(0, 1fr); gap: 56px; padding-block: 56px 120px; }
+nav.toc { position: sticky; top: calc(env(safe-area-inset-top, 0px) + 32px); align-self: start; display: grid; gap: 4px; font-size: 0.9rem; }
+nav.toc .label { font-size: 0.72rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); margin-bottom: 8px; }
+nav.toc a { color: var(--muted); text-decoration: none; padding: 4px 0; display: flex; gap: 10px; }
+nav.toc a span { font-family: var(--font-mono); color: var(--accent); font-size: 0.8rem; width: 1.2em; }
+nav.toc a:hover { color: var(--ink); }
+main { min-width: 0; display: grid; gap: 96px; }
+
+header.hero { display: grid; gap: 20px; }
+.eyebrow { font-family: var(--font-mono); font-size: 0.8rem; color: var(--accent); letter-spacing: 0.04em; }
+.hero h1 { font-size: clamp(2.6rem, 6vw, 4.4rem); font-weight: 800; letter-spacing: -0.02em; }
+.hero h1 em { font-style: normal; color: var(--accent); }
+.hero p { max-width: 62ch; color: var(--muted); margin: 0; font-size: 1.08rem; }
+.hero .attr { font-family: var(--font-mono); background: var(--code-bg); padding: 2px 8px; border-radius: 4px; color: var(--ink); }
+.notice { border: 1px solid var(--line); background: var(--surface); padding: 12px 16px; border-radius: 6px; font-size: 0.92rem; max-width: 62ch; }
+
+section.cat { display: grid; gap: 28px; scroll-margin-top: 32px; }
+.cat-head { display: grid; gap: 8px; border-bottom: 1px solid var(--line); padding-bottom: 16px; }
+.cat-head .num { font-family: var(--font-mono); color: var(--accent); font-size: 0.85rem; }
+.cat-head h2 { font-size: clamp(1.7rem, 3vw, 2.2rem); font-weight: 700; }
+.cat-head p { margin: 0; color: var(--muted); max-width: 62ch; }
+
+.demo { display: grid; grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr); gap: 28px; align-items: start; }
+.demo + .demo { border-top: 1px dashed var(--line); padding-top: 28px; }
+.info { display: grid; gap: 10px; min-width: 0; }
+.info h3 { font-size: 1.25rem; font-weight: 700; }
+.info p { margin: 0; color: var(--muted); font-size: 0.95rem; }
+.opts { margin: 0; padding: 0; list-style: none; display: grid; gap: 4px; font-size: 0.85rem; color: var(--muted); }
+.opts code { color: var(--ink); }
+
+.copy { display: flex; align-items: center; gap: 8px; width: 100%; min-width: 0; border: 1px solid var(--line); background: var(--code-bg); color: var(--ink); border-radius: 6px; padding: 8px 10px; cursor: pointer; text-align: left; font-family: var(--font-mono); font-size: 0.82rem; }
+.copy code { flex: 1; min-width: 0; overflow-x: auto; white-space: nowrap; }
+.copy .hint { font-family: var(--font-body); font-size: 0.72rem; color: var(--muted); flex-shrink: 0; }
+.copy:hover { border-color: var(--accent); }
+.copy.done .hint { color: var(--accent); }
+
+.stage { background: var(--stage); border-radius: 10px; min-height: 220px; padding: 28px; display: grid; place-items: center; overflow: hidden; min-width: 0; }
+.box { width: 140px; height: 100px; border-radius: 8px; background: var(--accent); color: var(--accent-ink); display: grid; place-items: center; font-family: var(--font-mono); font-size: 0.8rem; }
+.row { display: flex; gap: 12px; flex-wrap: wrap; justify-content: center; }
+.row .card { width: 80px; height: 80px; border-radius: 8px; background: var(--surface); border: 1px solid var(--line); }
+.grid { display: grid; grid-template-columns: repeat(6, 36px); gap: 8px; }
+.grid div { width: 36px; height: 36px; border-radius: 6px; background: var(--accent); }
+.big { font-family: var(--font-display); font-weight: 700; font-size: clamp(1.6rem, 3.4vw, 2.4rem); line-height: 1.15; text-align: left; width: 100%; }
+.mono-big { font-family: var(--font-mono); font-size: clamp(1.2rem, 3vw, 1.9rem); letter-spacing: 0.05em; }
+.para { font-size: 1.15rem; max-width: 40ch; }
+
+.img-wrapper { width: 100%; aspect-ratio: 16 / 10; border-radius: 8px; overflow: hidden; max-width: 100%; }
+.img-wrapper img { display: block; width: 100%; height: 115%; object-fit: cover; }
+.img-wrapper.zoom img { height: 100%; }
+.floaty { display: flex; gap: 20px; align-items: flex-end; }
+.floaty .box:nth-child(2) { background: var(--ink); color: var(--bg); }
+
+.counters { display: flex; gap: 32px; flex-wrap: wrap; justify-content: center; }
+.counters div { display: grid; text-align: center; }
+.counters strong { font-family: var(--font-display); font-size: 2.6rem; line-height: 1; }
+.counters span { font-size: 0.8rem; color: var(--muted); }
+
+.marquee { width: 100%; }
+.marquee-track { display: flex; gap: 40px; align-items: center; }
+.marquee-track span { font-family: var(--font-display); font-weight: 700; font-size: 1.6rem; white-space: nowrap; }
+.marquee-track span:nth-child(even) { color: var(--accent); }
+
+.svg-draw { width: 100%; max-width: 360px; height: auto; color: var(--accent); }
+.btn { font-family: var(--font-body); font-weight: 600; font-size: 1rem; border: 0; border-radius: 999px; padding: 16px 28px; background: var(--accent); color: var(--accent-ink); cursor: pointer; }
+.tilt-card { width: 220px; height: 150px; border-radius: 12px; background: var(--surface); border: 1px solid var(--line); display: grid; place-items: center; font-family: var(--font-display); font-weight: 700; font-size: 1.2rem; box-shadow: 0 12px 30px -16px rgba(20, 24, 36, 0.35); }
+
+.wide-stage { background: var(--stage); border-radius: 10px; overflow: hidden; }
+.pin-stage { min-height: 100vh; display: grid; align-content: center; gap: 16px; padding: 32px; }
+.pin-stage .step { background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 16px 20px; max-width: 460px; }
+.pin-stage .step strong { font-family: var(--font-display); }
+.h-track { display: flex; gap: 20px; padding: 32px; width: max-content; }
+.h-panel { width: min(70vw, 420px); height: 60vh; max-height: 420px; border-radius: 10px; background: var(--surface); border: 1px solid var(--line); padding: 24px; display: grid; align-content: end; font-family: var(--font-display); font-weight: 700; font-size: 1.8rem; }
+.h-panel small { font-family: var(--font-mono); font-weight: 400; font-size: 0.8rem; color: var(--muted); }
+
+.code-block { background: var(--code-bg); border: 1px solid var(--line); border-radius: 8px; overflow-x: auto; margin: 0; padding: 16px; line-height: 1.55; }
+.step-list { display: grid; gap: 28px; }
+.step-list > div { display: grid; gap: 10px; min-width: 0; }
+.step-list h3 { font-size: 1.15rem; }
+.step-list p { margin: 0; color: var(--muted); max-width: 62ch; }
+.copy-block { justify-self: start; border: 1px solid var(--line); background: var(--surface); color: var(--ink); padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 0.82rem; }
+.copy-block:hover { border-color: var(--accent); }
+
+.table-wrap { overflow-x: auto; border: 1px solid var(--line); border-radius: 8px; }
+table { border-collapse: collapse; width: 100%; font-size: 0.9rem; min-width: 560px; }
+th, td { text-align: left; padding: 10px 14px; border-bottom: 1px solid var(--line); vertical-align: top; }
+th { font-size: 0.72rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); font-weight: 600; background: var(--surface); }
+tr:last-child td { border-bottom: 0; }
+td code { white-space: nowrap; }
+.tips { margin: 0; padding-left: 20px; display: grid; gap: 8px; max-width: 70ch; }
+
+.replay { position: fixed; right: calc(20px + env(safe-area-inset-right, 0px)); bottom: calc(20px + env(safe-area-inset-bottom, 0px)); z-index: 30; border: 0; border-radius: 999px; padding: 12px 20px; background: var(--ink); color: var(--bg); font-weight: 600; cursor: pointer; font-family: var(--font-body); box-shadow: 0 8px 24px -10px rgba(0,0,0,0.5); }
+
+@media (max-width: 860px) {
+  .shell { grid-template-columns: minmax(0, 1fr); gap: 32px; padding-block: 32px 100px; }
+  nav.toc { display: none; }
+  .demo { grid-template-columns: minmax(0, 1fr); }
+  main { gap: 72px; }
+}
+</style>
+
+</head>
+<body>
+<div class="progress" data-anim="progress-bar"></div>
+
+<div class="shell">
+  <nav class="toc" aria-label="Kategorien">
+    <div class="label">Inhalt</div>
+    <a href="#setup"><span>↳</span>Einbinden</a>
+    <a href="#reveals"><span>1</span>Basis-Reveals</a>
+    <a href="#gruppen"><span>2</span>Gruppen</a>
+    <a href="#text"><span>3</span>Text</a>
+    <a href="#scroll"><span>4</span>Scroll-gebunden</a>
+    <a href="#funktional"><span>5</span>Funktional</a>
+    <a href="#modifier"><span>6</span>Modifier</a>
+    <a href="#api"><span>7</span>Infrastruktur</a>
+  </nav>
+
+  <main>
+    <header class="hero">
+      <div class="eyebrow">WF Anim · v1.0.0 · GSAP 3.13</div>
+      <h1>Ein Attribut,<br><em>eine Animation.</em></h1>
+      <p>Standard-Animationen für jedes Webflow-Projekt. Element auswählen, unter <em>Custom Attributes</em> <span class="attr">data-anim</span> mit einem Wert aus dieser Liste setzen, fertig. Jede Zeile unten zeigt die Animation live; ein Klick auf das Attribut kopiert es.</p>
+      <div class="notice" id="rm-notice" hidden>Dein System hat „Bewegung reduzieren“ aktiviert. Die Library zeigt Inhalte dann bewusst ohne Animation an, genau wie bei deinen Besuchern mit dieser Einstellung.</div>
+    </header>
+
+    <!-- SETUP -->
+    <section class="cat" id="setup">
+      <div class="cat-head">
+        <div class="num">↳ Einbinden</div>
+        <h2>In drei Schritten ins Projekt</h2>
+        <p>Einmal im Template-Projekt einrichten, danach steckt alles in jeder Kopie. Im Webflow Designer selbst läuft Custom Code nicht, dort bleiben alle Elemente sichtbar und bearbeitbar.</p>
+      </div>
+      <div class="step-list">
+        <div>
+          <h3>Head Code</h3>
+          <p>Versteckt animierte Elemente, bevor sie zum ersten Mal gezeichnet werden. Lädt die Library nicht innerhalb von drei Sekunden, wird alles wieder sichtbar.</p>
+<pre class="code-block" id="code-head"><code>&lt;script&gt;
+  document.documentElement.classList.add('js-anim');
+  setTimeout(function () {
+    if (!window.WFAnim) document.documentElement.classList.remove('js-anim');
+  }, 3000);
+&lt;/script&gt;
+&lt;style&gt;
+  .js-anim [data-anim^="fade-"], .js-anim [data-anim^="clip-"], .js-anim [data-anim^="split-"],
+  .js-anim [data-anim="scale-in"], .js-anim [data-anim="blur-in"], .js-anim [data-anim="stagger"],
+  .js-anim [data-anim="grid-stagger"], .js-anim [data-anim="scramble"], .js-anim [data-anim="text-fill"],
+  .js-anim [data-anim="counter"], .js-anim [data-anim="draw-svg"], .js-anim [data-anim="progress-bar"],
+  .js-anim [data-anim="pin"] [data-anim-item] { visibility: hidden; }
+  [data-anim="split-chars"] { font-kerning: none; }
+&lt;/style&gt;</code></pre>
+          <button class="copy-block" data-copy-target="code-head">Head Code kopieren</button>
+        </div>
+        <div>
+          <h3>GSAP aktivieren</h3>
+          <p>Im Projekt unter <strong>Settings → GSAP integration</strong> GSAP einschalten und die Plugins ScrollTrigger, SplitText, ScrambleText und DrawSVG anhaken. Webflow liefert GSAP dann selbst aus, du brauchst keinen externen Server.</p>
+        </div>
+        <div>
+          <h3>Footer Code</h3>
+          <p>Den kompletten Inhalt der Datei <code>webflow-footer-code.html</code> in den Footer Code einfügen. Die Library steckt darin vollständig, das Projekt ist damit von keinem fremden Server abhängig.</p>
+        </div>
+        <div>
+          <h3>Projekt-Defaults (optional)</h3>
+          <p>Setzt den Hausstil eines Projekts. Muss im Footer Code über dem Library-Code stehen. Alles, was du nicht angibst, behält den Standardwert.</p>
+<pre class="code-block" id="code-config"><code>&lt;script&gt;
+  window.WFAnimConfig = {
+    duration: 0.9,          // Sekunden
+    ease: 'power3.out',
+    start: 'top 85%',       // wann Reveals starten
+    distance: '2.5rem',     // Weg bei fade-up & Co.
+    stagger: 0.08,
+    locale: 'de-DE',        // Zahlenformat für counter
+    mobileBreakpoint: 768   // für data-anim-mobile="false"
+  };
+&lt;/script&gt;</code></pre>
+          <button class="copy-block" data-copy-target="code-config">Config kopieren</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- 1 REVEALS -->
+    <section class="cat" id="reveals">
+      <div class="cat-head">
+        <div class="num">1</div>
+        <h2>Basis-Reveals</h2>
+        <p>Elemente erscheinen, sobald sie in den sichtbaren Bereich scrollen. Standardmäßig einmalig; mit <code>data-anim-repeat</code> auch erneut.</p>
+      </div>
+
+      <div class="demo">
+        <div class="info">
+          <h3>Fade</h3>
+          <p>Einblenden mit Bewegung aus der jeweiligen Richtung. <code>fade-left</code> bewegt sich nach links, kommt also von rechts.</p>
+          <button class="copy" data-copy='data-anim="fade-up"'><code>data-anim="fade-up"</code><span class="hint">kopieren</span></button>
+          <ul class="opts"><li><code>fade-in</code> · <code>fade-up</code> · <code>fade-down</code> · <code>fade-left</code> · <code>fade-right</code></li><li><code>data-anim-distance="3rem"</code> Weg (px, rem, vh, vw)</li></ul>
+        </div>
+        <div class="stage"><div class="row">
+          <div class="box" data-anim="fade-up">fade-up</div>
+          <div class="box" data-anim="fade-left" data-anim-delay="0.15">fade-left</div>
+        </div></div>
+      </div>
+
+      <div class="demo">
+        <div class="info">
+          <h3>Scale & Blur</h3>
+          <p>Leicht aus kleiner Größe oder aus der Unschärfe. Wirkt ruhiger als ein Fade mit Weg.</p>
+          <button class="copy" data-copy='data-anim="scale-in"'><code>data-anim="scale-in"</code><span class="hint">kopieren</span></button>
+          <ul class="opts"><li><code>data-anim-scale="0.85"</code> Startgröße (Standard 0.92)</li><li><code>data-anim="blur-in"</code> · <code>data-anim-blur="20"</code> in px</li></ul>
+        </div>
+        <div class="stage"><div class="row">
+          <div class="box" data-anim="scale-in">scale-in</div>
+          <div class="box" data-anim="blur-in" data-anim-delay="0.15">blur-in</div>
+        </div></div>
+      </div>
+
+      <div class="demo">
+        <div class="info">
+          <h3>Clip</h3>
+          <p>Aufdecken über eine Maske. Ideal für Bilder und farbige Flächen. Die Richtung gibt an, wohin sich die Kante bewegt.</p>
+          <button class="copy" data-copy='data-anim="clip-up"'><code>data-anim="clip-up"</code><span class="hint">kopieren</span></button>
+          <ul class="opts"><li><code>clip-up</code> · <code>clip-down</code> · <code>clip-left</code> · <code>clip-right</code></li></ul>
+        </div>
+        <div class="stage">
+          <div class="img-wrapper zoom" data-anim="clip-up" data-anim-duration="1.2" style="max-width: 360px"><img data-demo-img="1" alt="Abstrakte Landschaft"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 2 GRUPPEN -->
+    <section class="cat" id="gruppen">
+      <div class="cat-head">
+        <div class="num">2</div>
+        <h2>Gruppen & Listen</h2>
+        <p>Das Attribut kommt an den Container, die Kinder erscheinen nacheinander. Bei Collection Lists das Attribut an die <em>Collection List</em> setzen, nicht an den Wrapper.</p>
+      </div>
+
+      <div class="demo">
+        <div class="info">
+          <h3>Stagger</h3>
+          <p>Direkte Kinder erscheinen versetzt. Liegen die Elemente tiefer verschachtelt, markiere sie mit <code>data-anim-item</code>.</p>
+          <button class="copy" data-copy='data-anim="stagger"'><code>data-anim="stagger"</code><span class="hint">kopieren</span></button>
+          <ul class="opts"><li><code>data-anim-stagger="0.12"</code> Abstand in s</li><li><code>data-anim-stagger-type="scale-in"</code> jeder Reveal-Typ</li></ul>
+        </div>
+        <div class="stage"><div class="row" data-anim="stagger">
+          <div class="card"></div><div class="card"></div><div class="card"></div><div class="card"></div><div class="card"></div>
+        </div></div>
+      </div>
+
+      <div class="demo">
+        <div class="info">
+          <h3>Grid-Stagger</h3>
+          <p>Breitet sich im Raster aus, standardmäßig von der Mitte. Gut für Logo-Wände und Galerien.</p>
+          <button class="copy" data-copy='data-anim="grid-stagger"'><code>data-anim="grid-stagger"</code><span class="hint">kopieren</span></button>
+          <ul class="opts"><li><code>data-anim-from="start"</code> · <code>center</code> · <code>end</code> · <code>edges</code> · <code>random</code></li><li><code>data-anim-stagger-type</code> wie bei stagger</li></ul>
+        </div>
+        <div class="stage"><div class="grid" data-anim="grid-stagger" data-anim-stagger-type="scale-in" data-anim-stagger="0.05">
+          <div></div><div></div><div></div><div></div><div></div><div></div>
+          <div></div><div></div><div></div><div></div><div></div><div></div>
+          <div></div><div></div><div></div><div></div><div></div><div></div>
+        </div></div>
+      </div>
+    </section>
+
+    <!-- 3 TEXT -->
+    <section class="cat" id="text">
+      <div class="cat-head">
+        <div class="num">3</div>
+        <h2>Text</h2>
+        <p>Basiert auf GSAP SplitText. Zeilen werden nach Resize und Font-Laden automatisch neu berechnet. Für Screenreader bleibt der Text lesbar.</p>
+      </div>
+
+      <div class="demo">
+        <div class="info">
+          <h3>Split Lines</h3>
+          <p>Zeilen gleiten nacheinander aus einer Maske. Der Klassiker für Headlines.</p>
+          <button class="copy" data-copy='data-anim="split-lines"'><code>data-anim="split-lines"</code><span class="hint">kopieren</span></button>
+          <ul class="opts"><li>auch <code>split-words</code> (Wort für Wort)</li></ul>
+        </div>
+        <div class="stage"><h3 class="big" data-anim="split-lines">Gute Animation fällt nicht auf. Sie lenkt den Blick dorthin, wo er hin soll.</h3></div>
+      </div>
+
+      <div class="demo">
+        <div class="info">
+          <h3>Split Chars</h3>
+          <p>Buchstabe für Buchstabe. Am besten für kurze Headlines bis etwa vier Wörter.</p>
+          <button class="copy" data-copy='data-anim="split-chars"'><code>data-anim="split-chars"</code><span class="hint">kopieren</span></button>
+        </div>
+        <div class="stage"><h3 class="big" data-anim="split-chars" style="text-align:center">Hallo Bremen</h3></div>
+      </div>
+
+      <div class="demo">
+        <div class="info">
+          <h3>Scramble</h3>
+          <p>Der Text entschlüsselt sich. Nur für reinen Text ohne verschachtelte Formatierung.</p>
+          <button class="copy" data-copy='data-anim="scramble"'><code>data-anim="scramble"</code><span class="hint">kopieren</span></button>
+          <ul class="opts"><li><code>data-anim-chars="01"</code> eigene Zeichen, oder <code>upperCase</code>, <code>lowerCase</code></li></ul>
+        </div>
+        <div class="stage"><div class="mono-big" data-anim="scramble">SYSTEM BEREIT</div></div>
+      </div>
+
+      <div class="demo">
+        <div class="info">
+          <h3>Highlight</h3>
+          <p>Ein Marker oder eine Unterstreichung zeichnet sich ein. Ans Inline-Element (Span) im Text hängen.</p>
+          <button class="copy" data-copy='data-anim="highlight"'><code>data-anim="highlight"</code><span class="hint">kopieren</span></button>
+          <ul class="opts"><li><code>data-anim-style="underline"</code> · <code>data-anim-thickness="0.15em"</code></li><li><code>data-anim-color="#ffd400"</code> oder CSS-Variable <code>--anim-highlight</code></li></ul>
+        </div>
+        <div class="stage"><p class="para">Wir bauen Websites, die <span data-anim="highlight">schnell laden</span> und sich <span data-anim="highlight" data-anim-style="underline" data-anim-delay="0.3">gut anfühlen</span>.</p></div>
+      </div>
+    </section>
+
+    <!-- 4 SCROLL -->
+    <section class="cat" id="scroll">
+      <div class="cat-head">
+        <div class="num">4</div>
+        <h2>Scroll-gebunden</h2>
+        <p>Diese Animationen folgen direkt der Scrollposition und laufen beim Hochscrollen rückwärts.</p>
+      </div>
+
+      <div class="demo">
+        <div class="info">
+          <h3>Bild-Parallax</h3>
+          <p>An den Image-Wrapper (festes Seitenverhältnis). Das Bild darin ist höher als der Wrapper; die Library misst den Überstand und bewegt das Bild genau um diesen Wert.</p>
+          <button class="copy" data-copy='data-anim="parallax"'><code>data-anim="parallax"</code><span class="hint">kopieren</span></button>
+          <ul class="opts"><li>Bild in Webflow: <code>width 100%</code> · <code>height 110%</code> · <code>object-fit: cover</code></li><li><code>data-anim-amount="15"</code> setzt die Bildhöhe auf 115 %</li><li><code>data-anim-direction="up"</code> Richtung umkehren</li></ul>
+        </div>
+        <div class="stage" style="padding:0"><div class="img-wrapper" data-anim="parallax" style="border-radius:0"><img data-demo-img="2" alt="Abstrakte Landschaft"></div></div>
+      </div>
+
+      <div class="demo">
+        <div class="info">
+          <h3>Element-Parallax</h3>
+          <p>Ein beliebiges Element bewegt sich langsamer oder schneller als die Seite. Negative Werte machen es schneller.</p>
+          <button class="copy" data-copy='data-anim="parallax-element"'><code>data-anim="parallax-element"</code><span class="hint">kopieren</span></button>
+          <ul class="opts"><li><code>data-anim-speed="0.3"</code> (Standard 0.2)</li></ul>
+        </div>
+        <div class="stage"><div class="floaty">
+          <div class="box" data-anim="parallax-element" data-anim-speed="0.25">0.25</div>
+          <div class="box" data-anim="parallax-element" data-anim-speed="-0.15">−0.15</div>
+        </div></div>
+      </div>
+
+      <div class="demo">
+        <div class="info">
+          <h3>Image Zoom</h3>
+          <p>Das Bild im Wrapper zoomt beim Scrollen langsam heraus.</p>
+          <button class="copy" data-copy='data-anim="image-zoom"'><code>data-anim="image-zoom"</code><span class="hint">kopieren</span></button>
+          <ul class="opts"><li><code>data-anim-scale="1.3"</code> Startzoom (Standard 1.2)</li></ul>
+        </div>
+        <div class="stage" style="padding:0"><div class="img-wrapper zoom" data-anim="image-zoom" style="border-radius:0"><img data-demo-img="3" alt="Abstrakte Landschaft"></div></div>
+      </div>
+
+      <div class="demo">
+        <div class="info">
+          <h3>Text Fill</h3>
+          <p>Der Text färbt sich Wort für Wort ein, während du scrollst. Für große Statements.</p>
+          <button class="copy" data-copy='data-anim="text-fill"'><code>data-anim="text-fill"</code><span class="hint">kopieren</span></button>
+          <ul class="opts"><li><code>data-anim-opacity="0.2"</code> Startdeckkraft</li><li><code>data-anim-start</code> / <code>data-anim-end</code> Scrollbereich</li></ul>
+        </div>
+        <div class="stage"><p class="big" data-anim="text-fill">Wir glauben, dass jede Bewegung auf einer Website einen Grund braucht. Alles andere ist Lärm.</p></div>
+      </div>
+
+      <div class="demo">
+        <div class="info">
+          <h3>Progress Bar</h3>
+          <p>Zeigt den Scrollfortschritt. Die Leiste oben auf dieser Seite ist eine. Styling (fixed, Höhe, Farbe) machst du in Webflow.</p>
+          <button class="copy" data-copy='data-anim="progress-bar"'><code>data-anim="progress-bar"</code><span class="hint">kopieren</span></button>
+          <ul class="opts"><li><code>data-anim-trigger="#artikel"</code> nur Fortschritt eines Bereichs</li></ul>
+        </div>
+        <div class="stage" style="min-height:120px"><p style="margin:0;color:var(--muted)">↑ Siehe Leiste am oberen Rand</p></div>
+      </div>
+
+      <div class="demo">
+        <div class="info">
+          <h3>Pin</h3>
+          <p>Die Section bleibt stehen, während die mit <code>data-anim-item</code> markierten Kinder nacheinander erscheinen.</p>
+          <button class="copy" data-copy='data-anim="pin"'><code>data-anim="pin"</code><span class="hint">kopieren</span></button>
+          <ul class="opts"><li><code>data-anim-length="200"</code> Dauer in % der Fensterhöhe</li><li><code>data-anim-item-type="fade-left"</code> Effekt der Items</li></ul>
+        </div>
+        <div class="stage" style="min-height:120px"><p style="margin:0;color:var(--muted)">↓ Demo direkt darunter</p></div>
+      </div>
+      <div class="wide-stage">
+        <div class="pin-stage" data-anim="pin">
+          <div class="step" data-anim-item><strong>1 · Briefing</strong><br>Ziele und Zielgruppe klären.</div>
+          <div class="step" data-anim-item><strong>2 · Konzept</strong><br>Struktur und Inhalte festlegen.</div>
+          <div class="step" data-anim-item><strong>3 · Design</strong><br>Look & Feel in Webflow bauen.</div>
+          <div class="step" data-anim-item><strong>4 · Launch</strong><br>Testen, veröffentlichen, messen.</div>
+        </div>
+      </div>
+
+      <div class="demo">
+        <div class="info">
+          <h3>Horizontal Scroll</h3>
+          <p>Vertikales Scrollen bewegt eine Reihe seitwärts. Attribut an die Section, die Reihe ist das erste Kind oder mit <code>data-anim-track</code> markiert.</p>
+          <button class="copy" data-copy='data-anim="horizontal"'><code>data-anim="horizontal"</code><span class="hint">kopieren</span></button>
+          <ul class="opts"><li>Track in Webflow: <code>display flex</code>, Breite <code>max-content</code></li><li>Auf Mobile oft besser: <code>data-anim-mobile="false"</code> und dort untereinander stapeln</li></ul>
+        </div>
+        <div class="stage" style="min-height:120px"><p style="margin:0;color:var(--muted)">↓ Demo direkt darunter</p></div>
+      </div>
+      <div class="wide-stage" data-anim="horizontal">
+        <div class="h-track">
+          <div class="h-panel"><small>01 / Projekt</small>Rakete</div>
+          <div class="h-panel"><small>02 / Projekt</small>Werft</div>
+          <div class="h-panel"><small>03 / Projekt</small>Kontor</div>
+          <div class="h-panel"><small>04 / Projekt</small>Leuchtturm</div>
+          <div class="h-panel"><small>05 / Projekt</small>Hafen</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 5 FUNKTIONAL -->
+    <section class="cat" id="funktional">
+      <div class="cat-head">
+        <div class="num">5</div>
+        <h2>Funktionale Effekte</h2>
+        <p>Kleine Bausteine für Zahlen, Logos, SVGs und Hover.</p>
+      </div>
+
+      <div class="demo">
+        <div class="info">
+          <h3>Counter</h3>
+          <p>Zählt die Zahl im Text hoch. Präfix und Suffix (z. B. „+“ oder „%“) bleiben erhalten. Eine Zahl pro Element.</p>
+          <button class="copy" data-copy='data-anim="counter"'><code>data-anim="counter"</code><span class="hint">kopieren</span></button>
+          <ul class="opts"><li><code>data-anim-decimals="1"</code> Nachkommastellen</li><li><code>data-anim-from="100"</code> Startwert · <code>data-anim-to</code> Ziel überschreiben</li><li><code>data-anim-grouping="false"</code> ohne Tausenderpunkt</li></ul>
+        </div>
+        <div class="stage"><div class="counters">
+          <div><strong data-anim="counter">250+</strong><span>Projekte</span></div>
+          <div><strong data-anim="counter">1.250</strong><span>Stunden</span></div>
+          <div><strong data-anim="counter" data-anim-decimals="1">98,5 %</strong><span>Zufriedenheit</span></div>
+        </div></div>
+      </div>
+
+      <div class="demo">
+        <div class="info">
+          <h3>Marquee</h3>
+          <p>Endloses Laufband. Der Track ist das erste Kind; die Library dupliziert ihn so oft wie nötig. Abstände über <code>gap</code> am Track.</p>
+          <button class="copy" data-copy='data-anim="marquee"'><code>data-anim="marquee"</code><span class="hint">kopieren</span></button>
+          <ul class="opts"><li><code>data-anim-speed="80"</code> Pixel pro Sekunde</li><li><code>data-anim-direction="right"</code></li><li><code>data-anim-pause</code> stoppt bei Hover</li><li><code>data-anim-scroll</code> dreht beim Hochscrollen um</li></ul>
+        </div>
+        <div class="stage"><div class="marquee" data-anim="marquee" data-anim-pause data-anim-scroll>
+          <div class="marquee-track"><span>Webflow</span><span>GSAP</span><span>ScrollTrigger</span><span>SplitText</span><span>Attribute</span></div>
+        </div></div>
+      </div>
+
+      <div class="demo">
+        <div class="info">
+          <h3>Draw SVG</h3>
+          <p>Linien zeichnen sich. Funktioniert nur mit Konturen (stroke), nicht mit Flächen. SVG in Webflow über ein Embed einfügen.</p>
+          <button class="copy" data-copy='data-anim="draw-svg"'><code>data-anim="draw-svg"</code><span class="hint">kopieren</span></button>
+          <ul class="opts"><li><code>data-anim-scrub</code> an den Scroll koppeln</li></ul>
+        </div>
+        <div class="stage">
+          <svg class="svg-draw" data-anim="draw-svg" viewBox="0 0 360 160" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M10 120 C 60 20, 110 20, 150 90 S 230 160, 270 70 S 340 20, 350 40"/>
+            <circle cx="300" cy="110" r="28"/>
+            <path d="M40 140 L 120 140"/>
+          </svg>
+        </div>
+      </div>
+
+      <div class="demo">
+        <div class="info">
+          <h3>Magnetic & Tilt</h3>
+          <p>Reagieren auf die Maus. Auf Touchgeräten automatisch aus.</p>
+          <button class="copy" data-copy='data-anim="magnetic"'><code>data-anim="magnetic"</code><span class="hint">kopieren</span></button>
+          <button class="copy" data-copy='data-anim="tilt"'><code>data-anim="tilt"</code><span class="hint">kopieren</span></button>
+          <ul class="opts"><li><code>data-anim-strength="0.5"</code> Magnet-Stärke</li><li><code>data-anim-max="12"</code> maximale Neigung in Grad</li></ul>
+        </div>
+        <div class="stage"><div class="row" style="align-items:center; gap:32px">
+          <button class="btn" data-anim="magnetic" type="button">Projekt anfragen</button>
+          <div class="tilt-card" data-anim="tilt">Hover mich</div>
+        </div></div>
+      </div>
+    </section>
+
+    <!-- 6 MODIFIER -->
+    <section class="cat" id="modifier">
+      <div class="cat-head">
+        <div class="num">6</div>
+        <h2>Globale Modifier</h2>
+        <p>Funktionieren bei allen Animationen, die beim Reinscrollen starten. Einfach als zusätzliches Attribut setzen.</p>
+      </div>
+      <div class="table-wrap"><table>
+        <thead><tr><th>Attribut</th><th>Beispiel</th><th>Wirkung</th></tr></thead>
+        <tbody>
+          <tr><td><code>data-anim-delay</code></td><td><code>0.2</code></td><td>Verzögerung in Sekunden</td></tr>
+          <tr><td><code>data-anim-duration</code></td><td><code>1.2</code></td><td>Dauer in Sekunden</td></tr>
+          <tr><td><code>data-anim-ease</code></td><td><code>expo.out</code></td><td>Jeder GSAP-Ease</td></tr>
+          <tr><td><code>data-anim-start</code></td><td><code>top 70%</code></td><td>Startet, wenn die Oberkante des Elements 70 % der Fensterhöhe erreicht</td></tr>
+          <tr><td><code>data-anim-end</code></td><td><code>bottom 40%</code></td><td>Ende, nur mit Scrub</td></tr>
+          <tr><td><code>data-anim-distance</code></td><td><code>4rem</code></td><td>Weg bei Fade-Animationen</td></tr>
+          <tr><td><code>data-anim-stagger</code></td><td><code>0.1</code></td><td>Versatz bei Gruppen, Text und SVG</td></tr>
+          <tr><td><code>data-anim-repeat</code></td><td>(ohne Wert)</td><td>Animiert erneut, wenn man wieder hineinscrollt</td></tr>
+          <tr><td><code>data-anim-scrub</code></td><td>(ohne Wert) oder <code>0.5</code></td><td>Reveal folgt direkt dem Scroll, Zahl = Nachlauf in s</td></tr>
+          <tr><td><code>data-anim-mobile</code></td><td><code>false</code></td><td>Unter 768 px keine Animation, Element ist normal sichtbar</td></tr>
+        </tbody>
+      </table></div>
+    </section>
+
+    <!-- 7 API -->
+    <section class="cat" id="api">
+      <div class="cat-head">
+        <div class="num">7</div>
+        <h2>Infrastruktur</h2>
+        <p>Was die Library im Hintergrund erledigt, und wie du sie bei Bedarf steuerst.</p>
+      </div>
+      <ul class="tips">
+        <li><strong>Bewegung reduzieren:</strong> Ist die Systemeinstellung aktiv, werden Inhalte ohne Animation angezeigt. Ausnahmen sind Progress Bar und Horizontal Scroll, weil sie für die Bedienung gebraucht werden.</li>
+        <li><strong>Fehlertoleranz:</strong> Fehlt ein Plugin oder ist ein Wert unbekannt, erscheint eine Warnung in der Konsole und das Element wird normal angezeigt.</li>
+        <li><strong>Nicht mischen:</strong> Kein <code>data-anim</code> auf Elementen, die zusätzlich eine native Webflow Interaction haben. Beide setzen <code>transform</code> und überschreiben sich.</li>
+        <li><strong>Lazy Loading:</strong> Die Library rechnet nach dem Laden der Schriften neu. Verändert sich das Layout später (Tabs, Akkordeons), rufe <code>WFAnim.refresh()</code> auf.</li>
+      </ul>
+<pre class="code-block"><code>WFAnim.init(element)   // neue Elemente animieren, z. B. nach CMS Load More
+WFAnim.refresh()       // Positionen neu berechnen
+WFAnim.destroy()       // alles zurücksetzen
+WFAnim.register('mein-effekt', (el, opts) =&gt; {
+  gsap.from(el, { rotate: -8, autoAlpha: 0, scrollTrigger: { trigger: el, start: opts.start } });
+});</code></pre>
+    </section>
+  </main>
+</div>
+
+<button class="replay" id="replay" type="button">↻ Neu abspielen</button>
+
+<script src="https://cdn.jsdelivr.net/npm/gsap@3.13.0/dist/gsap.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/gsap@3.13.0/dist/ScrollTrigger.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/gsap@3.13.0/dist/SplitText.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/gsap@3.13.0/dist/ScrambleTextPlugin.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/gsap@3.13.0/dist/DrawSVGPlugin.min.js"></script>
+<script>
+  // Demo-Bilder als SVG (keine externen Bilder nötig)
+  (function () {
+    var palettes = [
+      ['#1f2a6b', '#3b4fd8', '#8fa0ff', '#f2c94c'],
+      ['#13202b', '#245a6e', '#5fa8a0', '#f4d58d'],
+      ['#2a1631', '#6b2e5c', '#d06a6a', '#ffd3a1']
+    ];
+    document.querySelectorAll('img[data-demo-img]').forEach(function (img) {
+      var p = palettes[(+img.dataset.demoImg - 1) % palettes.length];
+      var svg = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 600" preserveAspectRatio="xMidYMid slice">' +
+        '<defs><linearGradient id="g" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="' + p[0] + '"/><stop offset="1" stop-color="' + p[1] + '"/></linearGradient></defs>' +
+        '<rect width="800" height="600" fill="url(#g)"/>' +
+        '<circle cx="580" cy="190" r="70" fill="' + p[3] + '"/>' +
+        '<path d="M0 420 L140 300 L260 380 L400 250 L560 400 L680 320 L800 390 L800 600 L0 600Z" fill="' + p[2] + '" opacity="0.85"/>' +
+        '<path d="M0 500 L180 400 L330 470 L470 380 L640 480 L800 430 L800 600 L0 600Z" fill="' + p[0] + '" opacity="0.9"/>' +
+        Array.from({ length: 12 }, function (_, i) { return '<line x1="0" x2="800" y1="' + (40 + i * 50) + '" y2="' + (40 + i * 50) + '" stroke="#fff" stroke-opacity="0.06"/>'; }).join('') +
+        '</svg>';
+      img.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg);
+    });
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) document.getElementById('rm-notice').hidden = false;
+  })();
+</script>
+<script>
+/*!
+ * WF Anim v1.0.0
+ * Attribut-basierte GSAP-Animationen für Webflow
+ *
+ * Benötigt: gsap + ScrollTrigger
+ * Optional: SplitText (split-*, text-fill), ScrambleTextPlugin (scramble), DrawSVGPlugin (draw-svg)
+ *
+ * Nutzung: data-anim="fade-up" an ein Element hängen. Doku siehe Demo-Seite.
+ * API: WFAnim.init(scope) · WFAnim.destroy() · WFAnim.refresh() · WFAnim.register(name, fn)
+ */
+(() => {
+  'use strict';
+  if (window.WFAnim) return;
+
+  /* ------------------------------------------------------------------ */
+  /*  Konfiguration (überschreibbar über window.WFAnimConfig vor dem     */
+  /*  Laden des Skripts)                                                  */
+  /* ------------------------------------------------------------------ */
+  const cfg = Object.assign(
+    {
+      duration: 0.9,
+      ease: 'power3.out',
+      start: 'top 85%',
+      end: 'bottom 40%',
+      distance: '2.5rem',
+      stagger: 0.08,
+      scale: 0.92,
+      blur: 12,
+      locale: 'de-DE',
+      mobileBreakpoint: 768,
+      autoInit: true,
+    },
+    window.WFAnimConfig || {}
+  );
+
+  const html = document.documentElement;
+  const warn = (...a) => console.warn('[WFAnim]', ...a);
+
+  /* ------------------------------------------------------------------ */
+  /*  Helfer                                                             */
+  /* ------------------------------------------------------------------ */
+  const num = (v, fb) => {
+    const n = parseFloat(v);
+    return Number.isFinite(n) ? n : fb;
+  };
+  // data-anim-x="" oder ="true" → true, ="false" oder fehlend → false
+  const bool = (v) => v !== undefined && v !== 'false';
+
+  const toPx = (v) => {
+    if (typeof v === 'number') return v;
+    const n = parseFloat(v);
+    if (!Number.isFinite(n)) return 0;
+    const unit = String(v).trim().replace(/^-?[\d.]+/, '');
+    switch (unit) {
+      case 'rem':
+      case 'em':
+        return n * parseFloat(getComputedStyle(html).fontSize);
+      case 'vh':
+        return (n * window.innerHeight) / 100;
+      case 'vw':
+        return (n * window.innerWidth) / 100;
+      default:
+        return n;
+    }
+  };
+
+  const opts = (el) => {
+    const d = el.dataset;
+    let scrub = false;
+    if (bool(d.animScrub)) scrub = d.animScrub === '' || d.animScrub === 'true' ? true : num(d.animScrub, true);
+    return {
+      delay: num(d.animDelay, 0),
+      duration: num(d.animDuration, cfg.duration),
+      ease: d.animEase || cfg.ease,
+      start: d.animStart || cfg.start,
+      end: d.animEnd || cfg.end,
+      distance: toPx(d.animDistance || cfg.distance),
+      stagger: num(d.animStagger, cfg.stagger),
+      hasStagger: d.animStagger !== undefined,
+      repeat: bool(d.animRepeat),
+      scrub,
+    };
+  };
+
+  // ScrollTrigger-Konfiguration für Reveal-Animationen
+  const st = (el, o, extra) =>
+    Object.assign(
+      o.scrub
+        ? { trigger: el, start: o.start, end: o.end, scrub: o.scrub }
+        : {
+            trigger: el,
+            start: o.start,
+            toggleActions: o.repeat ? 'play none none reverse' : 'play none none none',
+            once: !o.repeat,
+          },
+      extra || {}
+    );
+
+  const items = (el) => {
+    const marked = el.querySelectorAll('[data-anim-item]');
+    return marked.length ? Array.from(marked) : Array.from(el.children);
+  };
+
+  // Element (und markierte Items) sichtbar machen – für reduced motion, mobile aus, Fehler
+  const show = (el) => {
+    gsap.set(el, { visibility: 'visible' });
+    const it = el.querySelectorAll('[data-anim-item]');
+    if (it.length) gsap.set(it, { visibility: 'visible' });
+  };
+
+  const need = (name, el) => {
+    if (window[name]) return true;
+    warn(`${name} fehlt – "${el.dataset.anim}" wird ohne Animation angezeigt.`, el);
+    show(el);
+    return false;
+  };
+
+  /* ------------------------------------------------------------------ */
+  /*  Reveal-Presets                                                     */
+  /* ------------------------------------------------------------------ */
+  const REVEALS = [
+    'fade-in', 'fade-up', 'fade-down', 'fade-left', 'fade-right',
+    'scale-in', 'blur-in',
+    'clip-up', 'clip-down', 'clip-left', 'clip-right',
+  ];
+
+  const fromState = (type, el, o) => {
+    const d = o.distance;
+    const ds = el.dataset;
+    switch (type) {
+      case 'fade-in':    return { autoAlpha: 0 };
+      case 'fade-up':    return { autoAlpha: 0, y: d };
+      case 'fade-down':  return { autoAlpha: 0, y: -d };
+      case 'fade-left':  return { autoAlpha: 0, x: d };
+      case 'fade-right': return { autoAlpha: 0, x: -d };
+      case 'scale-in':   return { autoAlpha: 0, scale: num(ds.animScale, cfg.scale) };
+      case 'blur-in':    return { autoAlpha: 0, filter: `blur(${num(ds.animBlur, cfg.blur)}px)` };
+      case 'clip-up':    return { autoAlpha: 1, clipPath: 'inset(100% 0% 0% 0%)' };
+      case 'clip-down':  return { autoAlpha: 1, clipPath: 'inset(0% 0% 100% 0%)' };
+      case 'clip-left':  return { autoAlpha: 1, clipPath: 'inset(0% 0% 0% 100%)' };
+      case 'clip-right': return { autoAlpha: 1, clipPath: 'inset(0% 100% 0% 0%)' };
+      default:           return { autoAlpha: 0, y: d };
+    }
+  };
+
+  const TO = { autoAlpha: 1, x: 0, y: 0, scale: 1, filter: 'blur(0px)', clipPath: 'inset(0% 0% 0% 0%)' };
+  const toState = (from) => {
+    const t = { autoAlpha: 1 };
+    Object.keys(from).forEach((k) => (t[k] = TO[k]));
+    return t;
+  };
+
+  const tweenVars = (from, o, extra) =>
+    Object.assign(toState(from), {
+      duration: o.duration,
+      delay: o.scrub ? 0 : o.delay,
+      ease: o.ease,
+    }, extra);
+
+  /* ------------------------------------------------------------------ */
+  /*  Animationen                                                        */
+  /*  Signatur: (el, opts, ctx) → optional Cleanup-Funktion              */
+  /* ------------------------------------------------------------------ */
+  const A = {};
+
+  // 1 · Basis-Reveals
+  /*@block fade-in,fade-up,fade-down,fade-left,fade-right,scale-in,blur-in,clip-up,clip-down,clip-left,clip-right*/
+  REVEALS.forEach((type) => {
+    A[type] = (el, o) => {
+      const from = fromState(type, el, o);
+      const clearFilter = type === 'blur-in' && !o.repeat && !o.scrub;
+      gsap.fromTo(el, from, tweenVars(from, o, {
+        scrollTrigger: st(el, o),
+        onComplete: clearFilter ? () => gsap.set(el, { clearProps: 'filter' }) : undefined,
+      }));
+    };
+  });
+
+  /*@end*/
+
+  // 2 · Gruppen
+  /*@block stagger,grid-stagger*/
+  const staggerAnim = (el, o, staggerVal) => {
+    const type = el.dataset.animStaggerType || 'fade-up';
+    const list = items(el);
+    if (!list.length) return show(el);
+    const from = fromState(REVEALS.includes(type) ? type : 'fade-up', el, o);
+    gsap.set(el, { visibility: 'visible' });
+    gsap.fromTo(list, from, tweenVars(from, o, { stagger: staggerVal, scrollTrigger: st(el, o) }));
+  };
+
+  A['stagger'] = (el, o) => staggerAnim(el, o, o.stagger);
+
+  A['grid-stagger'] = (el, o) => {
+    const f = el.dataset.animFrom || 'center';
+    staggerAnim(el, o, { each: o.stagger, grid: 'auto', from: Number.isFinite(+f) ? +f : f });
+  };
+
+  /*@end*/
+
+  // 3 · Text
+  /*@block split-lines,split-words,split-chars*/
+  const splitAnim = (el, o, type, mask, from, to, defStagger) => {
+    if (!need('SplitText', el)) return;
+    SplitText.create(el, {
+      type,
+      mask,
+      autoSplit: true,
+      onSplit: (self) => {
+        const targets = type.includes('chars') ? self.chars : type.includes('words') ? self.words : self.lines;
+        return gsap.fromTo(targets, from, Object.assign({}, to, {
+          duration: o.duration,
+          delay: o.scrub ? 0 : o.delay,
+          ease: o.ease,
+          stagger: o.hasStagger ? o.stagger : defStagger,
+          scrollTrigger: st(el, o),
+        }));
+      },
+    });
+    gsap.set(el, { visibility: 'visible' });
+  };
+
+  A['split-lines'] = (el, o) =>
+    splitAnim(el, o, 'lines', 'lines', { yPercent: 110 }, { yPercent: 0 }, 0.1);
+
+  A['split-words'] = (el, o) =>
+    splitAnim(el, o, 'words', 'words', { yPercent: 110 }, { yPercent: 0 }, 0.05);
+
+  A['split-chars'] = (el, o) =>
+    splitAnim(el, o, 'words,chars', null, { autoAlpha: 0, yPercent: 60 }, { autoAlpha: 1, yPercent: 0 }, 0.025);
+
+  /*@end*/
+
+  /*@block scramble*/
+  A['scramble'] = (el, o) => {
+    if (!need('ScrambleTextPlugin', el)) return;
+    const text = el.textContent;
+    const placeholder = text.replace(/\S/g, '·');
+    el.setAttribute('aria-label', text.trim());
+    const tl = gsap.timeline({ delay: o.scrub ? 0 : o.delay, scrollTrigger: st(el, o) });
+    tl.call(() => (el.textContent = placeholder), null, 0)
+      .fromTo(el, { autoAlpha: 0 }, { autoAlpha: 1, duration: 0.2 }, 0)
+      .to(el, {
+        duration: Math.max(o.duration * 1.6, 1),
+        ease: 'none',
+        scrambleText: {
+          text,
+          chars: el.dataset.animChars || 'upperCase',
+          revealDelay: 0.2,
+          speed: 0.6,
+        },
+      }, 0);
+    return () => {
+      el.textContent = text;
+      el.removeAttribute('aria-label');
+    };
+  };
+
+  /*@end*/
+
+  /*@block highlight*/
+  A['highlight'] = (el, o) => {
+    const ds = el.dataset;
+    const color = ds.animColor || 'var(--anim-highlight, rgba(255, 214, 0, 0.55))';
+    const h = ds.animStyle === 'underline' ? ds.animThickness || '0.12em' : '100%';
+    gsap.set(el, {
+      backgroundImage: `linear-gradient(${color}, ${color})`,
+      backgroundRepeat: 'no-repeat',
+      backgroundPosition: '0% 100%',
+      backgroundSize: `0% ${h}`,
+      boxDecorationBreak: 'clone',
+      WebkitBoxDecorationBreak: 'clone',
+    });
+    gsap.to(el, {
+      backgroundSize: `100% ${h}`,
+      duration: o.duration * 1.2,
+      delay: o.scrub ? 0 : o.delay + 0.15,
+      ease: o.ease,
+      scrollTrigger: st(el, o),
+    });
+  };
+
+  /*@end*/
+
+  // 4 · Scroll-gebunden
+  /*@block parallax*/
+  A['parallax'] = (el) => {
+    const ds = el.dataset;
+    const img = el.querySelector('img') || el.firstElementChild;
+    if (!img) return;
+    gsap.set(el, { overflow: 'hidden' });
+    if (ds.animAmount !== undefined) {
+      gsap.set(img, { height: `${100 + num(ds.animAmount, 10)}%`, objectFit: 'cover' });
+    }
+    const over = () => Math.max(0, img.offsetHeight - el.offsetHeight);
+    const up = ds.animDirection === 'up';
+    gsap.fromTo(
+      img,
+      { y: () => (up ? 0 : -over()) },
+      {
+        y: () => (up ? -over() : 0),
+        ease: 'none',
+        scrollTrigger: {
+          trigger: el,
+          start: 'top bottom',
+          end: 'bottom top',
+          scrub: true,
+          invalidateOnRefresh: true,
+        },
+      }
+    );
+  };
+
+  /*@end*/
+
+  /*@block parallax-element*/
+  A['parallax-element'] = (el) => {
+    const speed = num(el.dataset.animSpeed, 0.2);
+    const range = () => speed * window.innerHeight * 0.5;
+    gsap.fromTo(
+      el,
+      { y: () => -range() },
+      {
+        y: () => range(),
+        ease: 'none',
+        scrollTrigger: { trigger: el, start: 'top bottom', end: 'bottom top', scrub: true, invalidateOnRefresh: true },
+      }
+    );
+  };
+
+  /*@end*/
+
+  /*@block image-zoom*/
+  A['image-zoom'] = (el) => {
+    const ds = el.dataset;
+    const img = el.querySelector('img') || el.firstElementChild;
+    if (!img) return;
+    gsap.set(el, { overflow: 'hidden' });
+    gsap.fromTo(
+      img,
+      { scale: num(ds.animScale, 1.2) },
+      {
+        scale: 1,
+        ease: 'none',
+        scrollTrigger: { trigger: el, start: ds.animStart || 'top bottom', end: ds.animEnd || 'bottom top', scrub: true },
+      }
+    );
+  };
+
+  /*@end*/
+
+  /*@block text-fill*/
+  A['text-fill'] = (el) => {
+    if (!need('SplitText', el)) return;
+    const ds = el.dataset;
+    const op = num(ds.animOpacity, 0.15);
+    SplitText.create(el, {
+      type: 'words',
+      autoSplit: true,
+      onSplit: (self) =>
+        gsap.fromTo(self.words, { opacity: op }, {
+          opacity: 1,
+          ease: 'none',
+          stagger: 0.1,
+          scrollTrigger: { trigger: el, start: ds.animStart || 'top 80%', end: ds.animEnd || 'bottom 50%', scrub: true },
+        }),
+    });
+    gsap.set(el, { visibility: 'visible' });
+  };
+
+  /*@end*/
+
+  /*@block progress-bar*/
+  A['progress-bar'] = (el) => {
+    const sel = el.dataset.animTrigger;
+    const target = sel ? document.querySelector(sel) : null;
+    gsap.fromTo(
+      el,
+      { scaleX: 0, transformOrigin: 'left center', visibility: 'visible' },
+      {
+        scaleX: 1,
+        ease: 'none',
+        scrollTrigger: target
+          ? { trigger: target, start: 'top top', end: 'bottom bottom', scrub: 0.3 }
+          : { start: 0, end: 'max', scrub: 0.3 },
+      }
+    );
+  };
+
+  /*@end*/
+
+  /*@block pin*/
+  A['pin'] = (el, o) => {
+    const ds = el.dataset;
+    const list = Array.from(el.querySelectorAll('[data-anim-item]'));
+    const length = num(ds.animLength, list.length ? list.length * 60 : 100); // in % der Viewport-Höhe
+    const tl = gsap.timeline({
+      scrollTrigger: {
+        trigger: el,
+        start: ds.animStart || 'top top',
+        end: () => '+=' + (window.innerHeight * length) / 100,
+        pin: true,
+        scrub: true,
+        invalidateOnRefresh: true,
+      },
+    });
+    if (list.length) {
+      const type = ds.animItemType || 'fade-up';
+      const from = fromState(REVEALS.includes(type) ? type : 'fade-up', el, o);
+      list.forEach((item, i) => tl.fromTo(item, from, Object.assign(toState(from), { duration: 1, ease: 'power2.out' }), i));
+      tl.to({}, { duration: 0.5 }); // kurze Ruhephase am Ende
+    }
+  };
+
+  /*@end*/
+
+  /*@block horizontal*/
+  A['horizontal'] = (el) => {
+    const track = el.querySelector('[data-anim-track]') || el.firstElementChild;
+    if (!track) return;
+    gsap.set(el, { overflow: 'hidden' });
+    const dist = () => Math.max(0, track.scrollWidth - el.clientWidth);
+    gsap.to(track, {
+      x: () => -dist(),
+      ease: 'none',
+      scrollTrigger: {
+        trigger: el,
+        start: el.dataset.animStart || 'top top',
+        end: () => '+=' + dist(),
+        pin: true,
+        scrub: true,
+        invalidateOnRefresh: true,
+      },
+    });
+  };
+
+  /*@end*/
+
+  // 5 · Funktional
+  /*@block counter*/
+  A['counter'] = (el, o) => {
+    const ds = el.dataset;
+    const raw = el.textContent;
+    const m = raw.match(/\d[\d.,\s]*\d|\d/);
+    if (!m && ds.animTo === undefined) return show(el);
+
+    const dec = num(ds.animDecimals, 0);
+    const prefix = m ? raw.slice(0, m.index) : '';
+    const suffix = m ? raw.slice(m.index + m[0].length) : '';
+
+    let target;
+    if (ds.animTo !== undefined) {
+      target = num(ds.animTo, 0);
+    } else {
+      const s = m[0].replace(/\s/g, '');
+      if (dec > 0) {
+        const i = Math.max(s.lastIndexOf(','), s.lastIndexOf('.'));
+        target = i < 0 ? parseFloat(s) : parseFloat(s.slice(0, i).replace(/[.,]/g, '') + '.' + s.slice(i + 1));
+      } else {
+        target = parseInt(s.replace(/[.,]/g, ''), 10);
+      }
+    }
+
+    const fmt = new Intl.NumberFormat(ds.animLocale || cfg.locale, {
+      minimumFractionDigits: dec,
+      maximumFractionDigits: dec,
+      useGrouping: ds.animGrouping !== 'false',
+    });
+    const state = { v: num(ds.animFrom, 0) };
+    const render = () => (el.textContent = prefix + fmt.format(state.v) + suffix);
+
+    el.setAttribute('aria-label', raw.trim());
+    render();
+    gsap.set(el, { visibility: 'visible', fontVariantNumeric: 'tabular-nums' });
+    gsap.to(state, {
+      v: target,
+      duration: num(ds.animDuration, 2),
+      delay: o.delay,
+      ease: ds.animEase || 'power2.out',
+      onUpdate: render,
+      scrollTrigger: st(el, Object.assign({}, o, { scrub: false })),
+    });
+    return () => {
+      el.textContent = raw;
+      el.removeAttribute('aria-label');
+    };
+  };
+
+  /*@end*/
+
+  /*@block marquee*/
+  A['marquee'] = (el, o, ctx) => {
+    const ds = el.dataset;
+    const track = el.querySelector('[data-anim-track]') || el.firstElementChild;
+    if (!track) return;
+
+    const saved = { el: el.getAttribute('style'), track: track.getAttribute('style') };
+    const clones = [];
+    const listeners = [];
+    let tw = null;
+    let onLoad = null;
+
+    const build = () => {
+      el.style.display = 'flex';
+      el.style.overflow = 'hidden';
+      track.style.flexShrink = '0';
+      // Gap des Tracks als Abstand am Ende anhängen, damit die Naht nahtlos ist
+      const cs = getComputedStyle(track);
+      const gap = parseFloat(cs.columnGap) || 0;
+      if (gap) track.style.paddingRight = (parseFloat(cs.paddingRight) || 0) + gap + 'px';
+
+      const w = track.offsetWidth;
+      if (!w) return;
+      const count = Math.ceil(Math.max(el.offsetWidth, window.innerWidth) / w) + 1;
+      for (let i = 0; i < count; i++) {
+        const c = track.cloneNode(true);
+        c.setAttribute('aria-hidden', 'true');
+        c.removeAttribute('data-anim-track');
+        el.appendChild(c);
+        clones.push(c);
+      }
+      const tracks = [track, ...clones];
+      const right = ds.animDirection === 'right';
+      tw = gsap.fromTo(
+        tracks,
+        { xPercent: right ? -100 : 0 },
+        { xPercent: right ? 0 : -100, duration: w / num(ds.animSpeed, 60), ease: 'none', repeat: -1 }
+      );
+
+      let dir = 1;
+      if (bool(ds.animScroll)) {
+        tw.totalTime(tw.duration() * 500); // Puffer, damit Rückwärtslaufen nicht bei 0 stoppt
+        ScrollTrigger.create({
+          trigger: el,
+          start: 'top bottom',
+          end: 'bottom top',
+          onUpdate: (self) => {
+            if (self.direction === dir) return;
+            dir = self.direction;
+            gsap.to(tw, { timeScale: dir, duration: 0.4, overwrite: true });
+          },
+        });
+      }
+      if (bool(ds.animPause)) {
+        const enter = () => gsap.to(tw, { timeScale: 0, duration: 0.4, overwrite: true });
+        const leave = () => gsap.to(tw, { timeScale: dir, duration: 0.4, overwrite: true });
+        el.addEventListener('mouseenter', enter);
+        el.addEventListener('mouseleave', leave);
+        listeners.push(['mouseenter', enter], ['mouseleave', leave]);
+      }
+    };
+
+    // Erst bauen, wenn Bilder geladen sind – sonst stimmt die Breite nicht
+    if (document.readyState === 'complete') build();
+    else {
+      onLoad = () => ctx.add(build);
+      window.addEventListener('load', onLoad, { once: true });
+    }
+
+    return () => {
+      if (onLoad) window.removeEventListener('load', onLoad);
+      listeners.forEach(([t, f]) => el.removeEventListener(t, f));
+      clones.forEach((c) => c.remove());
+      saved.el === null ? el.removeAttribute('style') : el.setAttribute('style', saved.el);
+      saved.track === null ? track.removeAttribute('style') : track.setAttribute('style', saved.track);
+    };
+  };
+
+  /*@end*/
+
+  /*@block draw-svg*/
+  A['draw-svg'] = (el, o) => {
+    if (!need('DrawSVGPlugin', el)) return;
+    const sel = 'path,line,polyline,polygon,circle,ellipse,rect';
+    const shapes = el.matches(sel) ? [el] : Array.from(el.querySelectorAll(sel));
+    if (!shapes.length) return show(el);
+    gsap.set(el, { visibility: 'visible' });
+    gsap.fromTo(shapes, { drawSVG: '0%' }, {
+      drawSVG: '100%',
+      duration: num(el.dataset.animDuration, 1.6),
+      delay: o.scrub ? 0 : o.delay,
+      ease: el.dataset.animEase || 'power2.inOut',
+      stagger: o.hasStagger ? o.stagger : 0.15,
+      scrollTrigger: st(el, o),
+    });
+  };
+
+  /*@end*/
+
+  const finePointer = () => window.matchMedia('(hover: hover) and (pointer: fine)').matches;
+
+  /*@block magnetic*/
+  A['magnetic'] = (el) => {
+    if (!finePointer()) return;
+    const s = num(el.dataset.animStrength, 0.3);
+    const xTo = gsap.quickTo(el, 'x', { duration: 0.5, ease: 'power3.out' });
+    const yTo = gsap.quickTo(el, 'y', { duration: 0.5, ease: 'power3.out' });
+    const move = (e) => {
+      const r = el.getBoundingClientRect();
+      xTo((e.clientX - (r.left + r.width / 2)) * s);
+      yTo((e.clientY - (r.top + r.height / 2)) * s);
+    };
+    const leave = () => {
+      xTo(0);
+      yTo(0);
+    };
+    el.addEventListener('pointermove', move);
+    el.addEventListener('pointerleave', leave);
+    return () => {
+      el.removeEventListener('pointermove', move);
+      el.removeEventListener('pointerleave', leave);
+    };
+  };
+
+  /*@end*/
+
+  /*@block tilt*/
+  A['tilt'] = (el) => {
+    if (!finePointer()) return;
+    const max = num(el.dataset.animMax, 8);
+    gsap.set(el, { transformPerspective: num(el.dataset.animPerspective, 800) });
+    const rx = gsap.quickTo(el, 'rotationX', { duration: 0.5, ease: 'power3.out' });
+    const ry = gsap.quickTo(el, 'rotationY', { duration: 0.5, ease: 'power3.out' });
+    const move = (e) => {
+      const r = el.getBoundingClientRect();
+      const px = (e.clientX - r.left) / r.width - 0.5;
+      const py = (e.clientY - r.top) / r.height - 0.5;
+      ry(px * max * 2);
+      rx(-py * max * 2);
+    };
+    const leave = () => {
+      rx(0);
+      ry(0);
+    };
+    el.addEventListener('pointermove', move);
+    el.addEventListener('pointerleave', leave);
+    return () => {
+      el.removeEventListener('pointermove', move);
+      el.removeEventListener('pointerleave', leave);
+    };
+  };
+
+  /*@end*/
+
+  /* ------------------------------------------------------------------ */
+  /*  Init / Destroy                                                     */
+  /* ------------------------------------------------------------------ */
+  // Diese Animationen laufen auch bei "Bewegung reduzieren", weil sie direkt
+  // an den Scroll gekoppelt bzw. für die Bedienung nötig sind.
+  const RUN_IN_REDUCED = new Set(['progress-bar', 'horizontal']);
+
+  const done = new WeakSet();
+  const contexts = [];
+  let registered = false;
+
+  function init(scope) {
+    scope = scope || document;
+    if (!window.gsap || !window.ScrollTrigger) {
+      warn('GSAP oder ScrollTrigger nicht gefunden – Animationen deaktiviert.');
+      html.classList.remove('js-anim');
+      return;
+    }
+    if (!registered) {
+      const plugins = ['ScrollTrigger', 'SplitText', 'ScrambleTextPlugin', 'DrawSVGPlugin']
+        .map((n) => window[n])
+        .filter(Boolean);
+      gsap.registerPlugin(...plugins);
+      registered = true;
+    }
+
+    const els = Array.from(scope.querySelectorAll('[data-anim]'));
+    if (scope !== document && scope.matches && scope.matches('[data-anim]')) els.unshift(scope);
+    const fresh = els.filter((el) => !done.has(el));
+    if (!fresh.length) return;
+    fresh.forEach((el) => done.add(el));
+
+    const mm = gsap.matchMedia();
+    mm.add(
+      {
+        always: 'all',
+        mobile: `(max-width: ${cfg.mobileBreakpoint - 1}px)`,
+        reduce: '(prefers-reduced-motion: reduce)',
+      },
+      (ctx) => {
+        const { mobile, reduce } = ctx.conditions;
+        const cleanups = [];
+        fresh.forEach((el) => {
+          const type = el.dataset.anim;
+          const fn = A[type];
+          if (!fn) {
+            warn(`Unbekannte Animation "${type}"`, el);
+            show(el);
+            return;
+          }
+          const off = (mobile && el.dataset.animMobile === 'false') || (reduce && !RUN_IN_REDUCED.has(type));
+          if (off) {
+            show(el);
+            return;
+          }
+          try {
+            const c = fn(el, opts(el), ctx);
+            if (typeof c === 'function') cleanups.push(c);
+          } catch (err) {
+            warn(`Fehler bei "${type}"`, err, el);
+            show(el);
+          }
+        });
+        return () => cleanups.forEach((c) => c());
+      }
+    );
+    contexts.push({ mm, els: fresh });
+    html.classList.add('anim-ready');
+  }
+
+  function destroy() {
+    contexts.forEach((c) => {
+      c.mm.revert();
+      c.els.forEach((el) => done.delete(el));
+    });
+    contexts.length = 0;
+  }
+
+  function refresh() {
+    if (window.ScrollTrigger) ScrollTrigger.refresh();
+  }
+
+  function register(name, fn) {
+    A[name] = fn;
+  }
+
+  window.WFAnim = { init, destroy, refresh, register, config: cfg, animations: A, version: '1.0.0' };
+
+  const start = () => {
+    if (!cfg.autoInit) return;
+    init();
+    if (document.fonts && document.fonts.ready) document.fonts.ready.then(refresh);
+  };
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start);
+  else start();
+})();
+
+</script>
+<script>
+  // Kopieren
+  function copyText(text, el, label) {
+    var ok = function () {
+      el.classList.add('done');
+      var hint = el.querySelector('.hint');
+      var t = hint || el;
+      var prev = t.textContent;
+      t.textContent = 'kopiert';
+      setTimeout(function () { t.textContent = prev; el.classList.remove('done'); }, 1400);
+    };
+    var fallback = function () {
+      var r = document.createRange();
+      r.selectNodeContents(el.querySelector('code') || el);
+      var s = window.getSelection(); s.removeAllRanges(); s.addRange(r);
+    };
+    try {
+      navigator.clipboard.writeText(text).then(ok, fallback);
+    } catch (e) { fallback(); }
+  }
+  document.querySelectorAll('.copy').forEach(function (b) {
+    b.addEventListener('click', function () { copyText(b.dataset.copy, b); });
+  });
+  document.querySelectorAll('.copy-block').forEach(function (b) {
+    b.addEventListener('click', function () {
+      var pre = document.getElementById(b.dataset.copyTarget);
+      try {
+        navigator.clipboard.writeText(pre.textContent).then(function () {
+          var t = b.textContent; b.textContent = 'Kopiert'; setTimeout(function () { b.textContent = t; }, 1400);
+        }, function () { var r = document.createRange(); r.selectNodeContents(pre); var s = getSelection(); s.removeAllRanges(); s.addRange(r); });
+      } catch (e) {}
+    });
+  });
+  // Neu abspielen
+  document.getElementById('replay').addEventListener('click', function () {
+    if (!window.WFAnim) return;
+    WFAnim.destroy();
+    requestAnimationFrame(function () { WFAnim.init(); WFAnim.refresh(); });
+  });
+</script>
+
+</body>
+</html>

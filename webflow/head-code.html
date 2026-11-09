@@ -1,0 +1,21 @@
+<!-- WF Anim · Head Code -->
+<script>
+document.documentElement.classList.add('js-anim');
+setTimeout(function(){if(!window.WFAnim)document.documentElement.classList.remove('js-anim')},3000);
+</script>
+<style>
+.js-anim [data-anim^="fade-"],
+.js-anim [data-anim^="clip-"],
+.js-anim [data-anim^="split-"],
+.js-anim [data-anim="scale-in"],
+.js-anim [data-anim="blur-in"],
+.js-anim [data-anim="stagger"],
+.js-anim [data-anim="grid-stagger"],
+.js-anim [data-anim="scramble"],
+.js-anim [data-anim="text-fill"],
+.js-anim [data-anim="counter"],
+.js-anim [data-anim="draw-svg"],
+.js-anim [data-anim="progress-bar"],
+.js-anim [data-anim="pin"] [data-anim-item] { visibility: hidden; }
+[data-anim="split-chars"] { font-kerning: none; }
+</style>

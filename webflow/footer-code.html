@@ -1,0 +1,599 @@
+<!-- WF Anim · Footer Code
+     Voraussetzung: Settings → GSAP integration → GSAP aktiv, Plugins: ScrollTrigger, SplitText, ScrambleTextPlugin, DrawSVGPlugin -->
+<script>
+/*! WF Anim v1.0.0 · Vollversion */
+"use strict";
+(() => {
+'use strict';
+if (window.WFAnim)
+return;
+const cfg = Object.assign({
+duration: 0.9,
+ease: 'power3.out',
+start: 'top 85%',
+end: 'bottom 40%',
+distance: '2.5rem',
+stagger: 0.08,
+scale: 0.92,
+blur: 12,
+locale: 'de-DE',
+mobileBreakpoint: 768,
+autoInit: true,
+}, window.WFAnimConfig || {});
+const html = document.documentElement;
+const warn = (...a) => console.warn('[WFAnim]', ...a);
+const num = (v, fb) => {
+const n = parseFloat(v);
+return Number.isFinite(n) ? n : fb;
+};
+const bool = (v) => v !== undefined && v !== 'false';
+const toPx = (v) => {
+if (typeof v === 'number')
+return v;
+const n = parseFloat(v);
+if (!Number.isFinite(n))
+return 0;
+const unit = String(v).trim().replace(/^-?[\d.]+/, '');
+switch (unit) {
+case 'rem':
+case 'em':
+return n * parseFloat(getComputedStyle(html).fontSize);
+case 'vh':
+return (n * window.innerHeight) / 100;
+case 'vw':
+return (n * window.innerWidth) / 100;
+default:
+return n;
+}
+};
+const opts = (el) => {
+const d = el.dataset;
+let scrub = false;
+if (bool(d.animScrub))
+scrub = d.animScrub === '' || d.animScrub === 'true' ? true : num(d.animScrub, true);
+return {
+delay: num(d.animDelay, 0),
+duration: num(d.animDuration, cfg.duration),
+ease: d.animEase || cfg.ease,
+start: d.animStart || cfg.start,
+end: d.animEnd || cfg.end,
+distance: toPx(d.animDistance || cfg.distance),
+stagger: num(d.animStagger, cfg.stagger),
+hasStagger: d.animStagger !== undefined,
+repeat: bool(d.animRepeat),
+scrub,
+};
+};
+const st = (el, o, extra) => Object.assign(o.scrub
+? { trigger: el, start: o.start, end: o.end, scrub: o.scrub }
+: {
+trigger: el,
+start: o.start,
+toggleActions: o.repeat ? 'play none none reverse' : 'play none none none',
+once: !o.repeat,
+}, extra || {});
+const items = (el) => {
+const marked = el.querySelectorAll('[data-anim-item]');
+return marked.length ? Array.from(marked) : Array.from(el.children);
+};
+const show = (el) => {
+gsap.set(el, { visibility: 'visible' });
+const it = el.querySelectorAll('[data-anim-item]');
+if (it.length)
+gsap.set(it, { visibility: 'visible' });
+};
+const need = (name, el) => {
+if (window[name])
+return true;
+warn(`${name} fehlt – "${el.dataset.anim}" wird ohne Animation angezeigt.`, el);
+show(el);
+return false;
+};
+const REVEALS = [
+'fade-in', 'fade-up', 'fade-down', 'fade-left', 'fade-right',
+'scale-in', 'blur-in',
+'clip-up', 'clip-down', 'clip-left', 'clip-right',
+];
+const fromState = (type, el, o) => {
+const d = o.distance;
+const ds = el.dataset;
+switch (type) {
+case 'fade-in': return { autoAlpha: 0 };
+case 'fade-up': return { autoAlpha: 0, y: d };
+case 'fade-down': return { autoAlpha: 0, y: -d };
+case 'fade-left': return { autoAlpha: 0, x: d };
+case 'fade-right': return { autoAlpha: 0, x: -d };
+case 'scale-in': return { autoAlpha: 0, scale: num(ds.animScale, cfg.scale) };
+case 'blur-in': return { autoAlpha: 0, filter: `blur(${num(ds.animBlur, cfg.blur)}px)` };
+case 'clip-up': return { autoAlpha: 1, clipPath: 'inset(100% 0% 0% 0%)' };
+case 'clip-down': return { autoAlpha: 1, clipPath: 'inset(0% 0% 100% 0%)' };
+case 'clip-left': return { autoAlpha: 1, clipPath: 'inset(0% 0% 0% 100%)' };
+case 'clip-right': return { autoAlpha: 1, clipPath: 'inset(0% 100% 0% 0%)' };
+default: return { autoAlpha: 0, y: d };
+}
+};
+const TO = { autoAlpha: 1, x: 0, y: 0, scale: 1, filter: 'blur(0px)', clipPath: 'inset(0% 0% 0% 0%)' };
+const toState = (from) => {
+const t = { autoAlpha: 1 };
+Object.keys(from).forEach((k) => (t[k] = TO[k]));
+return t;
+};
+const tweenVars = (from, o, extra) => Object.assign(toState(from), {
+duration: o.duration,
+delay: o.scrub ? 0 : o.delay,
+ease: o.ease,
+}, extra);
+const A = {};
+REVEALS.forEach((type) => {
+A[type] = (el, o) => {
+const from = fromState(type, el, o);
+const clearFilter = type === 'blur-in' && !o.repeat && !o.scrub;
+gsap.fromTo(el, from, tweenVars(from, o, {
+scrollTrigger: st(el, o),
+onComplete: clearFilter ? () => gsap.set(el, { clearProps: 'filter' }) : undefined,
+}));
+};
+});
+const staggerAnim = (el, o, staggerVal) => {
+const type = el.dataset.animStaggerType || 'fade-up';
+const list = items(el);
+if (!list.length)
+return show(el);
+const from = fromState(REVEALS.includes(type) ? type : 'fade-up', el, o);
+gsap.set(el, { visibility: 'visible' });
+gsap.fromTo(list, from, tweenVars(from, o, { stagger: staggerVal, scrollTrigger: st(el, o) }));
+};
+A['stagger'] = (el, o) => staggerAnim(el, o, o.stagger);
+A['grid-stagger'] = (el, o) => {
+const f = el.dataset.animFrom || 'center';
+staggerAnim(el, o, { each: o.stagger, grid: 'auto', from: Number.isFinite(+f) ? +f : f });
+};
+const splitAnim = (el, o, type, mask, from, to, defStagger) => {
+if (!need('SplitText', el))
+return;
+SplitText.create(el, {
+type,
+mask,
+autoSplit: true,
+onSplit: (self) => {
+const targets = type.includes('chars') ? self.chars : type.includes('words') ? self.words : self.lines;
+return gsap.fromTo(targets, from, Object.assign({}, to, {
+duration: o.duration,
+delay: o.scrub ? 0 : o.delay,
+ease: o.ease,
+stagger: o.hasStagger ? o.stagger : defStagger,
+scrollTrigger: st(el, o),
+}));
+},
+});
+gsap.set(el, { visibility: 'visible' });
+};
+A['split-lines'] = (el, o) => splitAnim(el, o, 'lines', 'lines', { yPercent: 110 }, { yPercent: 0 }, 0.1);
+A['split-words'] = (el, o) => splitAnim(el, o, 'words', 'words', { yPercent: 110 }, { yPercent: 0 }, 0.05);
+A['split-chars'] = (el, o) => splitAnim(el, o, 'words,chars', null, { autoAlpha: 0, yPercent: 60 }, { autoAlpha: 1, yPercent: 0 }, 0.025);
+A['scramble'] = (el, o) => {
+if (!need('ScrambleTextPlugin', el))
+return;
+const text = el.textContent;
+const placeholder = text.replace(/\S/g, '·');
+el.setAttribute('aria-label', text.trim());
+const tl = gsap.timeline({ delay: o.scrub ? 0 : o.delay, scrollTrigger: st(el, o) });
+tl.call(() => (el.textContent = placeholder), null, 0)
+.fromTo(el, { autoAlpha: 0 }, { autoAlpha: 1, duration: 0.2 }, 0)
+.to(el, {
+duration: Math.max(o.duration * 1.6, 1),
+ease: 'none',
+scrambleText: {
+text,
+chars: el.dataset.animChars || 'upperCase',
+revealDelay: 0.2,
+speed: 0.6,
+},
+}, 0);
+return () => {
+el.textContent = text;
+el.removeAttribute('aria-label');
+};
+};
+A['highlight'] = (el, o) => {
+const ds = el.dataset;
+const color = ds.animColor || 'var(--anim-highlight, rgba(255, 214, 0, 0.55))';
+const h = ds.animStyle === 'underline' ? ds.animThickness || '0.12em' : '100%';
+gsap.set(el, {
+backgroundImage: `linear-gradient(${color}, ${color})`,
+backgroundRepeat: 'no-repeat',
+backgroundPosition: '0% 100%',
+backgroundSize: `0% ${h}`,
+boxDecorationBreak: 'clone',
+WebkitBoxDecorationBreak: 'clone',
+});
+gsap.to(el, {
+backgroundSize: `100% ${h}`,
+duration: o.duration * 1.2,
+delay: o.scrub ? 0 : o.delay + 0.15,
+ease: o.ease,
+scrollTrigger: st(el, o),
+});
+};
+A['parallax'] = (el) => {
+const ds = el.dataset;
+const img = el.querySelector('img') || el.firstElementChild;
+if (!img)
+return;
+gsap.set(el, { overflow: 'hidden' });
+if (ds.animAmount !== undefined) {
+gsap.set(img, { height: `${100 + num(ds.animAmount, 10)}%`, objectFit: 'cover' });
+}
+const over = () => Math.max(0, img.offsetHeight - el.offsetHeight);
+const up = ds.animDirection === 'up';
+gsap.fromTo(img, { y: () => (up ? 0 : -over()) }, {
+y: () => (up ? -over() : 0),
+ease: 'none',
+scrollTrigger: {
+trigger: el,
+start: 'top bottom',
+end: 'bottom top',
+scrub: true,
+invalidateOnRefresh: true,
+},
+});
+};
+A['parallax-element'] = (el) => {
+const speed = num(el.dataset.animSpeed, 0.2);
+const range = () => speed * window.innerHeight * 0.5;
+gsap.fromTo(el, { y: () => -range() }, {
+y: () => range(),
+ease: 'none',
+scrollTrigger: { trigger: el, start: 'top bottom', end: 'bottom top', scrub: true, invalidateOnRefresh: true },
+});
+};
+A['image-zoom'] = (el) => {
+const ds = el.dataset;
+const img = el.querySelector('img') || el.firstElementChild;
+if (!img)
+return;
+gsap.set(el, { overflow: 'hidden' });
+gsap.fromTo(img, { scale: num(ds.animScale, 1.2) }, {
+scale: 1,
+ease: 'none',
+scrollTrigger: { trigger: el, start: ds.animStart || 'top bottom', end: ds.animEnd || 'bottom top', scrub: true },
+});
+};
+A['text-fill'] = (el) => {
+if (!need('SplitText', el))
+return;
+const ds = el.dataset;
+const op = num(ds.animOpacity, 0.15);
+SplitText.create(el, {
+type: 'words',
+autoSplit: true,
+onSplit: (self) => gsap.fromTo(self.words, { opacity: op }, {
+opacity: 1,
+ease: 'none',
+stagger: 0.1,
+scrollTrigger: { trigger: el, start: ds.animStart || 'top 80%', end: ds.animEnd || 'bottom 50%', scrub: true },
+}),
+});
+gsap.set(el, { visibility: 'visible' });
+};
+A['progress-bar'] = (el) => {
+const sel = el.dataset.animTrigger;
+const target = sel ? document.querySelector(sel) : null;
+gsap.fromTo(el, { scaleX: 0, transformOrigin: 'left center', visibility: 'visible' }, {
+scaleX: 1,
+ease: 'none',
+scrollTrigger: target
+? { trigger: target, start: 'top top', end: 'bottom bottom', scrub: 0.3 }
+: { start: 0, end: 'max', scrub: 0.3 },
+});
+};
+A['pin'] = (el, o) => {
+const ds = el.dataset;
+const list = Array.from(el.querySelectorAll('[data-anim-item]'));
+const length = num(ds.animLength, list.length ? list.length * 60 : 100);
+const tl = gsap.timeline({
+scrollTrigger: {
+trigger: el,
+start: ds.animStart || 'top top',
+end: () => '+=' + (window.innerHeight * length) / 100,
+pin: true,
+scrub: true,
+invalidateOnRefresh: true,
+},
+});
+if (list.length) {
+const type = ds.animItemType || 'fade-up';
+const from = fromState(REVEALS.includes(type) ? type : 'fade-up', el, o);
+list.forEach((item, i) => tl.fromTo(item, from, Object.assign(toState(from), { duration: 1, ease: 'power2.out' }), i));
+tl.to({}, { duration: 0.5 });
+}
+};
+A['horizontal'] = (el) => {
+const track = el.querySelector('[data-anim-track]') || el.firstElementChild;
+if (!track)
+return;
+gsap.set(el, { overflow: 'hidden' });
+const dist = () => Math.max(0, track.scrollWidth - el.clientWidth);
+gsap.to(track, {
+x: () => -dist(),
+ease: 'none',
+scrollTrigger: {
+trigger: el,
+start: el.dataset.animStart || 'top top',
+end: () => '+=' + dist(),
+pin: true,
+scrub: true,
+invalidateOnRefresh: true,
+},
+});
+};
+A['counter'] = (el, o) => {
+const ds = el.dataset;
+const raw = el.textContent;
+const m = raw.match(/\d[\d.,\s]*\d|\d/);
+if (!m && ds.animTo === undefined)
+return show(el);
+const dec = num(ds.animDecimals, 0);
+const prefix = m ? raw.slice(0, m.index) : '';
+const suffix = m ? raw.slice(m.index + m[0].length) : '';
+let target;
+if (ds.animTo !== undefined) {
+target = num(ds.animTo, 0);
+}
+else {
+const s = m[0].replace(/\s/g, '');
+if (dec > 0) {
+const i = Math.max(s.lastIndexOf(','), s.lastIndexOf('.'));
+target = i < 0 ? parseFloat(s) : parseFloat(s.slice(0, i).replace(/[.,]/g, '') + '.' + s.slice(i + 1));
+}
+else {
+target = parseInt(s.replace(/[.,]/g, ''), 10);
+}
+}
+const fmt = new Intl.NumberFormat(ds.animLocale || cfg.locale, {
+minimumFractionDigits: dec,
+maximumFractionDigits: dec,
+useGrouping: ds.animGrouping !== 'false',
+});
+const state = { v: num(ds.animFrom, 0) };
+const render = () => (el.textContent = prefix + fmt.format(state.v) + suffix);
+el.setAttribute('aria-label', raw.trim());
+render();
+gsap.set(el, { visibility: 'visible', fontVariantNumeric: 'tabular-nums' });
+gsap.to(state, {
+v: target,
+duration: num(ds.animDuration, 2),
+delay: o.delay,
+ease: ds.animEase || 'power2.out',
+onUpdate: render,
+scrollTrigger: st(el, Object.assign({}, o, { scrub: false })),
+});
+return () => {
+el.textContent = raw;
+el.removeAttribute('aria-label');
+};
+};
+A['marquee'] = (el, o, ctx) => {
+const ds = el.dataset;
+const track = el.querySelector('[data-anim-track]') || el.firstElementChild;
+if (!track)
+return;
+const saved = { el: el.getAttribute('style'), track: track.getAttribute('style') };
+const clones = [];
+const listeners = [];
+let tw = null;
+let onLoad = null;
+const build = () => {
+el.style.display = 'flex';
+el.style.overflow = 'hidden';
+track.style.flexShrink = '0';
+const cs = getComputedStyle(track);
+const gap = parseFloat(cs.columnGap) || 0;
+if (gap)
+track.style.paddingRight = (parseFloat(cs.paddingRight) || 0) + gap + 'px';
+const w = track.offsetWidth;
+if (!w)
+return;
+const count = Math.ceil(Math.max(el.offsetWidth, window.innerWidth) / w) + 1;
+for (let i = 0; i < count; i++) {
+const c = track.cloneNode(true);
+c.setAttribute('aria-hidden', 'true');
+c.removeAttribute('data-anim-track');
+el.appendChild(c);
+clones.push(c);
+}
+const tracks = [track, ...clones];
+const right = ds.animDirection === 'right';
+tw = gsap.fromTo(tracks, { xPercent: right ? -100 : 0 }, { xPercent: right ? 0 : -100, duration: w / num(ds.animSpeed, 60), ease: 'none', repeat: -1 });
+let dir = 1;
+if (bool(ds.animScroll)) {
+tw.totalTime(tw.duration() * 500);
+ScrollTrigger.create({
+trigger: el,
+start: 'top bottom',
+end: 'bottom top',
+onUpdate: (self) => {
+if (self.direction === dir)
+return;
+dir = self.direction;
+gsap.to(tw, { timeScale: dir, duration: 0.4, overwrite: true });
+},
+});
+}
+if (bool(ds.animPause)) {
+const enter = () => gsap.to(tw, { timeScale: 0, duration: 0.4, overwrite: true });
+const leave = () => gsap.to(tw, { timeScale: dir, duration: 0.4, overwrite: true });
+el.addEventListener('mouseenter', enter);
+el.addEventListener('mouseleave', leave);
+listeners.push(['mouseenter', enter], ['mouseleave', leave]);
+}
+};
+if (document.readyState === 'complete')
+build();
+else {
+onLoad = () => ctx.add(build);
+window.addEventListener('load', onLoad, { once: true });
+}
+return () => {
+if (onLoad)
+window.removeEventListener('load', onLoad);
+listeners.forEach(([t, f]) => el.removeEventListener(t, f));
+clones.forEach((c) => c.remove());
+saved.el === null ? el.removeAttribute('style') : el.setAttribute('style', saved.el);
+saved.track === null ? track.removeAttribute('style') : track.setAttribute('style', saved.track);
+};
+};
+A['draw-svg'] = (el, o) => {
+if (!need('DrawSVGPlugin', el))
+return;
+const sel = 'path,line,polyline,polygon,circle,ellipse,rect';
+const shapes = el.matches(sel) ? [el] : Array.from(el.querySelectorAll(sel));
+if (!shapes.length)
+return show(el);
+gsap.set(el, { visibility: 'visible' });
+gsap.fromTo(shapes, { drawSVG: '0%' }, {
+drawSVG: '100%',
+duration: num(el.dataset.animDuration, 1.6),
+delay: o.scrub ? 0 : o.delay,
+ease: el.dataset.animEase || 'power2.inOut',
+stagger: o.hasStagger ? o.stagger : 0.15,
+scrollTrigger: st(el, o),
+});
+};
+const finePointer = () => window.matchMedia('(hover: hover) and (pointer: fine)').matches;
+A['magnetic'] = (el) => {
+if (!finePointer())
+return;
+const s = num(el.dataset.animStrength, 0.3);
+const xTo = gsap.quickTo(el, 'x', { duration: 0.5, ease: 'power3.out' });
+const yTo = gsap.quickTo(el, 'y', { duration: 0.5, ease: 'power3.out' });
+const move = (e) => {
+const r = el.getBoundingClientRect();
+xTo((e.clientX - (r.left + r.width / 2)) * s);
+yTo((e.clientY - (r.top + r.height / 2)) * s);
+};
+const leave = () => {
+xTo(0);
+yTo(0);
+};
+el.addEventListener('pointermove', move);
+el.addEventListener('pointerleave', leave);
+return () => {
+el.removeEventListener('pointermove', move);
+el.removeEventListener('pointerleave', leave);
+};
+};
+A['tilt'] = (el) => {
+if (!finePointer())
+return;
+const max = num(el.dataset.animMax, 8);
+gsap.set(el, { transformPerspective: num(el.dataset.animPerspective, 800) });
+const rx = gsap.quickTo(el, 'rotationX', { duration: 0.5, ease: 'power3.out' });
+const ry = gsap.quickTo(el, 'rotationY', { duration: 0.5, ease: 'power3.out' });
+const move = (e) => {
+const r = el.getBoundingClientRect();
+const px = (e.clientX - r.left) / r.width - 0.5;
+const py = (e.clientY - r.top) / r.height - 0.5;
+ry(px * max * 2);
+rx(-py * max * 2);
+};
+const leave = () => {
+rx(0);
+ry(0);
+};
+el.addEventListener('pointermove', move);
+el.addEventListener('pointerleave', leave);
+return () => {
+el.removeEventListener('pointermove', move);
+el.removeEventListener('pointerleave', leave);
+};
+};
+const RUN_IN_REDUCED = new Set(['progress-bar', 'horizontal']);
+const done = new WeakSet();
+const contexts = [];
+let registered = false;
+function init(scope) {
+scope = scope || document;
+if (!window.gsap || !window.ScrollTrigger) {
+warn('GSAP oder ScrollTrigger nicht gefunden – Animationen deaktiviert.');
+html.classList.remove('js-anim');
+return;
+}
+if (!registered) {
+const plugins = ['ScrollTrigger', 'SplitText', 'ScrambleTextPlugin', 'DrawSVGPlugin']
+.map((n) => window[n])
+.filter(Boolean);
+gsap.registerPlugin(...plugins);
+registered = true;
+}
+const els = Array.from(scope.querySelectorAll('[data-anim]'));
+if (scope !== document && scope.matches && scope.matches('[data-anim]'))
+els.unshift(scope);
+const fresh = els.filter((el) => !done.has(el));
+if (!fresh.length)
+return;
+fresh.forEach((el) => done.add(el));
+const mm = gsap.matchMedia();
+mm.add({
+always: 'all',
+mobile: `(max-width: ${cfg.mobileBreakpoint - 1}px)`,
+reduce: '(prefers-reduced-motion: reduce)',
+}, (ctx) => {
+const { mobile, reduce } = ctx.conditions;
+const cleanups = [];
+fresh.forEach((el) => {
+const type = el.dataset.anim;
+const fn = A[type];
+if (!fn) {
+warn(`Unbekannte Animation "${type}"`, el);
+show(el);
+return;
+}
+const off = (mobile && el.dataset.animMobile === 'false') || (reduce && !RUN_IN_REDUCED.has(type));
+if (off) {
+show(el);
+return;
+}
+try {
+const c = fn(el, opts(el), ctx);
+if (typeof c === 'function')
+cleanups.push(c);
+}
+catch (err) {
+warn(`Fehler bei "${type}"`, err, el);
+show(el);
+}
+});
+return () => cleanups.forEach((c) => c());
+});
+contexts.push({ mm, els: fresh });
+html.classList.add('anim-ready');
+}
+function destroy() {
+contexts.forEach((c) => {
+c.mm.revert();
+c.els.forEach((el) => done.delete(el));
+});
+contexts.length = 0;
+}
+function refresh() {
+if (window.ScrollTrigger)
+ScrollTrigger.refresh();
+}
+function register(name, fn) {
+A[name] = fn;
+}
+window.WFAnim = { init, destroy, refresh, register, config: cfg, animations: A, version: '1.0.0' };
+const start = () => {
+if (!cfg.autoInit)
+return;
+init();
+if (document.fonts && document.fonts.ready)
+document.fonts.ready.then(refresh);
+};
+if (document.readyState === 'loading')
+document.addEventListener('DOMContentLoaded', start);
+else
+start();
+})();
+</script>
