@@ -18,7 +18,7 @@ Die Library ist komplett in den Footer Code eingebettet. Ein Webflow-Projekt hä
 Statt des langen Footer Codes reicht diese eine Zeile (Head Code und GSAP-Integration bleiben gleich):
 
 ```html
-<script src="https://cdn.jsdelivr.net/gh/rakete13/wf-anim@1.1.0/src/wf-anim.min.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/rakete13/wf-anim@1.2.0/src/wf-anim.min.js"></script>
 ```
 
 Bequem für eigene und betreute Projekte. Die Seite hängt dann aber an diesem Repo und an jsDelivr, und die IP-Adresse der Besucher geht an jsDelivr (in der Datenschutzerklärung erwähnen). Bei Übergabe an einen Kunden besser auf den eingebetteten Footer Code wechseln.
@@ -44,9 +44,35 @@ Soll ein Element im Startbildschirm trotzdem animieren (z. B. die Hero-Headline)
 | Gruppen | `stagger` `grid-stagger` |
 | Text | `split-lines` `split-words` `split-chars` `scramble` `highlight` |
 | Scroll | `parallax` `parallax-element` `image-zoom` `text-fill` `progress-bar` `pin` `horizontal` |
-| Funktional | `counter` `marquee` `draw-svg` `magnetic` `tilt` |
+| Funktional | `counter` `marquee` `draw-svg` |
 
 Globale Modifier: `data-anim-intro`, `data-anim-delay`, `data-anim-duration`, `data-anim-ease`, `data-anim-start`, `data-anim-end`, `data-anim-distance`, `data-anim-stagger`, `data-anim-repeat`, `data-anim-scrub`, `data-anim-mobile="false"`. Details und alle Optionen je Animation stehen in der Doku.
+
+## Hover-Effekte
+
+Eigenes Attribut `data-hover` an die Card oder den Button, mehrere Effekte mit Leerzeichen trennen:
+
+```
+card-item        ← data-hover = img-zoom lift arrow
+  ├── img-wrapper
+  │     └── img    ← wird skaliert (automatisch)
+  └── card-body
+        └── icon   ← data-hover-target = arrow
+```
+
+| Bereich | Werte für `data-hover` |
+|---|---|
+| Bilder | `img-zoom` `img-zoom-out` `img-darken` |
+| Cards | `lift` `reveal` `tilt` |
+| Links & Buttons | `underline` `arrow` `fill` `text-roll` `magnetic` |
+
+- Das Ziel findet die Library selbst (Bild-Effekte: erstes `img`, sonst das Element selbst). Ein anderes Ziel markierst du mit `data-hover-target`, bei mehreren Effekten mit dem Namen als Wert (`data-hover-target="arrow"`). `reveal` braucht immer ein markiertes Ziel.
+- Modifier: `data-hover-scale`, `data-hover-brightness`, `data-hover-distance`, `data-hover-shadow`, `data-hover-color`, `data-hover-text-color`, `data-hover-direction`, `data-hover-thickness`, `data-hover-strength`, `data-hover-max`, `data-hover-duration`, `data-hover-ease`. Sie können an der Card oder am Ziel stehen.
+- Läuft mit Maus/Trackpad und bei Tastatur-Fokus. Auf Touch-Geräten aus. Bei „Bewegung reduzieren“ bleiben nur Farbeffekte.
+- `data-anim="magnetic"` und `data-anim="tilt"` aus Version 1.0/1.1 funktionieren weiter.
+- Webflow-Dropdowns nutzen selbst `data-hover`, dort keinen Effekt setzen.
+
+Beim Ausdünnen per `build.js` bekommen Hover-Effekte das Präfix `hover:`, z. B. `node build.js fade-up,hover:img-zoom`.
 
 ## Aufbau
 

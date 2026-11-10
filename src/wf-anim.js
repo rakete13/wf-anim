@@ -1,11 +1,11 @@
 /*!
- * WF Anim v1.1.0
+ * WF Anim v1.2.0
  * Attribut-basierte GSAP-Animationen für Webflow
  *
  * Benötigt: gsap + ScrollTrigger
  * Optional: SplitText (split-*, text-fill), ScrambleTextPlugin (scramble), DrawSVGPlugin (draw-svg)
  *
- * Nutzung: data-anim="fade-up" an ein Element hängen. Doku siehe Demo-Seite.
+ * Nutzung: data-anim="fade-up" an ein Element hängen, Hover: data-hover="img-zoom" an die Card.
  * API: WFAnim.init(scope) · WFAnim.destroy() · WFAnim.refresh() · WFAnim.register(name, fn)
  */
 (() => {
@@ -601,57 +601,301 @@
 
   const finePointer = () => window.matchMedia('(hover: hover) and (pointer: fine)').matches;
 
-  /*@block magnetic*/
-  A['magnetic'] = (el) => {
-    if (!finePointer()) return;
-    const s = num(el.dataset.animStrength, 0.3);
-    const xTo = gsap.quickTo(el, 'x', { duration: 0.5, ease: 'power3.out' });
-    const yTo = gsap.quickTo(el, 'y', { duration: 0.5, ease: 'power3.out' });
-    const move = (e) => {
-      const r = el.getBoundingClientRect();
-      xTo((e.clientX - (r.left + r.width / 2)) * s);
-      yTo((e.clientY - (r.top + r.height / 2)) * s);
-    };
-    const leave = () => {
-      xTo(0);
-      yTo(0);
-    };
-    el.addEventListener('pointermove', move);
-    el.addEventListener('pointerleave', leave);
-    return () => {
-      el.removeEventListener('pointermove', move);
-      el.removeEventListener('pointerleave', leave);
-    };
+  /* ------------------------------------------------------------------ */
+  /*  Hover-Effekte: data-hover="img-zoom lift" an die Card              */
+  /*  Signatur: (card, x) → { tl?, move?, leave?, cleanup? }             */
+  /* ------------------------------------------------------------------ */
+  /*@block hover:img-zoom,hover:img-zoom-out,hover:img-darken,hover:lift,hover:reveal,hover:tilt,hover:underline,hover:arrow,hover:fill,hover:text-roll,hover:magnetic,magnetic,tilt*/
+  const H = {};
+  // Diese Effekte laufen auch bei "Bewegung reduzieren" (ohne Bewegung)
+  const HOVER_SAFE = new Set(['img-darken', 'fill', 'underline', 'reveal']);
+
+  // Ziel finden: data-hover-target="effekt" > data-hover-target (ohne Wert) > Standard
+  const hoverTarget = (card, name, fallback) => {
+    const marked = Array.from(card.querySelectorAll('[data-hover-target]'));
+    const exact = marked.find((t) => t.dataset.hoverTarget === name);
+    if (exact) return exact;
+    const generic = marked.find((t) => !t.dataset.hoverTarget || t.dataset.hoverTarget === 'true');
+    if (generic) return generic;
+    if (fallback === 'self') return card;
+    return (fallback && card.querySelector(fallback)) || null;
   };
 
+  const bindHover = (card, names, reduce, legacy) => {
+    // Modifier: erst am Ziel, dann an der Card; alte data-anim-* nur für magnetic/tilt
+    const get = (t, key, fb) => {
+      for (const el of [t, card]) {
+        if (!el) continue;
+        let v = el.dataset['hover' + key];
+        if ((v === undefined || v === '') && legacy) v = el.dataset['anim' + key];
+        if (v !== undefined && v !== '') return v;
+      }
+      return fb;
+    };
+    const x = {
+      reduce,
+      get,
+      dur: (t, fb) => num(get(t, 'Duration'), fb),
+      ease: (t, fb) => get(t, 'Ease', fb || 'power3.out'),
+    };
+    const fx = [];
+    names.forEach((n) => {
+      const f = H[n];
+      if (!f) return warn(`Unbekannter Hover-Effekt "${n}"`, card);
+      if (reduce && !HOVER_SAFE.has(n)) return;
+      try {
+        const r = f(card, x);
+        if (r) fx.push(r);
+      } catch (err) {
+        warn(`Fehler bei Hover "${n}"`, err, card);
+      }
+    });
+    if (!fx.length) return;
+
+    let hover = false;
+    let focus = false;
+    let on = false;
+    const sync = () => {
+      const want = hover || focus;
+      if (want === on) return;
+      on = want;
+      fx.forEach((f) => {
+        if (f.tl) on ? f.tl.play() : f.tl.reverse();
+        if (!on && f.leave) f.leave();
+      });
+    };
+    const enter = (e) => {
+      if (e.pointerType === 'touch') return;
+      hover = true;
+      sync();
+    };
+    const leave = () => {
+      hover = false;
+      sync();
+    };
+    const move = (e) => {
+      if (e.pointerType === 'touch') return;
+      fx.forEach((f) => f.move && f.move(e));
+    };
+    // Tastatur: nur bei sichtbarem Fokus (Tab), nicht beim Antippen
+    const fin = (e) => {
+      let kb = true;
+      try { kb = e.target.matches(':focus-visible'); } catch (_) {}
+      if (kb) {
+        focus = true;
+        sync();
+      }
+    };
+    const fout = (e) => {
+      if (card.contains(e.relatedTarget)) return;
+      focus = false;
+      sync();
+    };
+    const L = [['pointerenter', enter], ['pointerleave', leave], ['pointermove', move], ['focusin', fin], ['focusout', fout]];
+    L.forEach(([t, f]) => card.addEventListener(t, f));
+    return () => {
+      L.forEach(([t, f]) => card.removeEventListener(t, f));
+      fx.forEach((f) => f.cleanup && f.cleanup());
+    };
+  };
   /*@end*/
 
-  /*@block tilt*/
-  A['tilt'] = (el) => {
-    if (!finePointer()) return;
-    const max = num(el.dataset.animMax, 8);
-    gsap.set(el, { transformPerspective: num(el.dataset.animPerspective, 800) });
-    const rx = gsap.quickTo(el, 'rotationX', { duration: 0.5, ease: 'power3.out' });
-    const ry = gsap.quickTo(el, 'rotationY', { duration: 0.5, ease: 'power3.out' });
-    const move = (e) => {
-      const r = el.getBoundingClientRect();
-      const px = (e.clientX - r.left) / r.width - 0.5;
-      const py = (e.clientY - r.top) / r.height - 0.5;
-      ry(px * max * 2);
-      rx(-py * max * 2);
-    };
-    const leave = () => {
-      rx(0);
-      ry(0);
-    };
-    el.addEventListener('pointermove', move);
-    el.addEventListener('pointerleave', leave);
-    return () => {
-      el.removeEventListener('pointermove', move);
-      el.removeEventListener('pointerleave', leave);
+  /*@block hover:img-zoom,hover:img-zoom-out*/
+  const zoomFx = (out) => (card, x) => {
+    const img = hoverTarget(card, out ? 'img-zoom-out' : 'img-zoom', 'img');
+    if (!img) return;
+    if (img.parentElement) gsap.set(img.parentElement, { overflow: 'hidden' });
+    const s = num(x.get(img, 'Scale'), 1.08);
+    return {
+      tl: gsap.fromTo(img, { scale: out ? s : 1 }, {
+        scale: out ? 1 : s, duration: x.dur(img, 0.6), ease: x.ease(img), paused: true,
+      }),
     };
   };
+  H['img-zoom'] = zoomFx(false);
+  H['img-zoom-out'] = zoomFx(true);
+  /*@end*/
 
+  /*@block hover:img-darken*/
+  H['img-darken'] = (card, x) => {
+    const img = hoverTarget(card, 'img-darken', 'img');
+    if (!img) return;
+    const b = num(x.get(img, 'Brightness'), 0.7);
+    return {
+      tl: gsap.fromTo(img, { filter: 'brightness(1)' }, {
+        filter: `brightness(${b})`, duration: x.dur(img, 0.5), ease: x.ease(img), paused: true,
+      }),
+    };
+  };
+  /*@end*/
+
+  /*@block hover:lift*/
+  H['lift'] = (card, x) => {
+    const t = hoverTarget(card, 'lift', 'self');
+    const d = toPx(x.get(t, 'Distance', '6px'));
+    const from = { y: 0 };
+    const to = { y: -d, duration: x.dur(t, 0.45), ease: x.ease(t), paused: true };
+    const sh = x.get(t, 'Shadow', 'rgba(0, 0, 0, 0.35) 0px 20px 40px -18px');
+    if (sh !== 'false' && sh !== 'none') {
+      const cur = getComputedStyle(t).boxShadow;
+      from.boxShadow = cur && cur !== 'none' ? cur : 'rgba(0, 0, 0, 0) 0px 0px 0px 0px';
+      to.boxShadow = sh;
+    }
+    return { tl: gsap.fromTo(t, from, to) };
+  };
+  /*@end*/
+
+  /*@block hover:reveal*/
+  H['reveal'] = (card, x) => {
+    const t = hoverTarget(card, 'reveal', null);
+    if (!t) return warn('reveal: Element mit data-hover-target fehlt', card);
+    const d = x.reduce ? 0 : toPx(x.get(t, 'Distance', '10px'));
+    return {
+      tl: gsap.fromTo(t, { opacity: 0, y: d }, {
+        opacity: 1, y: 0, duration: x.dur(t, 0.4), ease: x.ease(t), paused: true,
+      }),
+    };
+  };
+  /*@end*/
+
+  /*@block hover:tilt,tilt*/
+  H['tilt'] = (card, x) => {
+    const t = hoverTarget(card, 'tilt', 'self');
+    const max = num(x.get(t, 'Max'), 8);
+    gsap.set(t, { transformPerspective: num(x.get(t, 'Perspective'), 800) });
+    const rx = gsap.quickTo(t, 'rotationX', { duration: 0.5, ease: 'power3.out' });
+    const ry = gsap.quickTo(t, 'rotationY', { duration: 0.5, ease: 'power3.out' });
+    return {
+      move: (e) => {
+        const r = card.getBoundingClientRect();
+        ry(((e.clientX - r.left) / r.width - 0.5) * max * 2);
+        rx(-((e.clientY - r.top) / r.height - 0.5) * max * 2);
+      },
+      leave: () => {
+        rx(0);
+        ry(0);
+      },
+    };
+  };
+  /*@end*/
+
+  /*@block hover:magnetic,magnetic*/
+  H['magnetic'] = (card, x) => {
+    const t = hoverTarget(card, 'magnetic', 'self');
+    const s = num(x.get(t, 'Strength'), 0.3);
+    const xTo = gsap.quickTo(t, 'x', { duration: 0.5, ease: 'power3.out' });
+    const yTo = gsap.quickTo(t, 'y', { duration: 0.5, ease: 'power3.out' });
+    return {
+      move: (e) => {
+        const r = card.getBoundingClientRect();
+        xTo((e.clientX - (r.left + r.width / 2)) * s);
+        yTo((e.clientY - (r.top + r.height / 2)) * s);
+      },
+      leave: () => {
+        xTo(0);
+        yTo(0);
+      },
+    };
+  };
+  /*@end*/
+
+  /*@block hover:underline*/
+  H['underline'] = (card, x) => {
+    const t = hoverTarget(card, 'underline', 'self');
+    const th = x.get(t, 'Thickness', '0.08em');
+    const color = x.get(t, 'Color', 'currentColor');
+    gsap.set(t, {
+      backgroundImage: `linear-gradient(${color}, ${color})`,
+      backgroundRepeat: 'no-repeat',
+      backgroundPosition: '0% 100%',
+      backgroundSize: `0% ${th}`,
+    });
+    return {
+      tl: gsap.to(t, {
+        backgroundSize: `100% ${th}`, duration: x.reduce ? 0.01 : x.dur(t, 0.45), ease: x.ease(t), paused: true,
+      }),
+    };
+  };
+  /*@end*/
+
+  /*@block hover:arrow*/
+  H['arrow'] = (card, x) => {
+    const t = hoverTarget(card, 'arrow', 'svg') || card.lastElementChild;
+    if (!t) return;
+    const d = toPx(x.get(t, 'Distance', '6px'));
+    const dirs = { right: { x: d }, left: { x: -d }, up: { y: -d }, down: { y: d }, 'up-right': { x: d, y: -d } };
+    const v = dirs[x.get(t, 'Direction', 'right')] || dirs.right;
+    return { tl: gsap.to(t, Object.assign({ duration: x.dur(t, 0.35), ease: x.ease(t), paused: true }, v)) };
+  };
+  /*@end*/
+
+  /*@block hover:fill*/
+  H['fill'] = (card, x) => {
+    const t = hoverTarget(card, 'fill', 'self');
+    const color = x.get(t, 'Color', 'rgba(0, 0, 0, 0.12)');
+    // CSS-Variablen (z. B. Webflow Variables) für die Farbanimation auflösen
+    const resolve = (c) => {
+      const m = c && /^var\((--[^),\s]+)/.exec(c);
+      return m ? getComputedStyle(t).getPropertyValue(m[1]).trim() || c : c;
+    };
+    const textColor = resolve(x.get(t, 'TextColor', null));
+    const dir = x.get(t, 'Direction', 'left');
+    const cs = getComputedStyle(t);
+    const prev = { position: t.style.position, isolation: t.style.isolation, overflow: t.style.overflow };
+    if (cs.position === 'static') t.style.position = 'relative';
+    t.style.isolation = 'isolate';
+    t.style.overflow = 'hidden';
+    const span = document.createElement('span');
+    span.setAttribute('aria-hidden', 'true');
+    span.setAttribute('style', `position:absolute;inset:0;z-index:-1;pointer-events:none;border-radius:inherit;background:${color}`);
+    t.prepend(span);
+    const axis = dir === 'top' || dir === 'bottom' ? 'scaleY' : 'scaleX';
+    const origin = { left: 'left center', right: 'right center', top: 'center top', bottom: 'center bottom' }[dir] || 'left center';
+    const tl = gsap.timeline({ paused: true, defaults: { duration: x.dur(t, 0.45), ease: x.ease(t) } });
+    if (x.reduce) tl.fromTo(span, { opacity: 0 }, { opacity: 1 });
+    else tl.fromTo(span, { [axis]: 0, transformOrigin: origin }, { [axis]: 1 });
+    if (textColor) tl.fromTo(t, { color: cs.color }, { color: textColor }, 0);
+    return {
+      tl,
+      cleanup: () => {
+        span.remove();
+        Object.assign(t.style, prev);
+      },
+    };
+  };
+  /*@end*/
+
+  /*@block hover:text-roll*/
+  H['text-roll'] = (card, x) => {
+    const t = hoverTarget(card, 'text-roll', 'self');
+    if (!t.textContent.trim()) return;
+    const wrap = document.createElement('span');
+    wrap.setAttribute('style', 'display:inline-block;position:relative;overflow:hidden;vertical-align:top');
+    const a = document.createElement('span');
+    a.style.display = 'block';
+    while (t.firstChild) a.appendChild(t.firstChild);
+    const b = a.cloneNode(true);
+    b.setAttribute('aria-hidden', 'true');
+    b.setAttribute('style', 'display:block;position:absolute;left:0;top:100%;width:100%');
+    b.querySelectorAll('[id]').forEach((n) => n.removeAttribute('id'));
+    wrap.append(a, b);
+    t.append(wrap);
+    return {
+      tl: gsap.to([a, b], { yPercent: -100, duration: x.dur(t, 0.5), ease: x.ease(t, 'power3.inOut'), paused: true }),
+      cleanup: () => {
+        while (a.firstChild) t.insertBefore(a.firstChild, wrap);
+        wrap.remove();
+      },
+    };
+  };
+  /*@end*/
+
+  // Ältere Schreibweise data-anim="magnetic" / "tilt" funktioniert weiter
+  /*@block magnetic*/
+  A['magnetic'] = (el) => (finePointer() ? bindHover(el, ['magnetic'], false, true) : undefined);
+  /*@end*/
+  /*@block tilt*/
+  A['tilt'] = (el) => (finePointer() ? bindHover(el, ['tilt'], false, true) : undefined);
   /*@end*/
 
   /* ------------------------------------------------------------------ */
@@ -693,6 +937,7 @@
   let focusBound = false;
 
   const done = new WeakSet();
+  const doneHover = new WeakSet();
   const contexts = [];
   let registered = false;
 
@@ -715,11 +960,20 @@
       focusBound = true;
     }
 
-    const els = Array.from(scope.querySelectorAll('[data-anim]'));
-    if (scope !== document && scope.matches && scope.matches('[data-anim]')) els.unshift(scope);
-    const fresh = els.filter((el) => !done.has(el));
-    if (!fresh.length) return;
+    const collect = (sel) => {
+      const list = Array.from(scope.querySelectorAll(sel));
+      if (scope !== document && scope.matches && scope.matches(sel)) list.unshift(scope);
+      return list;
+    };
+    const fresh = collect('[data-anim]').filter((el) => !done.has(el));
+    // data-hover="true/false" gehört zu Webflow-Dropdowns – ignorieren
+    const freshHover = collect('[data-hover]').filter((el) => {
+      const v = (el.dataset.hover || '').trim();
+      return !doneHover.has(el) && v && v !== 'true' && v !== 'false' && !el.classList.contains('w-dropdown');
+    });
+    if (!fresh.length && !freshHover.length) return;
     fresh.forEach((el) => done.add(el));
+    freshHover.forEach((el) => doneHover.add(el));
 
     const mm = gsap.matchMedia();
     mm.add(
@@ -727,10 +981,18 @@
         always: 'all',
         mobile: `(max-width: ${cfg.mobileBreakpoint - 1}px)`,
         reduce: '(prefers-reduced-motion: reduce)',
+        canHover: '(hover: hover) and (pointer: fine)',
       },
       (ctx) => {
-        const { mobile, reduce } = ctx.conditions;
+        const { mobile, reduce, canHover } = ctx.conditions;
         const cleanups = [];
+        // Hover-Effekte nur mit Maus/Trackpad; auf Touch bleibt alles wie gestaltet
+        if (canHover && typeof bindHover === 'function') {
+          freshHover.forEach((card) => {
+            const c = bindHover(card, card.dataset.hover.trim().split(/\s+/), reduce, false);
+            if (c) cleanups.push(c);
+          });
+        }
         fresh.forEach((el) => {
           const type = el.dataset.anim;
           const fn = A[type];
@@ -764,7 +1026,7 @@
         return () => cleanups.forEach((c) => c());
       }
     );
-    contexts.push({ mm, els: fresh });
+    contexts.push({ mm, els: fresh, hov: freshHover });
     html.classList.add('anim-ready');
   }
 
@@ -772,6 +1034,7 @@
     contexts.forEach((c) => {
       c.mm.revert();
       c.els.forEach((el) => done.delete(el));
+      c.hov.forEach((el) => doneHover.delete(el));
     });
     contexts.length = 0;
     if (focusBound) {
@@ -788,7 +1051,7 @@
     A[name] = fn;
   }
 
-  window.WFAnim = { init, destroy, refresh, register, config: cfg, animations: A, version: '1.1.0' };
+  window.WFAnim = { init, destroy, refresh, register, config: cfg, animations: A, version: '1.2.0', hover: typeof H === 'object' ? H : {} };
 
   const start = () => {
     if (!cfg.autoInit) return;

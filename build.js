@@ -1,6 +1,6 @@
 // Baut den Webflow-Code (Head + Footer) aus wf-anim.js.
 // Nutzung: node build.js            → alle Animationen (schreibt nach webflow/)
-//          node build.js fade-up,parallax,counter  → nur diese
+//          node build.js fade-up,parallax,hover:img-zoom  → nur diese (Hover-Effekte mit "hover:")
 const fs = require('fs');
 const path = require('path');
 const { execSync } = require('child_process');
@@ -13,7 +13,7 @@ const outDir = process.argv[3] || path.join(__dirname, 'webflow');
 
 // 1 · Nicht genutzte Blöcke entfernen
 const kept = [];
-let code = src.replace(/\/\*@block ([\w,-]+)\*\/([\s\S]*?)\/\*@end\*\//g, (_, names, body) => {
+let code = src.replace(/\/\*@block ([\w,:-]+)\*\/([\s\S]*?)\/\*@end\*\//g, (_, names, body) => {
   const list = names.split(',');
   const keep = !used || list.some((n) => used.has(n));
   if (keep) kept.push(...list.filter((n) => !used || used.has(n)));
@@ -24,8 +24,10 @@ if (used) {
   if (unknown.length) console.warn('Unbekannte Typen ignoriert:', unknown.join(', '));
 }
 
+kept.splice(0, kept.length, ...new Set(kept));
+
 // Lizenzkopf behalten, Rest minimieren
-const header = '/*! WF Anim v1.1.0 · ' + (used ? 'Auswahl: ' + kept.join(', ') : 'Vollversion') + ' */';
+const header = '/*! WF Anim v1.2.0 · ' + (used ? 'Auswahl: ' + kept.join(', ') : 'Vollversion') + ' */';
 code = ts.transpileModule(code, {
   compilerOptions: { target: ts.ScriptTarget.ES2020, removeComments: true },
 }).outputText;

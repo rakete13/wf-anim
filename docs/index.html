@@ -128,6 +128,19 @@ section.cat { display: grid; gap: 28px; scroll-margin-top: 32px; }
 .btn { font-family: var(--font-body); font-weight: 600; font-size: 1rem; border: 0; border-radius: 999px; padding: 16px 28px; background: var(--accent); color: var(--accent-ink); cursor: pointer; }
 .tilt-card { width: 220px; height: 150px; border-radius: 12px; background: var(--surface); border: 1px solid var(--line); display: grid; place-items: center; font-family: var(--font-display); font-weight: 700; font-size: 1.2rem; box-shadow: 0 12px 30px -16px rgba(20, 24, 36, 0.35); }
 
+.hcard { width: 180px; display: grid; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; overflow: hidden; color: var(--ink); text-decoration: none; }
+.hcard.wide { width: min(340px, 100%); }
+.hcard .media { position: relative; aspect-ratio: 4 / 3; overflow: hidden; }
+.hcard .media img { display: block; width: 100%; height: 100%; object-fit: cover; }
+.hcard .body { display: flex; justify-content: space-between; align-items: center; gap: 8px; padding: 12px 14px; font-weight: 600; font-size: 0.92rem; }
+.hcard .body span[data-hover-target="arrow"] { color: var(--accent); }
+.hcard .tag { position: absolute; left: 10px; bottom: 10px; background: var(--ink); color: var(--bg); font-size: 0.75rem; font-weight: 600; padding: 4px 10px; border-radius: 999px; }
+.link-grid { display: flex; flex-wrap: wrap; gap: 20px 28px; align-items: center; justify-content: center; }
+.tlink { color: var(--ink); text-decoration: none; font-weight: 600; font-size: 1.05rem; }
+.tlink span { display: inline-block; color: var(--accent); }
+.btn { display: inline-block; text-decoration: none; }
+.btn-ghost { background: transparent; color: var(--ink); box-shadow: inset 0 0 0 1.5px var(--ink); }
+
 .wide-stage { background: var(--stage); border-radius: 10px; overflow: hidden; }
 .pin-stage { min-height: 100vh; display: grid; align-content: center; gap: 16px; padding: 32px; }
 .pin-stage .step { background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 16px 20px; max-width: 460px; }
@@ -175,13 +188,14 @@ td code { white-space: nowrap; }
     <a href="#text"><span>3</span>Text</a>
     <a href="#scroll"><span>4</span>Scroll-gebunden</a>
     <a href="#funktional"><span>5</span>Funktional</a>
-    <a href="#modifier"><span>6</span>Modifier</a>
-    <a href="#api"><span>7</span>Infrastruktur</a>
+    <a href="#hover"><span>6</span>Hover</a>
+    <a href="#modifier"><span>7</span>Modifier</a>
+    <a href="#api"><span>8</span>Infrastruktur</a>
   </nav>
 
   <main>
     <header class="hero">
-      <div class="eyebrow">WF Anim · v1.1.0 · GSAP 3.13</div>
+      <div class="eyebrow">WF Anim · v1.2.0 · GSAP 3.13</div>
       <h1 data-anim="split-lines" data-anim-intro>Ein Attribut,<br><em>eine Animation.</em></h1>
       <p>Standard-Animationen für jedes Webflow-Projekt. Element auswählen, unter <em>Custom Attributes</em> <span class="attr">data-anim</span> mit einem Wert aus dieser Liste setzen, fertig. Jede Zeile unten zeigt die Animation live; ein Klick auf das Attribut kopiert es. Was beim Laden schon im Bild ist, bleibt ruhig. Die Überschrift hier oben animiert trotzdem, weil sie <span class="attr">data-anim-intro</span> trägt.</p>
       <div class="notice" id="rm-notice" hidden>Dein System hat „Bewegung reduzieren“ aktiviert. Die Library zeigt Inhalte dann bewusst ohne Animation an, genau wie bei deinen Besuchern mit dieser Einstellung.</div>
@@ -215,7 +229,7 @@ setTimeout(function(){if(!window.WFAnim)document.documentElement.classList.remov
         <div>
           <h3>Footer Code</h3>
           <p>Entweder eine Zeile, die die Library aus GitHub lädt. Bequem für eigene und betreute Projekte; die IP-Adresse der Besucher geht dabei an jsDelivr.</p>
-<pre class="code-block" id="code-footer"><code>&lt;script src="https://cdn.jsdelivr.net/gh/rakete13/wf-anim@1.1.0/src/wf-anim.min.js"&gt;&lt;/script&gt;</code></pre>
+<pre class="code-block" id="code-footer"><code>&lt;script src="https://cdn.jsdelivr.net/gh/rakete13/wf-anim@1.2.0/src/wf-anim.min.js"&gt;&lt;/script&gt;</code></pre>
           <button class="copy-block" data-copy-target="code-footer">Footer-Zeile kopieren</button>
           <p>Oder eingebettet: den Inhalt von <code>webflow/footer-code.html</code> aus dem Repo einfügen. Dann hängt das Projekt an keinem fremden Server, ideal bei Übergabe an Kunden.</p>
         </div>
@@ -478,7 +492,7 @@ setTimeout(function(){if(!window.WFAnim)document.documentElement.classList.remov
       <div class="cat-head">
         <div class="num">5</div>
         <h2>Funktionale Effekte</h2>
-        <p>Kleine Bausteine für Zahlen, Logos, SVGs und Hover.</p>
+        <p>Kleine Bausteine für Zahlen, Logos und SVGs.</p>
       </div>
 
       <div class="demo">
@@ -523,25 +537,94 @@ setTimeout(function(){if(!window.WFAnim)document.documentElement.classList.remov
         </div>
       </div>
 
+    </section>
+
+    <!-- 6 HOVER -->
+    <section class="cat" id="hover">
+      <div class="cat-head">
+        <div class="num">6</div>
+        <h2>Hover</h2>
+        <p>Eigenes Attribut <code>data-hover</code> an die Card oder den Button. Der Hover über das ganze Element löst den Effekt aus, das Ziel darin findet die Library selbst. Mehrere Effekte trennst du mit Leerzeichen.</p>
+      </div>
+
       <div class="demo">
         <div class="info">
-          <h3>Magnetic & Tilt</h3>
-          <p>Reagieren auf die Maus. Auf Touchgeräten automatisch aus.</p>
-          <button class="copy" data-copy='data-anim="magnetic"'><code>data-anim="magnetic"</code><span class="hint">kopieren</span></button>
-          <button class="copy" data-copy='data-anim="tilt"'><code>data-anim="tilt"</code><span class="hint">kopieren</span></button>
-          <ul class="opts"><li><code>data-anim-strength="0.5"</code> Magnet-Stärke</li><li><code>data-anim-max="12"</code> maximale Neigung in Grad</li></ul>
+          <h3>So ist es aufgebaut</h3>
+          <p>Bei Bild-Effekten sucht die Library das erste Bild in der Card. Soll ein anderes Element reagieren, bekommt es <code>data-hover-target</code>, bei mehreren Effekten mit dem Namen als Wert, z. B. <code>data-hover-target="arrow"</code>.</p>
+          <button class="copy" data-copy='data-hover="img-zoom lift arrow"'><code>data-hover="img-zoom lift arrow"</code><span class="hint">kopieren</span></button>
+          <ul class="opts"><li>Läuft mit Maus und bei Tastatur-Fokus (Tab)</li><li>Auf Touch-Geräten aus, dort bleibt alles wie gestaltet</li></ul>
         </div>
-        <div class="stage"><div class="row" style="align-items:center; gap:32px">
-          <button class="btn" data-anim="magnetic" type="button">Projekt anfragen</button>
-          <div class="tilt-card" data-anim="tilt">Hover mich</div>
+<pre class="code-block"><code>card-item        ← data-hover = img-zoom lift arrow
+  ├── img-wrapper
+  │     └── img    ← wird skaliert (automatisch)
+  └── card-body
+        ├── title
+        └── icon   ← data-hover-target = arrow</code></pre>
+      </div>
+
+      <div class="demo">
+        <div class="info">
+          <h3>Bilder</h3>
+          <p>Zoom und Abdunkeln des Bildes in der Card. Der direkte Wrapper des Bildes bekommt automatisch <code>overflow: hidden</code>.</p>
+          <button class="copy" data-copy='data-hover="img-zoom"'><code>data-hover="img-zoom"</code><span class="hint">kopieren</span></button>
+          <ul class="opts"><li><code>img-zoom</code> · <code>img-zoom-out</code> · <code>img-darken</code></li><li><code>data-hover-scale="1.12"</code> Zoomstufe (Standard 1.08)</li><li><code>data-hover-brightness="0.6"</code> für img-darken (Standard 0.7)</li></ul>
+        </div>
+        <div class="stage"><div class="row">
+          <a class="hcard" href="#hover" data-hover="img-zoom"><div class="media"><img data-demo-img="1" alt=""></div><div class="body">img-zoom</div></a>
+          <a class="hcard" href="#hover" data-hover="img-zoom-out"><div class="media"><img data-demo-img="2" alt=""></div><div class="body">img-zoom-out</div></a>
+          <a class="hcard" href="#hover" data-hover="img-darken"><div class="media"><img data-demo-img="3" alt=""></div><div class="body">img-darken</div></a>
         </div></div>
+      </div>
+
+      <div class="demo">
+        <div class="info">
+          <h3>Cards</h3>
+          <p><code>lift</code> hebt die Card an. <code>reveal</code> blendet ein Element ein, das du mit <code>data-hover-target</code> markierst. <code>tilt</code> neigt die Card zur Maus.</p>
+          <button class="copy" data-copy='data-hover="lift"'><code>data-hover="lift"</code><span class="hint">kopieren</span></button>
+          <ul class="opts"><li><code>data-hover-distance="10px"</code> Höhe bei lift</li><li><code>data-hover-shadow="false"</code> ohne Schatten</li><li><code>data-hover-max="12"</code> Neigung bei tilt in Grad</li></ul>
+        </div>
+        <div class="stage"><div class="row">
+          <a class="hcard" href="#hover" data-hover="lift"><div class="media"><img data-demo-img="2" alt=""></div><div class="body">lift</div></a>
+          <a class="hcard" href="#hover" data-hover="reveal img-darken"><div class="media"><img data-demo-img="3" alt=""><span class="tag" data-hover-target="reveal">Mehr erfahren</span></div><div class="body">reveal</div></a>
+          <a class="hcard" href="#hover" data-hover="tilt"><div class="media"><img data-demo-img="1" alt=""></div><div class="body">tilt</div></a>
+        </div></div>
+      </div>
+
+      <div class="demo">
+        <div class="info">
+          <h3>Links & Buttons</h3>
+          <p>Für Textlinks, Pfeile und Buttons. Das Attribut sitzt am Link oder Button selbst.</p>
+          <button class="copy" data-copy='data-hover="text-roll"'><code>data-hover="text-roll"</code><span class="hint">kopieren</span></button>
+          <ul class="opts"><li><code>underline</code> · <code>arrow</code> · <code>fill</code> · <code>text-roll</code> · <code>magnetic</code></li><li><code>data-hover-color</code> Farbe für fill/underline, auch Variablen</li><li><code>data-hover-text-color</code> Textfarbe bei fill</li><li><code>data-hover-direction="bottom"</code> fill von unten · arrow: <code>up-right</code></li><li><code>data-hover-strength="0.5"</code> für magnetic</li></ul>
+        </div>
+        <div class="stage"><div class="link-grid">
+          <a class="tlink" href="#hover" data-hover="underline">Unterstreichen</a>
+          <a class="tlink" href="#hover" data-hover="arrow">Zum Projekt <span aria-hidden="true">→</span></a>
+          <a class="btn btn-ghost" href="#hover" data-hover="fill" data-hover-color="var(--ink)" data-hover-text-color="var(--bg)">fill</a>
+          <a class="btn" href="#hover" data-hover="text-roll">text-roll</a>
+          <a class="btn" href="#hover" data-hover="magnetic">magnetic</a>
+        </div></div>
+      </div>
+
+      <div class="demo">
+        <div class="info">
+          <h3>Kombiniert</h3>
+          <p>Eine typische Projekt-Card: Bild zoomt, Card hebt sich, Titel unterstreicht sich und der Pfeil rückt vor. Titel und Pfeil sind mit dem Effektnamen markiert.</p>
+          <button class="copy" data-copy='data-hover="img-zoom lift underline arrow"'><code>data-hover="img-zoom lift underline arrow"</code><span class="hint">kopieren</span></button>
+        </div>
+        <div class="stage">
+          <a class="hcard wide" href="#hover" data-hover="img-zoom lift underline arrow">
+            <div class="media"><img data-demo-img="1" alt=""></div>
+            <div class="body"><span data-hover-target="underline">Projekt Leuchtturm</span><span data-hover-target="arrow" aria-hidden="true">→</span></div>
+          </a>
+        </div>
       </div>
     </section>
 
-    <!-- 6 MODIFIER -->
+    <!-- 7 MODIFIER -->
     <section class="cat" id="modifier">
       <div class="cat-head">
-        <div class="num">6</div>
+        <div class="num">7</div>
         <h2>Globale Modifier</h2>
         <p>Funktionieren bei allen Animationen, die beim Reinscrollen starten. Einfach als zusätzliches Attribut setzen.</p>
       </div>
@@ -566,7 +649,7 @@ setTimeout(function(){if(!window.WFAnim)document.documentElement.classList.remov
     <!-- 7 API -->
     <section class="cat" id="api">
       <div class="cat-head">
-        <div class="num">7</div>
+        <div class="num">8</div>
         <h2>Infrastruktur</h2>
         <p>Was die Library im Hintergrund erledigt, und wie du sie bei Bedarf steuerst.</p>
       </div>
@@ -574,6 +657,7 @@ setTimeout(function(){if(!window.WFAnim)document.documentElement.classList.remov
         <li><strong>Bewegung reduzieren:</strong> Ist die Systemeinstellung aktiv, werden Inhalte ohne Animation angezeigt. Ausnahmen sind Progress Bar und Horizontal Scroll, weil sie für die Bedienung gebraucht werden.</li>
         <li><strong>Barrierefreiheit:</strong> Noch nicht eingeblendete Elemente sind nur durchsichtig, nicht versteckt. Screenreader lesen sie vor, die Browser-Suche findet sie. Bekommt ein Link darin per Tastatur den Fokus, erscheint das Element sofort. Counter und Scramble geben Screenreadern immer den fertigen Text.</li>
         <li><strong>Fehlertoleranz:</strong> Fehlt ein Plugin oder ist ein Wert unbekannt, erscheint eine Warnung in der Konsole und das Element wird normal angezeigt.</li>
+        <li><strong>Hover:</strong> läuft nur mit Maus oder Trackpad und bei Tastatur-Fokus. Bei „Bewegung reduzieren“ bleiben nur Farbeffekte (img-darken, fill, underline, reveal ohne Bewegung). Webflow-Dropdowns nutzen selbst ein <code>data-hover</code>-Attribut, dort bitte keinen Effekt setzen.</li>
         <li><strong>Nicht mischen:</strong> Kein <code>data-anim</code> auf Elementen, die zusätzlich eine native Webflow Interaction haben. Beide setzen <code>transform</code> und überschreiben sich.</li>
         <li><strong>Lazy Loading:</strong> Die Library rechnet nach dem Laden der Schriften neu. Verändert sich das Layout später (Tabs, Akkordeons), rufe <code>WFAnim.refresh()</code> auf.</li>
       </ul>
@@ -619,13 +703,13 @@ WFAnim.register('mein-effekt', (el, opts) =&gt; {
 </script>
 <script>
 /*!
- * WF Anim v1.1.0
+ * WF Anim v1.2.0
  * Attribut-basierte GSAP-Animationen für Webflow
  *
  * Benötigt: gsap + ScrollTrigger
  * Optional: SplitText (split-*, text-fill), ScrambleTextPlugin (scramble), DrawSVGPlugin (draw-svg)
  *
- * Nutzung: data-anim="fade-up" an ein Element hängen. Doku siehe Demo-Seite.
+ * Nutzung: data-anim="fade-up" an ein Element hängen, Hover: data-hover="img-zoom" an die Card.
  * API: WFAnim.init(scope) · WFAnim.destroy() · WFAnim.refresh() · WFAnim.register(name, fn)
  */
 (() => {
@@ -1221,57 +1305,301 @@ WFAnim.register('mein-effekt', (el, opts) =&gt; {
 
   const finePointer = () => window.matchMedia('(hover: hover) and (pointer: fine)').matches;
 
-  /*@block magnetic*/
-  A['magnetic'] = (el) => {
-    if (!finePointer()) return;
-    const s = num(el.dataset.animStrength, 0.3);
-    const xTo = gsap.quickTo(el, 'x', { duration: 0.5, ease: 'power3.out' });
-    const yTo = gsap.quickTo(el, 'y', { duration: 0.5, ease: 'power3.out' });
-    const move = (e) => {
-      const r = el.getBoundingClientRect();
-      xTo((e.clientX - (r.left + r.width / 2)) * s);
-      yTo((e.clientY - (r.top + r.height / 2)) * s);
-    };
-    const leave = () => {
-      xTo(0);
-      yTo(0);
-    };
-    el.addEventListener('pointermove', move);
-    el.addEventListener('pointerleave', leave);
-    return () => {
-      el.removeEventListener('pointermove', move);
-      el.removeEventListener('pointerleave', leave);
-    };
+  /* ------------------------------------------------------------------ */
+  /*  Hover-Effekte: data-hover="img-zoom lift" an die Card              */
+  /*  Signatur: (card, x) → { tl?, move?, leave?, cleanup? }             */
+  /* ------------------------------------------------------------------ */
+  /*@block hover:img-zoom,hover:img-zoom-out,hover:img-darken,hover:lift,hover:reveal,hover:tilt,hover:underline,hover:arrow,hover:fill,hover:text-roll,hover:magnetic,magnetic,tilt*/
+  const H = {};
+  // Diese Effekte laufen auch bei "Bewegung reduzieren" (ohne Bewegung)
+  const HOVER_SAFE = new Set(['img-darken', 'fill', 'underline', 'reveal']);
+
+  // Ziel finden: data-hover-target="effekt" > data-hover-target (ohne Wert) > Standard
+  const hoverTarget = (card, name, fallback) => {
+    const marked = Array.from(card.querySelectorAll('[data-hover-target]'));
+    const exact = marked.find((t) => t.dataset.hoverTarget === name);
+    if (exact) return exact;
+    const generic = marked.find((t) => !t.dataset.hoverTarget || t.dataset.hoverTarget === 'true');
+    if (generic) return generic;
+    if (fallback === 'self') return card;
+    return (fallback && card.querySelector(fallback)) || null;
   };
 
+  const bindHover = (card, names, reduce, legacy) => {
+    // Modifier: erst am Ziel, dann an der Card; alte data-anim-* nur für magnetic/tilt
+    const get = (t, key, fb) => {
+      for (const el of [t, card]) {
+        if (!el) continue;
+        let v = el.dataset['hover' + key];
+        if ((v === undefined || v === '') && legacy) v = el.dataset['anim' + key];
+        if (v !== undefined && v !== '') return v;
+      }
+      return fb;
+    };
+    const x = {
+      reduce,
+      get,
+      dur: (t, fb) => num(get(t, 'Duration'), fb),
+      ease: (t, fb) => get(t, 'Ease', fb || 'power3.out'),
+    };
+    const fx = [];
+    names.forEach((n) => {
+      const f = H[n];
+      if (!f) return warn(`Unbekannter Hover-Effekt "${n}"`, card);
+      if (reduce && !HOVER_SAFE.has(n)) return;
+      try {
+        const r = f(card, x);
+        if (r) fx.push(r);
+      } catch (err) {
+        warn(`Fehler bei Hover "${n}"`, err, card);
+      }
+    });
+    if (!fx.length) return;
+
+    let hover = false;
+    let focus = false;
+    let on = false;
+    const sync = () => {
+      const want = hover || focus;
+      if (want === on) return;
+      on = want;
+      fx.forEach((f) => {
+        if (f.tl) on ? f.tl.play() : f.tl.reverse();
+        if (!on && f.leave) f.leave();
+      });
+    };
+    const enter = (e) => {
+      if (e.pointerType === 'touch') return;
+      hover = true;
+      sync();
+    };
+    const leave = () => {
+      hover = false;
+      sync();
+    };
+    const move = (e) => {
+      if (e.pointerType === 'touch') return;
+      fx.forEach((f) => f.move && f.move(e));
+    };
+    // Tastatur: nur bei sichtbarem Fokus (Tab), nicht beim Antippen
+    const fin = (e) => {
+      let kb = true;
+      try { kb = e.target.matches(':focus-visible'); } catch (_) {}
+      if (kb) {
+        focus = true;
+        sync();
+      }
+    };
+    const fout = (e) => {
+      if (card.contains(e.relatedTarget)) return;
+      focus = false;
+      sync();
+    };
+    const L = [['pointerenter', enter], ['pointerleave', leave], ['pointermove', move], ['focusin', fin], ['focusout', fout]];
+    L.forEach(([t, f]) => card.addEventListener(t, f));
+    return () => {
+      L.forEach(([t, f]) => card.removeEventListener(t, f));
+      fx.forEach((f) => f.cleanup && f.cleanup());
+    };
+  };
   /*@end*/
 
-  /*@block tilt*/
-  A['tilt'] = (el) => {
-    if (!finePointer()) return;
-    const max = num(el.dataset.animMax, 8);
-    gsap.set(el, { transformPerspective: num(el.dataset.animPerspective, 800) });
-    const rx = gsap.quickTo(el, 'rotationX', { duration: 0.5, ease: 'power3.out' });
-    const ry = gsap.quickTo(el, 'rotationY', { duration: 0.5, ease: 'power3.out' });
-    const move = (e) => {
-      const r = el.getBoundingClientRect();
-      const px = (e.clientX - r.left) / r.width - 0.5;
-      const py = (e.clientY - r.top) / r.height - 0.5;
-      ry(px * max * 2);
-      rx(-py * max * 2);
-    };
-    const leave = () => {
-      rx(0);
-      ry(0);
-    };
-    el.addEventListener('pointermove', move);
-    el.addEventListener('pointerleave', leave);
-    return () => {
-      el.removeEventListener('pointermove', move);
-      el.removeEventListener('pointerleave', leave);
+  /*@block hover:img-zoom,hover:img-zoom-out*/
+  const zoomFx = (out) => (card, x) => {
+    const img = hoverTarget(card, out ? 'img-zoom-out' : 'img-zoom', 'img');
+    if (!img) return;
+    if (img.parentElement) gsap.set(img.parentElement, { overflow: 'hidden' });
+    const s = num(x.get(img, 'Scale'), 1.08);
+    return {
+      tl: gsap.fromTo(img, { scale: out ? s : 1 }, {
+        scale: out ? 1 : s, duration: x.dur(img, 0.6), ease: x.ease(img), paused: true,
+      }),
     };
   };
+  H['img-zoom'] = zoomFx(false);
+  H['img-zoom-out'] = zoomFx(true);
+  /*@end*/
 
+  /*@block hover:img-darken*/
+  H['img-darken'] = (card, x) => {
+    const img = hoverTarget(card, 'img-darken', 'img');
+    if (!img) return;
+    const b = num(x.get(img, 'Brightness'), 0.7);
+    return {
+      tl: gsap.fromTo(img, { filter: 'brightness(1)' }, {
+        filter: `brightness(${b})`, duration: x.dur(img, 0.5), ease: x.ease(img), paused: true,
+      }),
+    };
+  };
+  /*@end*/
+
+  /*@block hover:lift*/
+  H['lift'] = (card, x) => {
+    const t = hoverTarget(card, 'lift', 'self');
+    const d = toPx(x.get(t, 'Distance', '6px'));
+    const from = { y: 0 };
+    const to = { y: -d, duration: x.dur(t, 0.45), ease: x.ease(t), paused: true };
+    const sh = x.get(t, 'Shadow', 'rgba(0, 0, 0, 0.35) 0px 20px 40px -18px');
+    if (sh !== 'false' && sh !== 'none') {
+      const cur = getComputedStyle(t).boxShadow;
+      from.boxShadow = cur && cur !== 'none' ? cur : 'rgba(0, 0, 0, 0) 0px 0px 0px 0px';
+      to.boxShadow = sh;
+    }
+    return { tl: gsap.fromTo(t, from, to) };
+  };
+  /*@end*/
+
+  /*@block hover:reveal*/
+  H['reveal'] = (card, x) => {
+    const t = hoverTarget(card, 'reveal', null);
+    if (!t) return warn('reveal: Element mit data-hover-target fehlt', card);
+    const d = x.reduce ? 0 : toPx(x.get(t, 'Distance', '10px'));
+    return {
+      tl: gsap.fromTo(t, { opacity: 0, y: d }, {
+        opacity: 1, y: 0, duration: x.dur(t, 0.4), ease: x.ease(t), paused: true,
+      }),
+    };
+  };
+  /*@end*/
+
+  /*@block hover:tilt,tilt*/
+  H['tilt'] = (card, x) => {
+    const t = hoverTarget(card, 'tilt', 'self');
+    const max = num(x.get(t, 'Max'), 8);
+    gsap.set(t, { transformPerspective: num(x.get(t, 'Perspective'), 800) });
+    const rx = gsap.quickTo(t, 'rotationX', { duration: 0.5, ease: 'power3.out' });
+    const ry = gsap.quickTo(t, 'rotationY', { duration: 0.5, ease: 'power3.out' });
+    return {
+      move: (e) => {
+        const r = card.getBoundingClientRect();
+        ry(((e.clientX - r.left) / r.width - 0.5) * max * 2);
+        rx(-((e.clientY - r.top) / r.height - 0.5) * max * 2);
+      },
+      leave: () => {
+        rx(0);
+        ry(0);
+      },
+    };
+  };
+  /*@end*/
+
+  /*@block hover:magnetic,magnetic*/
+  H['magnetic'] = (card, x) => {
+    const t = hoverTarget(card, 'magnetic', 'self');
+    const s = num(x.get(t, 'Strength'), 0.3);
+    const xTo = gsap.quickTo(t, 'x', { duration: 0.5, ease: 'power3.out' });
+    const yTo = gsap.quickTo(t, 'y', { duration: 0.5, ease: 'power3.out' });
+    return {
+      move: (e) => {
+        const r = card.getBoundingClientRect();
+        xTo((e.clientX - (r.left + r.width / 2)) * s);
+        yTo((e.clientY - (r.top + r.height / 2)) * s);
+      },
+      leave: () => {
+        xTo(0);
+        yTo(0);
+      },
+    };
+  };
+  /*@end*/
+
+  /*@block hover:underline*/
+  H['underline'] = (card, x) => {
+    const t = hoverTarget(card, 'underline', 'self');
+    const th = x.get(t, 'Thickness', '0.08em');
+    const color = x.get(t, 'Color', 'currentColor');
+    gsap.set(t, {
+      backgroundImage: `linear-gradient(${color}, ${color})`,
+      backgroundRepeat: 'no-repeat',
+      backgroundPosition: '0% 100%',
+      backgroundSize: `0% ${th}`,
+    });
+    return {
+      tl: gsap.to(t, {
+        backgroundSize: `100% ${th}`, duration: x.reduce ? 0.01 : x.dur(t, 0.45), ease: x.ease(t), paused: true,
+      }),
+    };
+  };
+  /*@end*/
+
+  /*@block hover:arrow*/
+  H['arrow'] = (card, x) => {
+    const t = hoverTarget(card, 'arrow', 'svg') || card.lastElementChild;
+    if (!t) return;
+    const d = toPx(x.get(t, 'Distance', '6px'));
+    const dirs = { right: { x: d }, left: { x: -d }, up: { y: -d }, down: { y: d }, 'up-right': { x: d, y: -d } };
+    const v = dirs[x.get(t, 'Direction', 'right')] || dirs.right;
+    return { tl: gsap.to(t, Object.assign({ duration: x.dur(t, 0.35), ease: x.ease(t), paused: true }, v)) };
+  };
+  /*@end*/
+
+  /*@block hover:fill*/
+  H['fill'] = (card, x) => {
+    const t = hoverTarget(card, 'fill', 'self');
+    const color = x.get(t, 'Color', 'rgba(0, 0, 0, 0.12)');
+    // CSS-Variablen (z. B. Webflow Variables) für die Farbanimation auflösen
+    const resolve = (c) => {
+      const m = c && /^var\((--[^),\s]+)/.exec(c);
+      return m ? getComputedStyle(t).getPropertyValue(m[1]).trim() || c : c;
+    };
+    const textColor = resolve(x.get(t, 'TextColor', null));
+    const dir = x.get(t, 'Direction', 'left');
+    const cs = getComputedStyle(t);
+    const prev = { position: t.style.position, isolation: t.style.isolation, overflow: t.style.overflow };
+    if (cs.position === 'static') t.style.position = 'relative';
+    t.style.isolation = 'isolate';
+    t.style.overflow = 'hidden';
+    const span = document.createElement('span');
+    span.setAttribute('aria-hidden', 'true');
+    span.setAttribute('style', `position:absolute;inset:0;z-index:-1;pointer-events:none;border-radius:inherit;background:${color}`);
+    t.prepend(span);
+    const axis = dir === 'top' || dir === 'bottom' ? 'scaleY' : 'scaleX';
+    const origin = { left: 'left center', right: 'right center', top: 'center top', bottom: 'center bottom' }[dir] || 'left center';
+    const tl = gsap.timeline({ paused: true, defaults: { duration: x.dur(t, 0.45), ease: x.ease(t) } });
+    if (x.reduce) tl.fromTo(span, { opacity: 0 }, { opacity: 1 });
+    else tl.fromTo(span, { [axis]: 0, transformOrigin: origin }, { [axis]: 1 });
+    if (textColor) tl.fromTo(t, { color: cs.color }, { color: textColor }, 0);
+    return {
+      tl,
+      cleanup: () => {
+        span.remove();
+        Object.assign(t.style, prev);
+      },
+    };
+  };
+  /*@end*/
+
+  /*@block hover:text-roll*/
+  H['text-roll'] = (card, x) => {
+    const t = hoverTarget(card, 'text-roll', 'self');
+    if (!t.textContent.trim()) return;
+    const wrap = document.createElement('span');
+    wrap.setAttribute('style', 'display:inline-block;position:relative;overflow:hidden;vertical-align:top');
+    const a = document.createElement('span');
+    a.style.display = 'block';
+    while (t.firstChild) a.appendChild(t.firstChild);
+    const b = a.cloneNode(true);
+    b.setAttribute('aria-hidden', 'true');
+    b.setAttribute('style', 'display:block;position:absolute;left:0;top:100%;width:100%');
+    b.querySelectorAll('[id]').forEach((n) => n.removeAttribute('id'));
+    wrap.append(a, b);
+    t.append(wrap);
+    return {
+      tl: gsap.to([a, b], { yPercent: -100, duration: x.dur(t, 0.5), ease: x.ease(t, 'power3.inOut'), paused: true }),
+      cleanup: () => {
+        while (a.firstChild) t.insertBefore(a.firstChild, wrap);
+        wrap.remove();
+      },
+    };
+  };
+  /*@end*/
+
+  // Ältere Schreibweise data-anim="magnetic" / "tilt" funktioniert weiter
+  /*@block magnetic*/
+  A['magnetic'] = (el) => (finePointer() ? bindHover(el, ['magnetic'], false, true) : undefined);
+  /*@end*/
+  /*@block tilt*/
+  A['tilt'] = (el) => (finePointer() ? bindHover(el, ['tilt'], false, true) : undefined);
   /*@end*/
 
   /* ------------------------------------------------------------------ */
@@ -1313,6 +1641,7 @@ WFAnim.register('mein-effekt', (el, opts) =&gt; {
   let focusBound = false;
 
   const done = new WeakSet();
+  const doneHover = new WeakSet();
   const contexts = [];
   let registered = false;
 
@@ -1335,11 +1664,20 @@ WFAnim.register('mein-effekt', (el, opts) =&gt; {
       focusBound = true;
     }
 
-    const els = Array.from(scope.querySelectorAll('[data-anim]'));
-    if (scope !== document && scope.matches && scope.matches('[data-anim]')) els.unshift(scope);
-    const fresh = els.filter((el) => !done.has(el));
-    if (!fresh.length) return;
+    const collect = (sel) => {
+      const list = Array.from(scope.querySelectorAll(sel));
+      if (scope !== document && scope.matches && scope.matches(sel)) list.unshift(scope);
+      return list;
+    };
+    const fresh = collect('[data-anim]').filter((el) => !done.has(el));
+    // data-hover="true/false" gehört zu Webflow-Dropdowns – ignorieren
+    const freshHover = collect('[data-hover]').filter((el) => {
+      const v = (el.dataset.hover || '').trim();
+      return !doneHover.has(el) && v && v !== 'true' && v !== 'false' && !el.classList.contains('w-dropdown');
+    });
+    if (!fresh.length && !freshHover.length) return;
     fresh.forEach((el) => done.add(el));
+    freshHover.forEach((el) => doneHover.add(el));
 
     const mm = gsap.matchMedia();
     mm.add(
@@ -1347,10 +1685,18 @@ WFAnim.register('mein-effekt', (el, opts) =&gt; {
         always: 'all',
         mobile: `(max-width: ${cfg.mobileBreakpoint - 1}px)`,
         reduce: '(prefers-reduced-motion: reduce)',
+        canHover: '(hover: hover) and (pointer: fine)',
       },
       (ctx) => {
-        const { mobile, reduce } = ctx.conditions;
+        const { mobile, reduce, canHover } = ctx.conditions;
         const cleanups = [];
+        // Hover-Effekte nur mit Maus/Trackpad; auf Touch bleibt alles wie gestaltet
+        if (canHover && typeof bindHover === 'function') {
+          freshHover.forEach((card) => {
+            const c = bindHover(card, card.dataset.hover.trim().split(/\s+/), reduce, false);
+            if (c) cleanups.push(c);
+          });
+        }
         fresh.forEach((el) => {
           const type = el.dataset.anim;
           const fn = A[type];
@@ -1384,7 +1730,7 @@ WFAnim.register('mein-effekt', (el, opts) =&gt; {
         return () => cleanups.forEach((c) => c());
       }
     );
-    contexts.push({ mm, els: fresh });
+    contexts.push({ mm, els: fresh, hov: freshHover });
     html.classList.add('anim-ready');
   }
 
@@ -1392,6 +1738,7 @@ WFAnim.register('mein-effekt', (el, opts) =&gt; {
     contexts.forEach((c) => {
       c.mm.revert();
       c.els.forEach((el) => done.delete(el));
+      c.hov.forEach((el) => doneHover.delete(el));
     });
     contexts.length = 0;
     if (focusBound) {
@@ -1408,7 +1755,7 @@ WFAnim.register('mein-effekt', (el, opts) =&gt; {
     A[name] = fn;
   }
 
-  window.WFAnim = { init, destroy, refresh, register, config: cfg, animations: A, version: '1.1.0' };
+  window.WFAnim = { init, destroy, refresh, register, config: cfg, animations: A, version: '1.2.0', hover: typeof H === 'object' ? H : {} };
 
   const start = () => {
     if (!cfg.autoInit) return;
