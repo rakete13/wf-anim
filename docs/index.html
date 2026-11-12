@@ -978,7 +978,7 @@ setTimeout(function(){if(!window.WFAnim)document.documentElement.classList.remov
         <li><strong>Fehlertoleranz:</strong> Fehlt ein Plugin oder ist ein Wert unbekannt, erscheint eine Warnung in der Konsole und das Element wird normal angezeigt.</li>
         <li><strong>Hover:</strong> läuft nur mit Maus oder Trackpad und bei Tastatur-Fokus. Bei „Bewegung reduzieren“ bleiben nur Farbeffekte (img-darken, fill, underline, reveal ohne Bewegung). Webflow-Dropdowns nutzen selbst ein <code>data-hover</code>-Attribut, dort bitte keinen Effekt setzen.</li>
         <li><strong>Nicht mischen:</strong> Kein <code>data-anim</code> auf Elementen, die zusätzlich eine native Webflow Interaction haben. Beide setzen <code>transform</code> und überschreiben sich.</li>
-        <li><strong>Debug-Modus:</strong> Zeigt farbige Start- und Endmarken jeder Scroll-Animation, eine Übersicht in der Konsole und typische Einrichtungsfehler (z. B. Bild beim Parallax nicht höher als der Wrapper, Section mit eigenem Hintergrund bei bg-color, zusätzliche Webflow Interaction am selben Element). Einschalten mit <code>?wfanim-debug</code> am Ende der Seitenadresse, mit <code>data-anim-debug</code> am body (alle) oder an einem einzelnen Element (nur dieses). Vor dem Livegang wieder entfernen. <button class="smooth-toggle debug-toggle" type="button" aria-pressed="false" id="debug-toggle">Debug hier einschalten</button></li>
+        <li><strong>Debug-Modus:</strong> Zeigt farbige Start- und Endmarken jeder Scroll-Animation, eine Übersicht in der Konsole und typische Einrichtungsfehler (z. B. Bild beim Parallax nicht höher als der Wrapper, Section mit eigenem Hintergrund bei bg-color, zusätzliche Webflow Interaction am selben Element). Einschalten mit <code>?wfanim-debug</code> am Ende der Seitenadresse, mit <code>data-anim-debug</code> am body (alle) oder an einem einzelnen Element (nur dieses). Vor dem Livegang wieder entfernen. Auf dieser Seite meldet er Image Expand und Shrink, weil die Demos in der Textspalte liegen statt in voller Breite – genau dafür ist die Prüfung da. <button class="smooth-toggle debug-toggle" type="button" aria-pressed="false" id="debug-toggle">Debug hier einschalten</button></li>
         <li><strong>Lazy Loading:</strong> Die Library rechnet nach dem Laden der Schriften und nach dem Auf- und Zuklappen eines Akkordeons neu. Verändert sich das Layout anders (Tabs, eigene Skripte), rufe <code>WFAnim.refresh()</code> auf.</li>
       </ul>
 <pre class="code-block"><code>WFAnim.init(element)   // neue Elemente animieren, z. B. nach CMS Load More
@@ -2277,9 +2277,8 @@ WFAnim.register('mein-effekt', (el, opts) =&gt; {
       return cs.display !== 'none' && cs.visibility !== 'hidden' && el.getClientRects().length > 0;
     };
     let open = visible();
-    let raf = 0;
+    // Direkt im Mutation-Callback prüfen (vor dem nächsten Zeichnen) – so blitzen die Links nie kurz auf
     const check = () => {
-      raf = 0;
       const now = visible();
       if (now === open) return;
       open = now;
@@ -2293,17 +2292,12 @@ WFAnim.register('mein-effekt', (el, opts) =&gt; {
         }));
       }
     };
-    const mo = new MutationObserver(() => {
-      if (!raf) raf = requestAnimationFrame(check);
-    });
+    const mo = new MutationObserver(check);
     // Menü selbst und drei Ebenen darüber beobachten (Webflow, Interactions, eigene Skripte)
     for (let n = el, i = 0; n && n !== document.body && i < 4; n = n.parentElement, i++) {
       mo.observe(n, { attributes: true, attributeFilter: ['style', 'class', 'hidden', 'data-nav-menu-open'] });
     }
-    return () => {
-      mo.disconnect();
-      if (raf) cancelAnimationFrame(raf);
-    };
+    return () => mo.disconnect();
   };
   /*@end*/
 
@@ -2778,18 +2772,21 @@ WFAnim.register('mein-effekt', (el, opts) =&gt; {
   CHECKS['image-shrink'] = CHECKS['image-expand'];
   const debugReport = [];
   let debugBadge = null;
-  const debugRun = (type, el, fn) => {
+  const debugInspect = (type, el, note) => {
     const issues = [];
     if (el.hasAttribute('data-w-id')) issues.push('Element hat zusätzlich eine Webflow Interaction – beide setzen transform und können sich stören.');
     const chk = CHECKS[type] && CHECKS[type](el);
     if (chk) issues.push(chk);
+    debugReport.push({ Animation: type + (note ? ` (${note})` : ''), Element: el, Hinweise: issues.join(' ') || '–' });
+    issues.forEach((t) => warn(`[Debug] ${type}: ${t}`, el));
+  };
+  const debugRun = (type, el, fn) => {
     ScrollTrigger.defaults({ markers: true, id: type });
     try {
       return fn();
     } finally {
       ScrollTrigger.defaults({ markers: false, id: undefined });
-      debugReport.push({ Animation: type, Element: el, Hinweise: issues.join(' ') || '–' });
-      issues.forEach((t) => warn(`[Debug] ${type}: ${t}`, el));
+      debugInspect(type, el);
     }
   };
   const showDebugBadge = () => {
@@ -2947,6 +2944,7 @@ WFAnim.register('mein-effekt', (el, opts) =&gt; {
           // Startbildschirm: ruhig lassen, wie in Webflow gestaltet
           const still = cfg.staticOnLoad && ENTRY.has(type) && !isIntro(el) && onScreen(el);
           if (still && type !== 'highlight') {
+            if (dbg) debugInspect(type, el, 'Startbildschirm, ruht');
             show(el);
             return;
           }

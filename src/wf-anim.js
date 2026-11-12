@@ -1252,9 +1252,8 @@
       return cs.display !== 'none' && cs.visibility !== 'hidden' && el.getClientRects().length > 0;
     };
     let open = visible();
-    let raf = 0;
+    // Direkt im Mutation-Callback prüfen (vor dem nächsten Zeichnen) – so blitzen die Links nie kurz auf
     const check = () => {
-      raf = 0;
       const now = visible();
       if (now === open) return;
       open = now;
@@ -1268,17 +1267,12 @@
         }));
       }
     };
-    const mo = new MutationObserver(() => {
-      if (!raf) raf = requestAnimationFrame(check);
-    });
+    const mo = new MutationObserver(check);
     // Menü selbst und drei Ebenen darüber beobachten (Webflow, Interactions, eigene Skripte)
     for (let n = el, i = 0; n && n !== document.body && i < 4; n = n.parentElement, i++) {
       mo.observe(n, { attributes: true, attributeFilter: ['style', 'class', 'hidden', 'data-nav-menu-open'] });
     }
-    return () => {
-      mo.disconnect();
-      if (raf) cancelAnimationFrame(raf);
-    };
+    return () => mo.disconnect();
   };
   /*@end*/
 
@@ -1753,18 +1747,21 @@
   CHECKS['image-shrink'] = CHECKS['image-expand'];
   const debugReport = [];
   let debugBadge = null;
-  const debugRun = (type, el, fn) => {
+  const debugInspect = (type, el, note) => {
     const issues = [];
     if (el.hasAttribute('data-w-id')) issues.push('Element hat zusätzlich eine Webflow Interaction – beide setzen transform und können sich stören.');
     const chk = CHECKS[type] && CHECKS[type](el);
     if (chk) issues.push(chk);
+    debugReport.push({ Animation: type + (note ? ` (${note})` : ''), Element: el, Hinweise: issues.join(' ') || '–' });
+    issues.forEach((t) => warn(`[Debug] ${type}: ${t}`, el));
+  };
+  const debugRun = (type, el, fn) => {
     ScrollTrigger.defaults({ markers: true, id: type });
     try {
       return fn();
     } finally {
       ScrollTrigger.defaults({ markers: false, id: undefined });
-      debugReport.push({ Animation: type, Element: el, Hinweise: issues.join(' ') || '–' });
-      issues.forEach((t) => warn(`[Debug] ${type}: ${t}`, el));
+      debugInspect(type, el);
     }
   };
   const showDebugBadge = () => {
@@ -1922,6 +1919,7 @@
           // Startbildschirm: ruhig lassen, wie in Webflow gestaltet
           const still = cfg.staticOnLoad && ENTRY.has(type) && !isIntro(el) && onScreen(el);
           if (still && type !== 'highlight') {
+            if (dbg) debugInspect(type, el, 'Startbildschirm, ruht');
             show(el);
             return;
           }
