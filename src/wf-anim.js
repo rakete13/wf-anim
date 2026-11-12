@@ -644,6 +644,8 @@
     const full = 'inset(0px 0px 0px 0px round 0px)';
     const zoom = ds.animZoom === 'false' ? 1 : num(ds.animZoom, 1.15);
     const pin = bool(ds.animPin);
+    // clip-path schneidet nur optisch – overflow verhindert seitliches Scrollen durch das gezoomte Bild
+    gsap.set(el, { overflow: 'hidden' });
     const tl = gsap.timeline({
       defaults: { ease: 'none' },
       scrollTrigger: pin

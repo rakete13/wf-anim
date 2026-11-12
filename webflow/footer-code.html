@@ -511,6 +511,7 @@ return `inset(${i.y}px ${i.r}px ${i.y}px ${i.l}px round ${rad}px)`;
 const full = 'inset(0px 0px 0px 0px round 0px)';
 const zoom = ds.animZoom === 'false' ? 1 : num(ds.animZoom, 1.15);
 const pin = bool(ds.animPin);
+gsap.set(el, { overflow: 'hidden' });
 const tl = gsap.timeline({
 defaults: { ease: 'none' },
 scrollTrigger: pin
