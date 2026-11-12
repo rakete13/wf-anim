@@ -18,7 +18,7 @@ Die Library ist komplett in den Footer Code eingebettet. Ein Webflow-Projekt hä
 Statt des langen Footer Codes reicht diese eine Zeile (Head Code und GSAP-Integration bleiben gleich):
 
 ```html
-<script src="https://cdn.jsdelivr.net/gh/rakete13/wf-anim@1.2.0/src/wf-anim.min.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/rakete13/wf-anim@1.3.0/src/wf-anim.min.js"></script>
 ```
 
 Bequem für eigene und betreute Projekte. Die Seite hängt dann aber an diesem Repo und an jsDelivr, und die IP-Adresse der Besucher geht an jsDelivr (in der Datenschutzerklärung erwähnen). Bei Übergabe an einen Kunden besser auf den eingebetteten Footer Code wechseln.
@@ -40,13 +40,24 @@ Soll ein Element im Startbildschirm trotzdem animieren (z. B. die Hero-Headline)
 
 | Kategorie | Werte für `data-anim` |
 |---|---|
-| Reveals | `fade-in` `fade-up` `fade-down` `fade-left` `fade-right` `scale-in` `blur-in` `clip-up` `clip-down` `clip-left` `clip-right` |
+| Reveals | `fade-in` `fade-up` `fade-down` `fade-left` `fade-right` `scale-in` `blur-in` `clip-up` `clip-down` `clip-left` `clip-right` `image-curtain` |
 | Gruppen | `stagger` `grid-stagger` |
-| Text | `split-lines` `split-words` `split-chars` `scramble` `highlight` |
-| Scroll | `parallax` `parallax-element` `image-zoom` `text-fill` `progress-bar` `pin` `horizontal` |
+| Text | `split-lines` `split-words` `split-chars` `scramble` `highlight` `rotate-words` `typewriter` |
+| Scroll | `parallax` `parallax-element` `image-zoom` `image-expand` `image-shrink` `text-fill` `progress-bar` `pin` `horizontal` `stack` `cover` |
 | Funktional | `counter` `marquee` `draw-svg` |
+| Seite & Navigation | `nav-hide` `bg-color` `cursor` · Smooth Scroll global über `data-anim-smooth` am body oder `WFAnimConfig.smoothScroll` |
 
 Globale Modifier: `data-anim-intro`, `data-anim-delay`, `data-anim-duration`, `data-anim-ease`, `data-anim-start`, `data-anim-end`, `data-anim-distance`, `data-anim-stagger`, `data-anim-repeat`, `data-anim-scrub`, `data-anim-mobile="false"`. Details und alle Optionen je Animation stehen in der Doku.
+
+## Hinweise zu einzelnen Effekten
+
+- **image-expand / image-shrink:** Wrapper im Layout voll breit anlegen, eine clip-path-Maske schneidet ihn zu. `data-anim-inset="container"` richtet den kleinen Zustand am Element mit `data-anim-container` aus.
+- **stack:** Container ohne `overflow: hidden` (auch nicht darüber), sonst greift das Festkleben nicht.
+- **cover:** Die nachfolgende Section braucht eine Hintergrundfarbe.
+- **bg-color:** Die Section selbst transparent lassen. Farben auch als Variablen `--anim-bg` / `--anim-text`.
+- **nav-hide:** Navbar auf fixed oder sticky. Setzt die Klasse `is-scrolled` zum Gestalten.
+- **cursor:** Element in Webflow gestalten (Position fixed, Deckkraft 0). Klassen `is-hover` und `is-text`, Text aus `data-cursor="…"` landet im Kind mit `data-cursor-label`.
+- **Größe:** Die Vollversion eingebettet hat inzwischen rund 43.000 Zeichen. Webflow erlaubt 50.000 insgesamt. Beim Einbetten daher besser per `build.js` ausdünnen oder die Library über jsDelivr laden.
 
 ## Hover-Effekte
 

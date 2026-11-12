@@ -85,6 +85,10 @@ const show = (el) => {
 unhide(el);
 el.querySelectorAll('[data-anim-item]').forEach(unhide);
 };
+const resolveColor = (c, el) => {
+const m = c && /^var\((--[^),\s]+)/.exec(String(c).trim());
+return m ? getComputedStyle(el || html).getPropertyValue(m[1]).trim() || c : c;
+};
 const SR_STYLE = 'position:absolute;width:1px;height:1px;margin:-1px;padding:0;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0';
 const srSplit = (el) => {
 const raw = el.textContent;
@@ -472,6 +476,476 @@ scrollTrigger: st(el, o),
 });
 };
 const finePointer = () => window.matchMedia('(hover: hover) and (pointer: fine)').matches;
+const expandFx = (shrink) => (el) => {
+const ds = el.dataset;
+const media = el.querySelector('img, video');
+const len = (v, base) => (String(v).trim().endsWith('%') ? (parseFloat(v) / 100) * base : toPx(v));
+const insetOf = () => {
+const r = el.getBoundingClientRect();
+const v = ds.animInset || '6vw';
+let l;
+let rr;
+if (v === 'container') {
+const c = document.querySelector('[data-anim-container]') || document.querySelector('.w-container, .container');
+if (c) {
+const cr = c.getBoundingClientRect();
+const cs = getComputedStyle(c);
+l = cr.left + parseFloat(cs.paddingLeft) - r.left;
+rr = r.right - (cr.right - parseFloat(cs.paddingRight));
+}
+else
+warn('image-expand: kein Element mit data-anim-container gefunden', el);
+}
+if (l === undefined)
+l = rr = len(v === 'container' ? '6vw' : v, r.width);
+l = Math.max(0, l);
+rr = Math.max(0, rr);
+const y = ds.animInsetY ? len(ds.animInsetY, r.height) : Math.min((l + rr) / 2, r.height * 0.25);
+return { l, r: rr, y };
+};
+const rad = toPx(ds.animRadius || '1rem');
+const small = () => {
+const i = insetOf();
+return `inset(${i.y}px ${i.r}px ${i.y}px ${i.l}px round ${rad}px)`;
+};
+const full = 'inset(0px 0px 0px 0px round 0px)';
+const zoom = ds.animZoom === 'false' ? 1 : num(ds.animZoom, 1.15);
+const pin = bool(ds.animPin);
+const tl = gsap.timeline({
+defaults: { ease: 'none' },
+scrollTrigger: pin
+? { trigger: el, start: ds.animStart || 'top top', end: ds.animEnd || '+=100%', pin: true, scrub: true, invalidateOnRefresh: true }
+: { trigger: el, start: ds.animStart || 'top bottom', end: ds.animEnd || 'center center', scrub: true, invalidateOnRefresh: true },
+});
+tl.fromTo(el, { clipPath: () => (shrink ? full : small()) }, { clipPath: () => (shrink ? small() : full) }, 0);
+if (media && zoom !== 1)
+tl.fromTo(media, { scale: shrink ? 1 : zoom }, { scale: shrink ? zoom : 1 }, 0);
+};
+A['image-expand'] = expandFx(false);
+A['image-shrink'] = expandFx(true);
+A['image-curtain'] = (el, o) => {
+const ds = el.dataset;
+const media = el.querySelector('img, video') || el.firstElementChild;
+if (!media)
+return show(el);
+const dir = ds.animDirection || 'right';
+const axis = dir === 'up' || dir === 'down' ? 'scaleY' : 'scaleX';
+const o1 = { right: 'left center', left: 'right center', down: 'center top', up: 'center bottom' }[dir] || 'left center';
+const o2 = { right: 'right center', left: 'left center', down: 'center bottom', up: 'center top' }[dir] || 'right center';
+const prev = { position: el.style.position, overflow: el.style.overflow };
+if (getComputedStyle(el).position === 'static')
+el.style.position = 'relative';
+el.style.overflow = 'hidden';
+const cover = document.createElement('span');
+cover.setAttribute('aria-hidden', 'true');
+cover.setAttribute('style', `position:absolute;inset:0;z-index:2;pointer-events:none;background:${ds.animColor || 'var(--anim-curtain, #141824)'}`);
+el.appendChild(cover);
+unhide(el);
+gsap.set(media, { opacity: 0 });
+const half = o.duration * 0.6;
+const tl = gsap.timeline({ delay: o.scrub ? 0 : o.delay, scrollTrigger: st(el, o), defaults: { ease: 'power3.inOut' } });
+tl.fromTo(cover, { [axis]: 0, transformOrigin: o1 }, { [axis]: 1, duration: half })
+.set(media, { opacity: 1 })
+.set(cover, { transformOrigin: o2 })
+.to(cover, { [axis]: 0, duration: half })
+.fromTo(media, { scale: 1.15 }, { scale: 1, duration: o.duration * 1.4, ease: 'power3.out', immediateRender: false }, '<');
+return () => {
+cover.remove();
+Object.assign(el.style, prev);
+};
+};
+A['stack'] = (el) => {
+const ds = el.dataset;
+const list = items(el);
+if (list.length < 2)
+return;
+const top = ds.animTop || '10vh';
+const gap = ds.animOffset || '1.5rem';
+const min = num(ds.animScale, 0.9);
+const dim = num(ds.animDim, 0);
+const n = list.length;
+const last = list[n - 1];
+list.forEach((it, i) => gsap.set(it, { position: 'sticky', top: `calc(${top} + ${i} * ${gap})`, transformOrigin: 'center top' }));
+list.slice(0, -1).forEach((it, i) => {
+const f = (n - 1 - i) / (n - 1);
+const from = { scale: 1 };
+const to = { scale: 1 - (1 - min) * f, ease: 'none' };
+if (dim) {
+from.filter = 'brightness(1)';
+to.filter = `brightness(${1 - dim * f})`;
+}
+to.scrollTrigger = {
+trigger: list[i + 1],
+start: 'top bottom',
+endTrigger: last,
+end: () => 'top ' + (parseFloat(getComputedStyle(last).top) || 0) + 'px',
+scrub: true,
+invalidateOnRefresh: true,
+};
+gsap.fromTo(it, from, to);
+});
+};
+A['cover'] = (el) => {
+const ds = el.dataset;
+const next = el.nextElementSibling;
+if (next) {
+if (getComputedStyle(next).position === 'static')
+gsap.set(next, { position: 'relative' });
+gsap.set(next, { zIndex: 1 });
+}
+const dim = num(ds.animDim, 0.5);
+const from = { scale: 1 };
+const to = { scale: num(ds.animScale, 0.92), ease: 'none' };
+if (dim) {
+from.filter = 'brightness(1)';
+to.filter = `brightness(${1 - dim})`;
+}
+if (ds.animRadius) {
+from.borderRadius = '0px';
+to.borderRadius = toPx(ds.animRadius) + 'px';
+}
+const tall = () => el.offsetHeight > window.innerHeight;
+to.scrollTrigger = {
+trigger: el,
+start: () => (tall() ? 'bottom bottom' : 'top top'),
+end: () => '+=' + window.innerHeight,
+pin: true,
+pinSpacing: false,
+scrub: true,
+invalidateOnRefresh: true,
+};
+gsap.fromTo(el, from, to);
+};
+A['rotate-words'] = (el) => {
+const ds = el.dataset;
+const base = el.textContent.trim();
+const list = (ds.animWords || '').split(',').map((w) => w.trim()).filter(Boolean);
+if (base && !list.includes(base))
+list.unshift(base);
+if (list.length < 2)
+return;
+const raw = el.innerHTML;
+el.textContent = '';
+const sr = document.createElement('span');
+sr.setAttribute('style', SR_STYLE);
+sr.textContent = list.join(', ');
+const wrap = document.createElement('span');
+wrap.setAttribute('aria-hidden', 'true');
+wrap.setAttribute('style', 'display:inline-block;position:relative;white-space:nowrap;clip-path:inset(0 -0.6em)');
+const words = list.map((w, i) => {
+const s = document.createElement('span');
+s.textContent = w;
+s.setAttribute('style', i ? 'display:inline-block;position:absolute;left:0;top:0' : 'display:inline-block');
+return s;
+});
+wrap.append(...words);
+el.append(sr, wrap);
+words.forEach((w, i) => i && gsap.set(w, { yPercent: 100 }));
+const interval = num(ds.animInterval, 2.2);
+const dur = num(ds.animDuration, 0.6);
+const ease = ds.animEase || 'power3.inOut';
+let i = 0;
+let dc;
+const step = () => {
+const n = (i + 1) % words.length;
+gsap.to(words[i], { yPercent: -100, duration: dur, ease });
+gsap.fromTo(words[n], { yPercent: 100 }, { yPercent: 0, duration: dur, ease });
+gsap.to(wrap, { width: words[n].offsetWidth, duration: dur, ease });
+i = n;
+dc = gsap.delayedCall(interval, step);
+};
+dc = gsap.delayedCall(interval, step);
+return () => {
+if (dc)
+dc.kill();
+gsap.killTweensOf([wrap, ...words]);
+el.innerHTML = raw;
+};
+};
+A['typewriter'] = (el, o) => {
+const { raw, vis, restore } = srSplit(el);
+const text = raw.replace(/\s+/g, ' ').trim();
+vis.textContent = '';
+const typed = document.createElement('span');
+const rest = document.createElement('span');
+rest.style.visibility = 'hidden';
+rest.textContent = text;
+const withCaret = el.dataset.animCursor !== 'false';
+const caret = document.createElement('span');
+caret.setAttribute('style', 'display:inline-block;width:0.06em;height:1em;margin-right:-0.06em;vertical-align:-0.12em;background:currentColor');
+vis.append(typed);
+if (withCaret)
+vis.append(caret);
+vis.append(rest);
+unhide(el);
+const speed = num(el.dataset.animSpeed, 30);
+const state = { n: 0 };
+const render = () => {
+const n = Math.round(state.n);
+typed.textContent = text.slice(0, n);
+rest.textContent = text.slice(n);
+};
+gsap.to(state, {
+n: text.length,
+duration: text.length / speed,
+delay: o.scrub ? 0 : o.delay,
+ease: 'none',
+onUpdate: render,
+scrollTrigger: st(el, o),
+});
+if (withCaret)
+gsap.to(caret, { opacity: 0, duration: 0.5, repeat: -1, yoyo: true, ease: 'steps(1)' });
+return restore;
+};
+A['nav-hide'] = (el, o, ctx) => {
+const offset = toPx(el.dataset.animOffset || '100px');
+const reduce = ctx && ctx.conditions && ctx.conditions.reduce;
+const dur = reduce ? 0 : num(el.dataset.animDuration, 0.4);
+let hidden = false;
+let focusIn = false;
+const set = (h) => {
+if (h === hidden)
+return;
+hidden = h;
+gsap.to(el, { yPercent: h ? -100 : 0, duration: dur, ease: 'power3.out', overwrite: true });
+};
+const fin = () => {
+focusIn = true;
+set(false);
+};
+const fout = (e) => {
+if (!el.contains(e.relatedTarget))
+focusIn = false;
+};
+el.addEventListener('focusin', fin);
+el.addEventListener('focusout', fout);
+el.classList.toggle('is-scrolled', window.scrollY > offset);
+ScrollTrigger.create({
+start: 0,
+end: 'max',
+onUpdate: (self) => {
+const y = self.scroll();
+el.classList.toggle('is-scrolled', y > offset);
+if (y <= offset || focusIn || el.querySelector('.w--open'))
+return set(false);
+set(self.direction === 1);
+},
+});
+return () => {
+el.removeEventListener('focusin', fin);
+el.removeEventListener('focusout', fout);
+el.classList.remove('is-scrolled');
+};
+};
+const bgGroups = new Map();
+A['bg-color'] = (el, o, ctx) => {
+const ds = el.dataset;
+const target = (ds.animTarget && document.querySelector(ds.animTarget)) || document.body;
+let g = bgGroups.get(target);
+if (!g) {
+const cs = getComputedStyle(target);
+g = {
+items: [],
+inline: { bg: target.style.backgroundColor, color: target.style.color },
+orig: { bg: cs.backgroundColor, color: cs.color },
+};
+bgGroups.set(target, g);
+gsap.set(html, { '--anim-bg': g.orig.bg, '--anim-text': g.orig.color });
+}
+const item = { bg: ds.animColor, color: ds.animTextColor, active: false };
+g.items.push(item);
+const reduce = ctx && ctx.conditions && ctx.conditions.reduce;
+const dur = reduce ? 0.2 : num(ds.animDuration, 0.6);
+const apply = () => {
+const act = g.items.filter((it) => it.active).pop();
+const bg = act && act.bg ? resolveColor(act.bg, target) : g.orig.bg;
+const color = act && act.color ? resolveColor(act.color, target) : g.orig.color;
+gsap.to(target, {
+backgroundColor: bg,
+color,
+duration: dur,
+ease: 'power2.out',
+overwrite: 'auto',
+onComplete: act ? undefined : () => {
+target.style.backgroundColor = g.inline.bg;
+target.style.color = g.inline.color;
+},
+});
+gsap.to(html, { '--anim-bg': bg, '--anim-text': color, duration: dur, ease: 'power2.out', overwrite: 'auto' });
+};
+ScrollTrigger.create({
+trigger: el,
+start: ds.animStart || 'top 50%',
+end: ds.animEnd || 'bottom 50%',
+onToggle: (self) => {
+item.active = self.isActive;
+apply();
+},
+});
+return () => {
+g.items.splice(g.items.indexOf(item), 1);
+if (g.items.length)
+return;
+gsap.killTweensOf([target, html]);
+target.style.backgroundColor = g.inline.bg;
+target.style.color = g.inline.color;
+bgGroups.delete(target);
+};
+};
+let cursorStyle = null;
+A['cursor'] = (el, o, ctx) => {
+if (!ctx || !ctx.conditions || !ctx.conditions.canHover) {
+gsap.set(el, { display: 'none' });
+return;
+}
+const ds = el.dataset;
+const lag = num(ds.animLag, 0.15);
+const scale = num(ds.animScale, 3);
+const textScale = num(ds.animTextScale, 1);
+const label = el.querySelector('[data-cursor-label]');
+gsap.set(el, { position: 'fixed', left: 0, top: 0, xPercent: -50, yPercent: -50, pointerEvents: 'none', zIndex: 9999, opacity: 0 });
+const xTo = gsap.quickTo(el, 'x', { duration: lag, ease: 'power3' });
+const yTo = gsap.quickTo(el, 'y', { duration: lag, ease: 'power3' });
+const hide = bool(ds.animHideNative);
+if (hide) {
+if (!cursorStyle) {
+cursorStyle = document.createElement('style');
+cursorStyle.textContent = 'html.wfa-cursor-hide, html.wfa-cursor-hide * { cursor: none !important; }';
+document.head.appendChild(cursorStyle);
+}
+html.classList.add('wfa-cursor-hide');
+}
+let shown = false;
+let state = '';
+let text = '';
+let lx = 0;
+let ly = 0;
+const update = (t) => {
+const tEl = t && t.closest ? t.closest('[data-cursor]') : null;
+const link = !tEl && t && t.closest ? t.closest('a, button, [role="button"], label, select, [data-cursor-hover]') : null;
+const next = tEl ? 'text' : link ? 'hover' : '';
+const nt = tEl ? tEl.getAttribute('data-cursor') : '';
+if (next === state && nt === text)
+return;
+state = next;
+text = nt;
+el.classList.toggle('is-hover', next === 'hover');
+el.classList.toggle('is-text', next === 'text');
+if (label)
+label.textContent = nt;
+gsap.to(el, { scale: next === 'hover' ? scale : next === 'text' ? textScale : 1, duration: 0.35, ease: 'power3.out', overwrite: 'auto' });
+};
+const move = (e) => {
+if (e.pointerType === 'touch')
+return;
+lx = e.clientX;
+ly = e.clientY;
+if (!shown) {
+shown = true;
+gsap.set(el, { x: lx, y: ly });
+gsap.to(el, { opacity: 1, duration: 0.3 });
+}
+xTo(lx);
+yTo(ly);
+update(e.target);
+};
+const out = () => {
+shown = false;
+gsap.to(el, { opacity: 0, duration: 0.3 });
+};
+const onScroll = () => shown && update(document.elementFromPoint(lx, ly));
+document.addEventListener('pointermove', move, { passive: true });
+html.addEventListener('mouseleave', out);
+window.addEventListener('scroll', onScroll, { passive: true });
+return () => {
+document.removeEventListener('pointermove', move);
+html.removeEventListener('mouseleave', out);
+window.removeEventListener('scroll', onScroll);
+el.classList.remove('is-hover', 'is-text');
+html.classList.remove('wfa-cursor-hide');
+};
+};
+const smooth = (() => {
+let on = false;
+let lerp = 0.1;
+let cur = 0;
+let target = 0;
+let moving = false;
+const max = () => document.documentElement.scrollHeight - window.innerHeight;
+const nested = (node, dy) => {
+for (let n = node; n && n.nodeType === 1 && n !== document.body && n !== html; n = n.parentElement) {
+if (n.hasAttribute('data-anim-native-scroll'))
+return true;
+const oy = getComputedStyle(n).overflowY;
+if ((oy === 'auto' || oy === 'scroll') && n.scrollHeight > n.clientHeight) {
+if ((dy > 0 && n.scrollTop + n.clientHeight < n.scrollHeight - 1) || (dy < 0 && n.scrollTop > 0))
+return true;
+}
+}
+return false;
+};
+const locked = () => getComputedStyle(document.body).overflow === 'hidden' || getComputedStyle(html).overflow === 'hidden';
+const onWheel = (e) => {
+if (e.ctrlKey || e.defaultPrevented || Math.abs(e.deltaX) > Math.abs(e.deltaY))
+return;
+if (locked() || nested(e.target, e.deltaY))
+return;
+e.preventDefault();
+let dy = e.deltaY;
+if (e.deltaMode === 1)
+dy *= 40;
+else if (e.deltaMode === 2)
+dy *= window.innerHeight;
+if (!moving)
+cur = target = window.scrollY;
+target = Math.max(0, Math.min(max(), target + dy));
+moving = true;
+};
+const onScroll = () => {
+if (!moving)
+cur = target = window.scrollY;
+};
+const onKey = () => {
+moving = false;
+};
+const loop = (time, dt) => {
+if (!moving)
+return;
+const k = 1 - Math.pow(1 - lerp, (dt || 16.7) / 16.7);
+cur += (target - cur) * k;
+if (Math.abs(target - cur) < 0.5) {
+cur = target;
+moving = false;
+}
+window.scrollTo({ top: cur, behavior: 'instant' });
+};
+return {
+start(l) {
+lerp = Math.min(0.5, Math.max(0.02, num(l, 0.1)));
+if (on)
+return;
+on = true;
+cur = target = window.scrollY;
+window.addEventListener('wheel', onWheel, { passive: false });
+window.addEventListener('scroll', onScroll, { passive: true });
+window.addEventListener('keydown', onKey);
+gsap.ticker.add(loop);
+},
+stop() {
+if (!on)
+return;
+on = false;
+moving = false;
+window.removeEventListener('wheel', onWheel);
+window.removeEventListener('scroll', onScroll);
+window.removeEventListener('keydown', onKey);
+gsap.ticker.remove(loop);
+},
+get active() {
+return on;
+},
+};
+})();
 const H = {};
 const HOVER_SAFE = new Set(['img-darken', 'fill', 'underline', 'reveal']);
 const hoverTarget = (card, name, fallback) => {
@@ -750,10 +1224,10 @@ wrap.remove();
 };
 A['magnetic'] = (el) => (finePointer() ? bindHover(el, ['magnetic'], false, true) : undefined);
 A['tilt'] = (el) => (finePointer() ? bindHover(el, ['tilt'], false, true) : undefined);
-const RUN_IN_REDUCED = new Set(['progress-bar', 'horizontal']);
+const RUN_IN_REDUCED = new Set(['progress-bar', 'horizontal', 'bg-color', 'nav-hide']);
 const ENTRY = new Set([
 ...REVEALS, 'stagger', 'grid-stagger', 'split-lines', 'split-words', 'split-chars',
-'scramble', 'highlight', 'counter', 'draw-svg',
+'scramble', 'highlight', 'counter', 'draw-svg', 'typewriter', 'image-curtain',
 ]);
 const isIntro = (el) => el.hasAttribute('data-anim-intro') && el.dataset.animIntro !== 'false';
 const onScreen = (el) => el.getBoundingClientRect().top < window.innerHeight;
@@ -777,6 +1251,7 @@ a.progress(1);
 });
 };
 let focusBound = false;
+let smoothMM = null;
 const done = new WeakSet();
 const doneHover = new WeakSet();
 const contexts = [];
@@ -794,6 +1269,16 @@ const plugins = ['ScrollTrigger', 'SplitText', 'ScrambleTextPlugin', 'DrawSVGPlu
 .filter(Boolean);
 gsap.registerPlugin(...plugins);
 registered = true;
+}
+if (!smoothMM && typeof smooth === 'object') {
+const val = cfg.smoothScroll !== undefined ? cfg.smoothScroll : document.body.getAttribute('data-anim-smooth');
+if (val !== undefined && val !== null && val !== false && val !== 'false') {
+smoothMM = gsap.matchMedia();
+smoothMM.add('(prefers-reduced-motion: no-preference)', () => {
+smooth.start(val);
+return () => smooth.stop();
+});
+}
 }
 if (!focusBound) {
 document.addEventListener('focusin', onFocus);
@@ -840,6 +1325,9 @@ return;
 }
 const off = (mobile && el.dataset.animMobile === 'false') || (reduce && !RUN_IN_REDUCED.has(type));
 if (off) {
+if (type === 'cursor')
+gsap.set(el, { display: 'none' });
+else
 show(el);
 return;
 }
@@ -868,6 +1356,10 @@ contexts.push({ mm, els: fresh, hov: freshHover });
 html.classList.add('anim-ready');
 }
 function destroy() {
+if (smoothMM) {
+smoothMM.revert();
+smoothMM = null;
+}
 contexts.forEach((c) => {
 c.mm.revert();
 c.els.forEach((el) => done.delete(el));
@@ -886,7 +1378,15 @@ ScrollTrigger.refresh();
 function register(name, fn) {
 A[name] = fn;
 }
-window.WFAnim = { init, destroy, refresh, register, config: cfg, animations: A, version: '1.2.0', hover: typeof H === 'object' ? H : {} };
+function smoothScroll(v) {
+if (typeof smooth !== 'object')
+return warn('Smooth Scroll ist in diesem Build nicht enthalten.');
+if (v === false)
+smooth.stop();
+else
+smooth.start(v);
+}
+window.WFAnim = { init, destroy, refresh, register, smoothScroll, config: cfg, animations: A, version: '1.3.0', hover: typeof H === 'object' ? H : {} };
 const start = () => {
 if (!cfg.autoInit)
 return;

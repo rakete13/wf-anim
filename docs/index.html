@@ -30,17 +30,18 @@
   --font-body: "IBM Plex Sans", "Helvetica Neue", Arial, sans-serif;
   --font-mono: "IBM Plex Mono", ui-monospace, Menlo, Consolas, monospace;
   --anim-highlight: var(--mark);
+  --cursor-soft: rgba(47, 76, 245, 0.25);
 }
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
     --bg: #0f121a; --surface: #171b26; --ink: #e8eaf2; --muted: #9aa1b4; --line: #272d3b;
-    --accent: #7f93ff; --accent-ink: #0f121a; --stage: #1d2230; --mark: rgba(255, 196, 0, 0.38); --code-bg: #1d2230;
+    --accent: #7f93ff; --accent-ink: #0f121a; --stage: #1d2230; --mark: rgba(255, 196, 0, 0.38); --code-bg: #1d2230; --cursor-soft: rgba(127, 147, 255, 0.3);
     color-scheme: dark;
   }
 }
 :root[data-theme="dark"] {
   --bg: #0f121a; --surface: #171b26; --ink: #e8eaf2; --muted: #9aa1b4; --line: #272d3b;
-  --accent: #7f93ff; --accent-ink: #0f121a; --stage: #1d2230; --mark: rgba(255, 196, 0, 0.38); --code-bg: #1d2230;
+  --accent: #7f93ff; --accent-ink: #0f121a; --stage: #1d2230; --mark: rgba(255, 196, 0, 0.38); --code-bg: #1d2230; --cursor-soft: rgba(127, 147, 255, 0.3);
   color-scheme: dark;
 }
 
@@ -62,8 +63,23 @@ code, pre { font-family: var(--font-mono); font-size: 0.86rem; }
 
 .progress { position: fixed; top: env(safe-area-inset-top, 0px); left: 0; right: 0; height: 3px; background: var(--accent); z-index: 20; }
 
-.shell { max-width: 1180px; margin: 0 auto; display: grid; grid-template-columns: 210px minmax(0, 1fr); gap: 56px; padding-block: 56px 120px; }
-nav.toc { position: sticky; top: calc(env(safe-area-inset-top, 0px) + 32px); align-self: start; display: grid; gap: 4px; font-size: 0.9rem; }
+.site-head { position: fixed; top: 0; left: 0; right: 0; z-index: 15; padding-top: env(safe-area-inset-top, 0px); background: var(--surface); border-bottom: 1px solid var(--line); transition: box-shadow 0.3s; }
+.site-head.is-scrolled { box-shadow: 0 10px 30px -18px rgba(20, 24, 36, 0.45); }
+.site-head-in { max-width: 1180px; margin: 0 auto; height: 56px; display: flex; align-items: center; gap: 20px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+.site-head .brand { font-family: var(--font-display); font-weight: 800; font-size: 1.1rem; color: var(--ink); text-decoration: none; }
+.site-head .brand span { color: var(--accent); }
+.site-head .links { display: flex; gap: 18px; margin-left: auto; font-size: 0.88rem; }
+.site-head .links a { color: var(--muted); text-decoration: none; }
+.site-head .links a:hover { color: var(--ink); }
+.smooth-toggle { border: 1px solid var(--line); background: var(--bg); color: var(--ink); border-radius: 999px; padding: 6px 12px; font: 600 0.8rem var(--font-body); cursor: pointer; white-space: nowrap; }
+.smooth-toggle[aria-pressed="true"] { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+.cursor { position: fixed; top: 0; left: 0; width: 12px; height: 12px; border-radius: 999px; background: var(--accent); opacity: 0; pointer-events: none; z-index: 40; display: grid; place-items: center; transition: width 0.3s, height 0.3s, background-color 0.3s; }
+.cursor.is-hover { background: var(--cursor-soft); }
+.cursor.is-text { width: 86px; height: 86px; }
+.cursor [data-cursor-label] { font: 600 0.72rem var(--font-body); color: var(--accent-ink); white-space: nowrap; }
+.cursor:not(.is-text) [data-cursor-label] { display: none; }
+.shell { max-width: 1180px; margin: 0 auto; display: grid; grid-template-columns: 210px minmax(0, 1fr); gap: 56px; padding-block: 112px 120px; }
+nav.toc { position: sticky; top: calc(env(safe-area-inset-top, 0px) + 88px); align-self: start; display: grid; gap: 4px; font-size: 0.9rem; }
 nav.toc .label { font-size: 0.72rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); margin-bottom: 8px; }
 nav.toc a { color: var(--muted); text-decoration: none; padding: 4px 0; display: flex; gap: 10px; }
 nav.toc a span { font-family: var(--font-mono); color: var(--accent); font-size: 0.8rem; width: 1.2em; }
@@ -141,6 +157,24 @@ section.cat { display: grid; gap: 28px; scroll-margin-top: 32px; }
 .btn { display: inline-block; text-decoration: none; }
 .btn-ghost { background: transparent; color: var(--ink); box-shadow: inset 0 0 0 1.5px var(--ink); }
 
+.expand-wrap { width: 100%; aspect-ratio: 16 / 9; max-width: 100%; }
+.expand-wrap img { display: block; width: 100%; height: 100%; object-fit: cover; }
+.plain-stage { background: var(--stage); border-radius: 10px; padding: 32px; }
+.stack { display: grid; gap: 24px; padding-bottom: 12vh; }
+.stack-card { height: 46vh; min-height: 260px; border-radius: 14px; padding: 28px; display: grid; align-content: space-between; font-family: var(--font-display); font-weight: 700; font-size: 1.6rem; color: #fff; }
+.stack-card small { font: 500 0.8rem var(--font-mono); opacity: 0.8; }
+.stack-card:nth-child(1) { background: #2f4cf5; }
+.stack-card:nth-child(2) { background: #1d2a6b; }
+.stack-card:nth-child(3) { background: #245a6e; }
+.stack-card:nth-child(4) { background: #6b2e5c; }
+.cover-a, .cover-b { min-height: 80vh; border-radius: 10px; padding: 40px; display: grid; align-content: center; gap: 12px; }
+.cover-a { background: var(--surface); border: 1px solid var(--line); }
+.cover-b { background: var(--accent); color: var(--accent-ink); }
+.cover-a h3, .cover-b h3 { font-size: clamp(1.6rem, 4vw, 2.6rem); }
+.bg-band { min-height: 75vh; display: grid; align-content: center; gap: 16px; padding-block: 40px; }
+.bg-band h3 { font-size: clamp(2rem, 5vw, 3.6rem); font-weight: 800; max-width: 16ch; }
+.rw { color: var(--accent); }
+
 .wide-stage { background: var(--stage); border-radius: 10px; overflow: hidden; }
 .pin-stage { min-height: 100vh; display: grid; align-content: center; gap: 16px; padding: 32px; }
 .pin-stage .step { background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 16px 20px; max-width: 460px; }
@@ -168,7 +202,9 @@ td code { white-space: nowrap; }
 .replay { position: fixed; right: calc(20px + env(safe-area-inset-right, 0px)); bottom: calc(20px + env(safe-area-inset-bottom, 0px)); z-index: 30; border: 0; border-radius: 999px; padding: 12px 20px; background: var(--ink); color: var(--bg); font-weight: 600; cursor: pointer; font-family: var(--font-body); box-shadow: 0 8px 24px -10px rgba(0,0,0,0.5); }
 
 @media (max-width: 860px) {
-  .shell { grid-template-columns: minmax(0, 1fr); gap: 32px; padding-block: 32px 100px; }
+  .shell { grid-template-columns: minmax(0, 1fr); gap: 32px; padding-block: 88px 100px; }
+  .site-head .links { display: none; }
+  .smooth-toggle { margin-left: auto; }
   nav.toc { display: none; }
   .demo { grid-template-columns: minmax(0, 1fr); }
   main { gap: 72px; }
@@ -178,6 +214,22 @@ td code { white-space: nowrap; }
 </head>
 <body>
 <div class="progress" data-anim="progress-bar"></div>
+
+<header class="site-head" data-anim="nav-hide" data-anim-offset="160px">
+  <div class="site-head-in">
+    <a class="brand" href="#setup">WF<span>.</span>Anim</a>
+    <nav class="links" aria-label="Schnellzugriff">
+      <a href="#reveals">Reveals</a>
+      <a href="#text">Text</a>
+      <a href="#scroll">Scroll</a>
+      <a href="#hover">Hover</a>
+      <a href="#seite">Seite</a>
+    </nav>
+    <button class="smooth-toggle" type="button" aria-pressed="false" data-smooth-toggle>Smooth Scroll</button>
+  </div>
+</header>
+
+<div class="cursor" data-anim="cursor" data-anim-scale="2.5" aria-hidden="true"><span data-cursor-label></span></div>
 
 <div class="shell">
   <nav class="toc" aria-label="Kategorien">
@@ -189,13 +241,14 @@ td code { white-space: nowrap; }
     <a href="#scroll"><span>4</span>Scroll-gebunden</a>
     <a href="#funktional"><span>5</span>Funktional</a>
     <a href="#hover"><span>6</span>Hover</a>
-    <a href="#modifier"><span>7</span>Modifier</a>
-    <a href="#api"><span>8</span>Infrastruktur</a>
+    <a href="#seite"><span>7</span>Seite & Navigation</a>
+    <a href="#modifier"><span>8</span>Modifier</a>
+    <a href="#api"><span>9</span>Infrastruktur</a>
   </nav>
 
   <main>
     <header class="hero">
-      <div class="eyebrow">WF Anim · v1.2.0 · GSAP 3.13</div>
+      <div class="eyebrow">WF Anim · v1.3.0 · GSAP 3.13</div>
       <h1 data-anim="split-lines" data-anim-intro>Ein Attribut,<br><em>eine Animation.</em></h1>
       <p>Standard-Animationen für jedes Webflow-Projekt. Element auswählen, unter <em>Custom Attributes</em> <span class="attr">data-anim</span> mit einem Wert aus dieser Liste setzen, fertig. Jede Zeile unten zeigt die Animation live; ein Klick auf das Attribut kopiert es. Was beim Laden schon im Bild ist, bleibt ruhig. Die Überschrift hier oben animiert trotzdem, weil sie <span class="attr">data-anim-intro</span> trägt.</p>
       <div class="notice" id="rm-notice" hidden>Dein System hat „Bewegung reduzieren“ aktiviert. Die Library zeigt Inhalte dann bewusst ohne Animation an, genau wie bei deinen Besuchern mit dieser Einstellung.</div>
@@ -229,7 +282,7 @@ setTimeout(function(){if(!window.WFAnim)document.documentElement.classList.remov
         <div>
           <h3>Footer Code</h3>
           <p>Entweder eine Zeile, die die Library aus GitHub lädt. Bequem für eigene und betreute Projekte; die IP-Adresse der Besucher geht dabei an jsDelivr.</p>
-<pre class="code-block" id="code-footer"><code>&lt;script src="https://cdn.jsdelivr.net/gh/rakete13/wf-anim@1.2.0/src/wf-anim.min.js"&gt;&lt;/script&gt;</code></pre>
+<pre class="code-block" id="code-footer"><code>&lt;script src="https://cdn.jsdelivr.net/gh/rakete13/wf-anim@1.3.0/src/wf-anim.min.js"&gt;&lt;/script&gt;</code></pre>
           <button class="copy-block" data-copy-target="code-footer">Footer-Zeile kopieren</button>
           <p>Oder eingebettet: den Inhalt von <code>webflow/footer-code.html</code> aus dem Repo einfügen. Dann hängt das Projekt an keinem fremden Server, ideal bei Übergabe an Kunden.</p>
         </div>
@@ -301,6 +354,18 @@ setTimeout(function(){if(!window.WFAnim)document.documentElement.classList.remov
         </div>
         <div class="stage">
           <div class="img-wrapper zoom" data-anim="clip-up" data-anim-duration="1.2" style="max-width: 360px"><img data-demo-img="1" alt="Abstrakte Landschaft"></div>
+        </div>
+      </div>
+
+      <div class="demo">
+        <div class="info">
+          <h3>Curtain</h3>
+          <p>Eine Farbfläche wischt über das Bild und gibt es frei, das Bild zoomt dabei leicht heraus. Attribut an den Wrapper des Bildes.</p>
+          <button class="copy" data-copy='data-anim="image-curtain"'><code>data-anim="image-curtain"</code><span class="hint">kopieren</span></button>
+          <ul class="opts"><li><code>data-anim-color="#ff5a1f"</code> Farbe der Fläche, auch Variablen</li><li><code>data-anim-direction="left"</code> · <code>up</code> · <code>down</code> (Standard right)</li></ul>
+        </div>
+        <div class="stage">
+          <div class="img-wrapper zoom" data-anim="image-curtain" data-anim-color="var(--accent)" data-anim-duration="1.2" style="max-width: 360px"><img data-demo-img="2" alt="Abstrakte Landschaft"></div>
         </div>
       </div>
     </section>
@@ -385,6 +450,26 @@ setTimeout(function(){if(!window.WFAnim)document.documentElement.classList.remov
           <ul class="opts"><li><code>data-anim-style="underline"</code> · <code>data-anim-thickness="0.15em"</code></li><li><code>data-anim-color="#ffd400"</code> oder CSS-Variable <code>--anim-highlight</code></li></ul>
         </div>
         <div class="stage"><p class="para">Wir bauen Websites, die <span data-anim="highlight">schnell laden</span> und sich <span data-anim="highlight" data-anim-style="underline" data-anim-delay="0.3">gut anfühlen</span>.</p></div>
+      </div>
+
+      <div class="demo">
+        <div class="info">
+          <h3>Rotate Words</h3>
+          <p>Ein Wort in der Headline wechselt in Schleife. In Webflow das Wort in einen Span setzen, dort steht das erste Wort; die übrigen kommen ins Attribut. Läuft auch im Startbildschirm.</p>
+          <button class="copy" data-copy='data-anim="rotate-words"'><code>data-anim="rotate-words"</code><span class="hint">kopieren</span></button>
+          <ul class="opts"><li><code>data-anim-words="Marken, Shops"</code> weitere Wörter, mit Komma getrennt</li><li><code>data-anim-interval="3"</code> Sekunden pro Wort</li></ul>
+        </div>
+        <div class="stage"><h3 class="big">Wir bauen <span class="rw" data-anim="rotate-words" data-anim-words="Marken, Shops, Kampagnen">Websites</span>, die bleiben.</h3></div>
+      </div>
+
+      <div class="demo">
+        <div class="info">
+          <h3>Typewriter</h3>
+          <p>Text tippt sich Zeichen für Zeichen. Der Platz ist von Anfang an reserviert, das Layout springt nicht. Nur für reinen Text ohne Formatierung.</p>
+          <button class="copy" data-copy='data-anim="typewriter"'><code>data-anim="typewriter"</code><span class="hint">kopieren</span></button>
+          <ul class="opts"><li><code>data-anim-speed="20"</code> Zeichen pro Sekunde (Standard 30)</li><li><code>data-anim-cursor="false"</code> ohne Schreibmarke</li></ul>
+        </div>
+        <div class="stage"><p class="para mono-big" style="font-size:1.3rem" data-anim="typewriter">Hallo. Diese Zeile schreibt sich gerade selbst.</p></div>
       </div>
     </section>
 
@@ -484,6 +569,60 @@ setTimeout(function(){if(!window.WFAnim)document.documentElement.classList.remov
           <div class="h-panel"><small>04 / Projekt</small>Leuchtturm</div>
           <div class="h-panel"><small>05 / Projekt</small>Hafen</div>
         </div>
+      </div>
+
+      <div class="demo">
+        <div class="info">
+          <h3>Image Expand</h3>
+          <p>Das Bild wächst beim Scrollen von einer kleineren Fläche auf die volle Breite. Der Wrapper ist im Layout voll breit, eine Maske (clip-path) schneidet ihn anfangs zu. Nichts im Grid verschiebt sich.</p>
+          <button class="copy" data-copy='data-anim="image-expand"'><code>data-anim="image-expand"</code><span class="hint">kopieren</span></button>
+          <ul class="opts"><li><code>data-anim-inset="container"</code> Startgröße = Breite des Elements mit <code>data-anim-container</code>; sonst z. B. <code>8vw</code> oder <code>10%</code></li><li><code>data-anim-radius="24px"</code> Ecken im kleinen Zustand</li><li><code>data-anim-zoom="false"</code> ohne Bild-Zoom</li><li><code>data-anim-pin</code> Section bleibt stehen, bis das Bild voll ist</li></ul>
+        </div>
+        <div class="stage" style="min-height:120px"><p style="margin:0;color:var(--muted)">↓ Demo direkt darunter</p></div>
+      </div>
+      <div class="expand-wrap" data-anim="image-expand" data-anim-inset="12%"><img data-demo-img="1" alt="Abstrakte Landschaft"></div>
+
+      <div class="demo">
+        <div class="info">
+          <h3>Image Shrink</h3>
+          <p>Umgekehrt: Das Bild kommt in voller Breite und zieht sich beim Scrollen auf die kleinere Fläche zusammen. In der Stage oben auf der Seite zusätzlich <code>data-anim-start="top top"</code> setzen.</p>
+          <button class="copy" data-copy='data-anim="image-shrink"'><code>data-anim="image-shrink"</code><span class="hint">kopieren</span></button>
+          <ul class="opts"><li>gleiche Optionen wie Image Expand</li></ul>
+        </div>
+        <div class="stage" style="min-height:120px"><p style="margin:0;color:var(--muted)">↓ Demo direkt darunter</p></div>
+      </div>
+      <div class="expand-wrap" data-anim="image-shrink" data-anim-inset="12%"><img data-demo-img="3" alt="Abstrakte Landschaft"></div>
+
+      <div class="demo">
+        <div class="info">
+          <h3>Stack</h3>
+          <p>Cards kleben beim Scrollen nacheinander fest und stapeln sich; die unteren werden dabei kleiner. Attribut an den Container, die Cards sind seine Kinder. Kein <code>overflow: hidden</code> auf dem Container oder darüber, sonst greift es nicht.</p>
+          <button class="copy" data-copy='data-anim="stack"'><code>data-anim="stack"</code><span class="hint">kopieren</span></button>
+          <ul class="opts"><li><code>data-anim-top="15vh"</code> Abstand zum oberen Rand</li><li><code>data-anim-offset="2rem"</code> Versatz je Card</li><li><code>data-anim-scale="0.85"</code> kleinste Größe</li><li><code>data-anim-dim="0.3"</code> untere Cards abdunkeln</li></ul>
+        </div>
+        <div class="stage" style="min-height:120px"><p style="margin:0;color:var(--muted)">↓ Demo direkt darunter</p></div>
+      </div>
+      <div class="plain-stage">
+        <div class="stack" data-anim="stack" data-anim-top="18vh" data-anim-dim="0.25">
+          <div class="stack-card"><small>01</small>Strategie</div>
+          <div class="stack-card"><small>02</small>Design</div>
+          <div class="stack-card"><small>03</small>Entwicklung</div>
+          <div class="stack-card"><small>04</small>Launch</div>
+        </div>
+      </div>
+
+      <div class="demo">
+        <div class="info">
+          <h3>Cover</h3>
+          <p>Die Section bleibt stehen, die nächste schiebt sich darüber. Die stehende wird dabei leicht kleiner und dunkler. Attribut an die Section, die überdeckt wird; die nächste braucht eine Hintergrundfarbe.</p>
+          <button class="copy" data-copy='data-anim="cover"'><code>data-anim="cover"</code><span class="hint">kopieren</span></button>
+          <ul class="opts"><li><code>data-anim-scale="0.9"</code> Größe am Ende</li><li><code>data-anim-dim="0.6"</code> Abdunkeln (Standard 0.5, <code>0</code> = aus)</li><li><code>data-anim-radius="24px"</code> Ecken am Ende</li></ul>
+        </div>
+        <div class="stage" style="min-height:120px"><p style="margin:0;color:var(--muted)">↓ Demo direkt darunter</p></div>
+      </div>
+      <div>
+        <div class="cover-a" data-anim="cover" data-anim-radius="24px"><small style="font-family:var(--font-mono);color:var(--muted)">Section A</small><h3>Diese Section bleibt stehen.</h3></div>
+        <div class="cover-b"><small style="font-family:var(--font-mono);opacity:.8">Section B</small><h3>Und diese schiebt sich darüber.</h3></div>
       </div>
     </section>
 
@@ -613,7 +752,7 @@ setTimeout(function(){if(!window.WFAnim)document.documentElement.classList.remov
           <button class="copy" data-copy='data-hover="img-zoom lift underline arrow"'><code>data-hover="img-zoom lift underline arrow"</code><span class="hint">kopieren</span></button>
         </div>
         <div class="stage">
-          <a class="hcard wide" href="#hover" data-hover="img-zoom lift underline arrow">
+          <a class="hcard wide" href="#hover" data-hover="img-zoom lift underline arrow" data-cursor="Ansehen">
             <div class="media"><img data-demo-img="1" alt=""></div>
             <div class="body"><span data-hover-target="underline">Projekt Leuchtturm</span><span data-hover-target="arrow" aria-hidden="true">→</span></div>
           </a>
@@ -621,10 +760,63 @@ setTimeout(function(){if(!window.WFAnim)document.documentElement.classList.remov
       </div>
     </section>
 
-    <!-- 7 MODIFIER -->
-    <section class="cat" id="modifier">
+    <!-- 7 SEITE -->
+    <section class="cat" id="seite">
       <div class="cat-head">
         <div class="num">7</div>
+        <h2>Seite & Navigation</h2>
+        <p>Effekte für die ganze Seite: Header, Hintergrund, Scrollverhalten und Cursor.</p>
+      </div>
+
+      <div class="demo">
+        <div class="info">
+          <h3>Nav Hide</h3>
+          <p>Der Header verschwindet beim Runterscrollen und kommt beim Hochscrollen zurück. Der Header dieser Seite nutzt es. Zusätzlich bekommt er ab dem Offset die Klasse <code>is-scrolled</code>, die du in Webflow als Combo-Klasse gestalten kannst (z. B. Schatten).</p>
+          <button class="copy" data-copy='data-anim="nav-hide"'><code>data-anim="nav-hide"</code><span class="hint">kopieren</span></button>
+          <ul class="opts"><li>An die Navbar; in Webflow auf Position fixed oder sticky stellen</li><li><code>data-anim-offset="200px"</code> erst ab dieser Scrolltiefe</li><li>Bleibt sichtbar bei Tastatur-Fokus und geöffnetem Mobile-Menü</li></ul>
+        </div>
+        <div class="stage" style="min-height:120px"><p style="margin:0;color:var(--muted)">↑ Siehe Header oben</p></div>
+      </div>
+
+      <div class="demo">
+        <div class="info">
+          <h3>Background Color</h3>
+          <p>Solange die Section die Bildschirmmitte abdeckt, wechselt der Seitenhintergrund fließend auf ihre Farbe. Die Section selbst braucht in Webflow einen transparenten Hintergrund. Die Farben stehen außerdem als Variablen <code>--anim-bg</code> und <code>--anim-text</code> bereit.</p>
+          <button class="copy" data-copy='data-anim="bg-color"'><code>data-anim="bg-color"</code><span class="hint">kopieren</span></button>
+          <ul class="opts"><li><code>data-anim-color="#141824"</code> Hintergrund, auch Variablen</li><li><code>data-anim-text-color="#ffffff"</code> Textfarbe</li><li><code>data-anim-target=".page-wrapper"</code> anderes Element statt body</li></ul>
+        </div>
+        <div class="stage" style="min-height:120px"><p style="margin:0;color:var(--muted)">↓ Demo direkt darunter</p></div>
+      </div>
+      <div class="bg-band" data-anim="bg-color" data-anim-color="var(--accent)" data-anim-text-color="var(--accent-ink)">
+        <small style="font-family:var(--font-mono)">bg-color</small>
+        <h3>Die ganze Seite wechselt die Farbe.</h3>
+      </div>
+
+      <div class="demo">
+        <div class="info">
+          <h3>Smooth Scroll</h3>
+          <p>Weiches, leicht nachlaufendes Scrollen mit dem Mausrad. Tastatur, Scrollbalken und Touch bleiben normal. Wird global eingeschaltet, nicht per Element. Probier es mit dem Schalter im Header dieser Seite.</p>
+          <button class="copy" data-copy='data-anim-smooth'><code>data-anim-smooth</code><span class="hint">kopieren</span></button>
+          <ul class="opts"><li>Am <code>body</code>, oder im Footer vor der Library: <code>WFAnimConfig = { smoothScroll: true }</code></li><li>Wert <code>0.06</code> = weicher, <code>0.2</code> = direkter (Standard 0.1)</li><li><code>data-anim-native-scroll</code> an Bereichen, die selbst scrollen sollen</li><li>Bei „Bewegung reduzieren“ automatisch aus</li></ul>
+        </div>
+        <div class="stage"><button class="smooth-toggle" type="button" aria-pressed="false" data-smooth-toggle style="font-size:1rem;padding:12px 20px">Smooth Scroll</button></div>
+      </div>
+
+      <div class="demo">
+        <div class="info">
+          <h3>Cursor</h3>
+          <p>Eigener Cursor, den du in Webflow gestaltest: ein Element irgendwo auf der Seite (z. B. in einem globalen Component) mit Position fixed und Deckkraft 0. Über Links wird er größer, über Elementen mit <code>data-cursor="Text"</code> zeigt er den Text im Kind mit <code>data-cursor-label</code>. Auf dieser Seite aktiv.</p>
+          <button class="copy" data-copy='data-anim="cursor"'><code>data-anim="cursor"</code><span class="hint">kopieren</span></button>
+          <ul class="opts"><li>Klassen <code>is-hover</code> und <code>is-text</code> als Combo-Klassen gestalten</li><li><code>data-anim-scale="2"</code> Größe über Links (Standard 3)</li><li><code>data-anim-lag="0.3"</code> Nachlauf in Sekunden</li><li><code>data-anim-hide-native</code> System-Cursor ausblenden</li><li>Auf Touch-Geräten automatisch aus</li></ul>
+        </div>
+        <div class="stage"><a class="hcard" href="#seite" data-cursor="Ansehen"><div class="media"><img data-demo-img="2" alt=""></div><div class="body">data-cursor</div></a></div>
+      </div>
+    </section>
+
+    <!-- 8 MODIFIER -->
+    <section class="cat" id="modifier">
+      <div class="cat-head">
+        <div class="num">8</div>
         <h2>Globale Modifier</h2>
         <p>Funktionieren bei allen Animationen, die beim Reinscrollen starten. Einfach als zusätzliches Attribut setzen.</p>
       </div>
@@ -649,12 +841,12 @@ setTimeout(function(){if(!window.WFAnim)document.documentElement.classList.remov
     <!-- 7 API -->
     <section class="cat" id="api">
       <div class="cat-head">
-        <div class="num">8</div>
+        <div class="num">9</div>
         <h2>Infrastruktur</h2>
         <p>Was die Library im Hintergrund erledigt, und wie du sie bei Bedarf steuerst.</p>
       </div>
       <ul class="tips">
-        <li><strong>Bewegung reduzieren:</strong> Ist die Systemeinstellung aktiv, werden Inhalte ohne Animation angezeigt. Ausnahmen sind Progress Bar und Horizontal Scroll, weil sie für die Bedienung gebraucht werden.</li>
+        <li><strong>Bewegung reduzieren:</strong> Ist die Systemeinstellung aktiv, werden Inhalte ohne Animation angezeigt. Ausnahmen sind Progress Bar, Horizontal Scroll, Nav Hide (ohne Gleiten) und Background Color, weil sie für die Bedienung gebraucht werden oder keine Bewegung sind. Smooth Scroll und der eigene Cursor sind dann aus.</li>
         <li><strong>Barrierefreiheit:</strong> Noch nicht eingeblendete Elemente sind nur durchsichtig, nicht versteckt. Screenreader lesen sie vor, die Browser-Suche findet sie. Bekommt ein Link darin per Tastatur den Fokus, erscheint das Element sofort. Counter und Scramble geben Screenreadern immer den fertigen Text.</li>
         <li><strong>Fehlertoleranz:</strong> Fehlt ein Plugin oder ist ein Wert unbekannt, erscheint eine Warnung in der Konsole und das Element wird normal angezeigt.</li>
         <li><strong>Hover:</strong> läuft nur mit Maus oder Trackpad und bei Tastatur-Fokus. Bei „Bewegung reduzieren“ bleiben nur Farbeffekte (img-darken, fill, underline, reveal ohne Bewegung). Webflow-Dropdowns nutzen selbst ein <code>data-hover</code>-Attribut, dort bitte keinen Effekt setzen.</li>
@@ -664,6 +856,7 @@ setTimeout(function(){if(!window.WFAnim)document.documentElement.classList.remov
 <pre class="code-block"><code>WFAnim.init(element)   // neue Elemente animieren, z. B. nach CMS Load More
 WFAnim.refresh()       // Positionen neu berechnen
 WFAnim.destroy()       // alles zurücksetzen
+WFAnim.smoothScroll(true)  // Smooth Scroll per Code an (false = aus)
 WFAnim.register('mein-effekt', (el, opts) =&gt; {
   gsap.from(el, { rotate: -8, autoAlpha: 0, scrollTrigger: { trigger: el, start: opts.start } });
 });</code></pre>
@@ -703,7 +896,7 @@ WFAnim.register('mein-effekt', (el, opts) =&gt; {
 </script>
 <script>
 /*!
- * WF Anim v1.2.0
+ * WF Anim v1.3.0
  * Attribut-basierte GSAP-Animationen für Webflow
  *
  * Benötigt: gsap + ScrollTrigger
@@ -814,6 +1007,12 @@ WFAnim.register('mein-effekt', (el, opts) =&gt; {
   const show = (el) => {
     unhide(el);
     el.querySelectorAll('[data-anim-item]').forEach(unhide);
+  };
+
+  // CSS-Variablen (z. B. Webflow Variables) in Farben auflösen – GSAP kann var() nicht animieren
+  const resolveColor = (c, el) => {
+    const m = c && /^var\((--[^),\s]+)/.exec(String(c).trim());
+    return m ? getComputedStyle(el || html).getPropertyValue(m[1]).trim() || c : c;
   };
 
   // Echter Text für Screenreader, animierter Text nur fürs Auge (counter, scramble)
@@ -1306,6 +1505,503 @@ WFAnim.register('mein-effekt', (el, opts) =&gt; {
   const finePointer = () => window.matchMedia('(hover: hover) and (pointer: fine)').matches;
 
   /* ------------------------------------------------------------------ */
+  /*  Bilder                                                             */
+  /* ------------------------------------------------------------------ */
+  /*@block image-expand,image-shrink*/
+  // Wrapper ist im Layout voll breit; eine clip-path-Maske schneidet ihn zu
+  const expandFx = (shrink) => (el) => {
+    const ds = el.dataset;
+    const media = el.querySelector('img, video');
+    const len = (v, base) => (String(v).trim().endsWith('%') ? (parseFloat(v) / 100) * base : toPx(v));
+    const insetOf = () => {
+      const r = el.getBoundingClientRect();
+      const v = ds.animInset || '6vw';
+      let l;
+      let rr;
+      if (v === 'container') {
+        const c = document.querySelector('[data-anim-container]') || document.querySelector('.w-container, .container');
+        if (c) {
+          const cr = c.getBoundingClientRect();
+          const cs = getComputedStyle(c);
+          l = cr.left + parseFloat(cs.paddingLeft) - r.left;
+          rr = r.right - (cr.right - parseFloat(cs.paddingRight));
+        } else warn('image-expand: kein Element mit data-anim-container gefunden', el);
+      }
+      if (l === undefined) l = rr = len(v === 'container' ? '6vw' : v, r.width);
+      l = Math.max(0, l);
+      rr = Math.max(0, rr);
+      const y = ds.animInsetY ? len(ds.animInsetY, r.height) : Math.min((l + rr) / 2, r.height * 0.25);
+      return { l, r: rr, y };
+    };
+    const rad = toPx(ds.animRadius || '1rem');
+    const small = () => {
+      const i = insetOf();
+      return `inset(${i.y}px ${i.r}px ${i.y}px ${i.l}px round ${rad}px)`;
+    };
+    const full = 'inset(0px 0px 0px 0px round 0px)';
+    const zoom = ds.animZoom === 'false' ? 1 : num(ds.animZoom, 1.15);
+    const pin = bool(ds.animPin);
+    const tl = gsap.timeline({
+      defaults: { ease: 'none' },
+      scrollTrigger: pin
+        ? { trigger: el, start: ds.animStart || 'top top', end: ds.animEnd || '+=100%', pin: true, scrub: true, invalidateOnRefresh: true }
+        : { trigger: el, start: ds.animStart || 'top bottom', end: ds.animEnd || 'center center', scrub: true, invalidateOnRefresh: true },
+    });
+    tl.fromTo(el, { clipPath: () => (shrink ? full : small()) }, { clipPath: () => (shrink ? small() : full) }, 0);
+    if (media && zoom !== 1) tl.fromTo(media, { scale: shrink ? 1 : zoom }, { scale: shrink ? zoom : 1 }, 0);
+  };
+  A['image-expand'] = expandFx(false);
+  A['image-shrink'] = expandFx(true);
+  /*@end*/
+
+  /*@block image-curtain*/
+  // Farbfläche wischt über das Bild und gibt es frei
+  A['image-curtain'] = (el, o) => {
+    const ds = el.dataset;
+    const media = el.querySelector('img, video') || el.firstElementChild;
+    if (!media) return show(el);
+    const dir = ds.animDirection || 'right';
+    const axis = dir === 'up' || dir === 'down' ? 'scaleY' : 'scaleX';
+    const o1 = { right: 'left center', left: 'right center', down: 'center top', up: 'center bottom' }[dir] || 'left center';
+    const o2 = { right: 'right center', left: 'left center', down: 'center bottom', up: 'center top' }[dir] || 'right center';
+    const prev = { position: el.style.position, overflow: el.style.overflow };
+    if (getComputedStyle(el).position === 'static') el.style.position = 'relative';
+    el.style.overflow = 'hidden';
+    const cover = document.createElement('span');
+    cover.setAttribute('aria-hidden', 'true');
+    cover.setAttribute('style', `position:absolute;inset:0;z-index:2;pointer-events:none;background:${ds.animColor || 'var(--anim-curtain, #141824)'}`);
+    el.appendChild(cover);
+    unhide(el);
+    gsap.set(media, { opacity: 0 });
+    const half = o.duration * 0.6;
+    const tl = gsap.timeline({ delay: o.scrub ? 0 : o.delay, scrollTrigger: st(el, o), defaults: { ease: 'power3.inOut' } });
+    tl.fromTo(cover, { [axis]: 0, transformOrigin: o1 }, { [axis]: 1, duration: half })
+      .set(media, { opacity: 1 })
+      .set(cover, { transformOrigin: o2 })
+      .to(cover, { [axis]: 0, duration: half })
+      .fromTo(media, { scale: 1.15 }, { scale: 1, duration: o.duration * 1.4, ease: 'power3.out', immediateRender: false }, '<');
+    return () => {
+      cover.remove();
+      Object.assign(el.style, prev);
+    };
+  };
+  /*@end*/
+
+  /* ------------------------------------------------------------------ */
+  /*  Sections                                                           */
+  /* ------------------------------------------------------------------ */
+  /*@block stack*/
+  // Kinder kleben nacheinander (sticky) und stapeln sich; frühere werden kleiner
+  A['stack'] = (el) => {
+    const ds = el.dataset;
+    const list = items(el);
+    if (list.length < 2) return;
+    const top = ds.animTop || '10vh';
+    const gap = ds.animOffset || '1.5rem';
+    const min = num(ds.animScale, 0.9);
+    const dim = num(ds.animDim, 0);
+    const n = list.length;
+    const last = list[n - 1];
+    list.forEach((it, i) => gsap.set(it, { position: 'sticky', top: `calc(${top} + ${i} * ${gap})`, transformOrigin: 'center top' }));
+    list.slice(0, -1).forEach((it, i) => {
+      const f = (n - 1 - i) / (n - 1);
+      const from = { scale: 1 };
+      const to = { scale: 1 - (1 - min) * f, ease: 'none' };
+      if (dim) {
+        from.filter = 'brightness(1)';
+        to.filter = `brightness(${1 - dim * f})`;
+      }
+      to.scrollTrigger = {
+        trigger: list[i + 1],
+        start: 'top bottom',
+        endTrigger: last,
+        end: () => 'top ' + (parseFloat(getComputedStyle(last).top) || 0) + 'px',
+        scrub: true,
+        invalidateOnRefresh: true,
+      };
+      gsap.fromTo(it, from, to);
+    });
+  };
+  /*@end*/
+
+  /*@block cover*/
+  // Section bleibt stehen, die nächste schiebt sich darüber
+  A['cover'] = (el) => {
+    const ds = el.dataset;
+    const next = el.nextElementSibling;
+    if (next) {
+      if (getComputedStyle(next).position === 'static') gsap.set(next, { position: 'relative' });
+      gsap.set(next, { zIndex: 1 });
+    }
+    const dim = num(ds.animDim, 0.5);
+    const from = { scale: 1 };
+    const to = { scale: num(ds.animScale, 0.92), ease: 'none' };
+    if (dim) {
+      from.filter = 'brightness(1)';
+      to.filter = `brightness(${1 - dim})`;
+    }
+    if (ds.animRadius) {
+      from.borderRadius = '0px';
+      to.borderRadius = toPx(ds.animRadius) + 'px';
+    }
+    const tall = () => el.offsetHeight > window.innerHeight;
+    to.scrollTrigger = {
+      trigger: el,
+      start: () => (tall() ? 'bottom bottom' : 'top top'),
+      end: () => '+=' + window.innerHeight,
+      pin: true,
+      pinSpacing: false,
+      scrub: true,
+      invalidateOnRefresh: true,
+    };
+    gsap.fromTo(el, from, to);
+  };
+  /*@end*/
+
+  /* ------------------------------------------------------------------ */
+  /*  Text                                                               */
+  /* ------------------------------------------------------------------ */
+  /*@block rotate-words*/
+  // Ein Wort wechselt in Schleife: Text "Websites", data-anim-words="Marken, Shops"
+  A['rotate-words'] = (el) => {
+    const ds = el.dataset;
+    const base = el.textContent.trim();
+    const list = (ds.animWords || '').split(',').map((w) => w.trim()).filter(Boolean);
+    if (base && !list.includes(base)) list.unshift(base);
+    if (list.length < 2) return;
+    const raw = el.innerHTML;
+    el.textContent = '';
+    const sr = document.createElement('span');
+    sr.setAttribute('style', SR_STYLE);
+    sr.textContent = list.join(', ');
+    const wrap = document.createElement('span');
+    wrap.setAttribute('aria-hidden', 'true');
+    wrap.setAttribute('style', 'display:inline-block;position:relative;white-space:nowrap;clip-path:inset(0 -0.6em)');
+    const words = list.map((w, i) => {
+      const s = document.createElement('span');
+      s.textContent = w;
+      s.setAttribute('style', i ? 'display:inline-block;position:absolute;left:0;top:0' : 'display:inline-block');
+      return s;
+    });
+    wrap.append(...words);
+    el.append(sr, wrap);
+    words.forEach((w, i) => i && gsap.set(w, { yPercent: 100 }));
+    const interval = num(ds.animInterval, 2.2);
+    const dur = num(ds.animDuration, 0.6);
+    const ease = ds.animEase || 'power3.inOut';
+    let i = 0;
+    let dc;
+    const step = () => {
+      const n = (i + 1) % words.length;
+      gsap.to(words[i], { yPercent: -100, duration: dur, ease });
+      gsap.fromTo(words[n], { yPercent: 100 }, { yPercent: 0, duration: dur, ease });
+      gsap.to(wrap, { width: words[n].offsetWidth, duration: dur, ease });
+      i = n;
+      dc = gsap.delayedCall(interval, step);
+    };
+    dc = gsap.delayedCall(interval, step);
+    return () => {
+      if (dc) dc.kill();
+      gsap.killTweensOf([wrap, ...words]);
+      el.innerHTML = raw;
+    };
+  };
+  /*@end*/
+
+  /*@block typewriter*/
+  // Text tippt sich; der Platz bleibt reserviert, damit nichts springt
+  A['typewriter'] = (el, o) => {
+    const { raw, vis, restore } = srSplit(el);
+    const text = raw.replace(/\s+/g, ' ').trim();
+    vis.textContent = '';
+    const typed = document.createElement('span');
+    const rest = document.createElement('span');
+    rest.style.visibility = 'hidden';
+    rest.textContent = text;
+    const withCaret = el.dataset.animCursor !== 'false';
+    const caret = document.createElement('span');
+    caret.setAttribute('style', 'display:inline-block;width:0.06em;height:1em;margin-right:-0.06em;vertical-align:-0.12em;background:currentColor');
+    vis.append(typed);
+    if (withCaret) vis.append(caret);
+    vis.append(rest);
+    unhide(el);
+    const speed = num(el.dataset.animSpeed, 30);
+    const state = { n: 0 };
+    const render = () => {
+      const n = Math.round(state.n);
+      typed.textContent = text.slice(0, n);
+      rest.textContent = text.slice(n);
+    };
+    gsap.to(state, {
+      n: text.length,
+      duration: text.length / speed,
+      delay: o.scrub ? 0 : o.delay,
+      ease: 'none',
+      onUpdate: render,
+      scrollTrigger: st(el, o),
+    });
+    if (withCaret) gsap.to(caret, { opacity: 0, duration: 0.5, repeat: -1, yoyo: true, ease: 'steps(1)' });
+    return restore;
+  };
+  /*@end*/
+
+  /* ------------------------------------------------------------------ */
+  /*  Seite & Navigation                                                 */
+  /* ------------------------------------------------------------------ */
+  /*@block nav-hide*/
+  // Header verschwindet beim Runterscrollen, kommt beim Hochscrollen zurück.
+  // Setzt außerdem die Klasse is-scrolled (zum Gestalten in Webflow).
+  A['nav-hide'] = (el, o, ctx) => {
+    const offset = toPx(el.dataset.animOffset || '100px');
+    const reduce = ctx && ctx.conditions && ctx.conditions.reduce;
+    const dur = reduce ? 0 : num(el.dataset.animDuration, 0.4);
+    let hidden = false;
+    let focusIn = false;
+    const set = (h) => {
+      if (h === hidden) return;
+      hidden = h;
+      gsap.to(el, { yPercent: h ? -100 : 0, duration: dur, ease: 'power3.out', overwrite: true });
+    };
+    const fin = () => {
+      focusIn = true;
+      set(false);
+    };
+    const fout = (e) => {
+      if (!el.contains(e.relatedTarget)) focusIn = false;
+    };
+    el.addEventListener('focusin', fin);
+    el.addEventListener('focusout', fout);
+    el.classList.toggle('is-scrolled', window.scrollY > offset);
+    ScrollTrigger.create({
+      start: 0,
+      end: 'max',
+      onUpdate: (self) => {
+        const y = self.scroll();
+        el.classList.toggle('is-scrolled', y > offset);
+        // Nicht verstecken: oben auf der Seite, bei Tastatur-Fokus oder offenem Webflow-Menü
+        if (y <= offset || focusIn || el.querySelector('.w--open')) return set(false);
+        set(self.direction === 1);
+      },
+    });
+    return () => {
+      el.removeEventListener('focusin', fin);
+      el.removeEventListener('focusout', fout);
+      el.classList.remove('is-scrolled');
+    };
+  };
+  /*@end*/
+
+  /*@block bg-color*/
+  // Section färbt den Seitenhintergrund, solange sie die Bildschirmmitte abdeckt
+  const bgGroups = new Map();
+  A['bg-color'] = (el, o, ctx) => {
+    const ds = el.dataset;
+    const target = (ds.animTarget && document.querySelector(ds.animTarget)) || document.body;
+    let g = bgGroups.get(target);
+    if (!g) {
+      const cs = getComputedStyle(target);
+      g = {
+        items: [],
+        inline: { bg: target.style.backgroundColor, color: target.style.color },
+        orig: { bg: cs.backgroundColor, color: cs.color },
+      };
+      bgGroups.set(target, g);
+      gsap.set(html, { '--anim-bg': g.orig.bg, '--anim-text': g.orig.color });
+    }
+    const item = { bg: ds.animColor, color: ds.animTextColor, active: false };
+    g.items.push(item);
+    const reduce = ctx && ctx.conditions && ctx.conditions.reduce;
+    const dur = reduce ? 0.2 : num(ds.animDuration, 0.6);
+    const apply = () => {
+      const act = g.items.filter((it) => it.active).pop();
+      const bg = act && act.bg ? resolveColor(act.bg, target) : g.orig.bg;
+      const color = act && act.color ? resolveColor(act.color, target) : g.orig.color;
+      gsap.to(target, {
+        backgroundColor: bg,
+        color,
+        duration: dur,
+        ease: 'power2.out',
+        overwrite: 'auto',
+        // Ohne aktive Section: Inline-Farben wieder entfernen, damit Webflow-Styles gelten
+        onComplete: act ? undefined : () => {
+          target.style.backgroundColor = g.inline.bg;
+          target.style.color = g.inline.color;
+        },
+      });
+      gsap.to(html, { '--anim-bg': bg, '--anim-text': color, duration: dur, ease: 'power2.out', overwrite: 'auto' });
+    };
+    ScrollTrigger.create({
+      trigger: el,
+      start: ds.animStart || 'top 50%',
+      end: ds.animEnd || 'bottom 50%',
+      onToggle: (self) => {
+        item.active = self.isActive;
+        apply();
+      },
+    });
+    return () => {
+      g.items.splice(g.items.indexOf(item), 1);
+      if (g.items.length) return;
+      gsap.killTweensOf([target, html]);
+      target.style.backgroundColor = g.inline.bg;
+      target.style.color = g.inline.color;
+      bgGroups.delete(target);
+    };
+  };
+  /*@end*/
+
+  /*@block cursor*/
+  // Eigener Cursor: Element mit data-anim="cursor" (in Webflow gestaltet).
+  // Klassen is-hover (über Links/Buttons) und is-text (über [data-cursor]).
+  let cursorStyle = null;
+  A['cursor'] = (el, o, ctx) => {
+    if (!ctx || !ctx.conditions || !ctx.conditions.canHover) {
+      gsap.set(el, { display: 'none' });
+      return;
+    }
+    const ds = el.dataset;
+    const lag = num(ds.animLag, 0.15);
+    const scale = num(ds.animScale, 3);
+    const textScale = num(ds.animTextScale, 1);
+    const label = el.querySelector('[data-cursor-label]');
+    gsap.set(el, { position: 'fixed', left: 0, top: 0, xPercent: -50, yPercent: -50, pointerEvents: 'none', zIndex: 9999, opacity: 0 });
+    const xTo = gsap.quickTo(el, 'x', { duration: lag, ease: 'power3' });
+    const yTo = gsap.quickTo(el, 'y', { duration: lag, ease: 'power3' });
+    const hide = bool(ds.animHideNative);
+    if (hide) {
+      if (!cursorStyle) {
+        cursorStyle = document.createElement('style');
+        cursorStyle.textContent = 'html.wfa-cursor-hide, html.wfa-cursor-hide * { cursor: none !important; }';
+        document.head.appendChild(cursorStyle);
+      }
+      html.classList.add('wfa-cursor-hide');
+    }
+    let shown = false;
+    let state = '';
+    let text = '';
+    let lx = 0;
+    let ly = 0;
+    const update = (t) => {
+      const tEl = t && t.closest ? t.closest('[data-cursor]') : null;
+      const link = !tEl && t && t.closest ? t.closest('a, button, [role="button"], label, select, [data-cursor-hover]') : null;
+      const next = tEl ? 'text' : link ? 'hover' : '';
+      const nt = tEl ? tEl.getAttribute('data-cursor') : '';
+      if (next === state && nt === text) return;
+      state = next;
+      text = nt;
+      el.classList.toggle('is-hover', next === 'hover');
+      el.classList.toggle('is-text', next === 'text');
+      if (label) label.textContent = nt;
+      gsap.to(el, { scale: next === 'hover' ? scale : next === 'text' ? textScale : 1, duration: 0.35, ease: 'power3.out', overwrite: 'auto' });
+    };
+    const move = (e) => {
+      if (e.pointerType === 'touch') return;
+      lx = e.clientX;
+      ly = e.clientY;
+      if (!shown) {
+        shown = true;
+        gsap.set(el, { x: lx, y: ly });
+        gsap.to(el, { opacity: 1, duration: 0.3 });
+      }
+      xTo(lx);
+      yTo(ly);
+      update(e.target);
+    };
+    const out = () => {
+      shown = false;
+      gsap.to(el, { opacity: 0, duration: 0.3 });
+    };
+    // Beim Scrollen ohne Mausbewegung ändert sich, was unter dem Cursor liegt
+    const onScroll = () => shown && update(document.elementFromPoint(lx, ly));
+    document.addEventListener('pointermove', move, { passive: true });
+    html.addEventListener('mouseleave', out);
+    window.addEventListener('scroll', onScroll, { passive: true });
+    return () => {
+      document.removeEventListener('pointermove', move);
+      html.removeEventListener('mouseleave', out);
+      window.removeEventListener('scroll', onScroll);
+      el.classList.remove('is-hover', 'is-text');
+      html.classList.remove('wfa-cursor-hide');
+    };
+  };
+  /*@end*/
+
+  /*@block smooth-scroll*/
+  // Weiches Scrollen mit Mausrad. Tastatur, Scrollbar und Touch bleiben nativ.
+  // Aktivieren: WFAnimConfig.smoothScroll = true (oder Zahl 0.05–0.3) bzw. data-anim-smooth am <body>
+  const smooth = (() => {
+    let on = false;
+    let lerp = 0.1;
+    let cur = 0;
+    let target = 0;
+    let moving = false;
+    const max = () => document.documentElement.scrollHeight - window.innerHeight;
+    const nested = (node, dy) => {
+      for (let n = node; n && n.nodeType === 1 && n !== document.body && n !== html; n = n.parentElement) {
+        if (n.hasAttribute('data-anim-native-scroll')) return true;
+        const oy = getComputedStyle(n).overflowY;
+        if ((oy === 'auto' || oy === 'scroll') && n.scrollHeight > n.clientHeight) {
+          if ((dy > 0 && n.scrollTop + n.clientHeight < n.scrollHeight - 1) || (dy < 0 && n.scrollTop > 0)) return true;
+        }
+      }
+      return false;
+    };
+    const locked = () => getComputedStyle(document.body).overflow === 'hidden' || getComputedStyle(html).overflow === 'hidden';
+    const onWheel = (e) => {
+      if (e.ctrlKey || e.defaultPrevented || Math.abs(e.deltaX) > Math.abs(e.deltaY)) return;
+      if (locked() || nested(e.target, e.deltaY)) return;
+      e.preventDefault();
+      let dy = e.deltaY;
+      if (e.deltaMode === 1) dy *= 40;
+      else if (e.deltaMode === 2) dy *= window.innerHeight;
+      if (!moving) cur = target = window.scrollY;
+      target = Math.max(0, Math.min(max(), target + dy));
+      moving = true;
+    };
+    const onScroll = () => {
+      if (!moving) cur = target = window.scrollY;
+    };
+    const onKey = () => {
+      moving = false;
+    };
+    const loop = (time, dt) => {
+      if (!moving) return;
+      const k = 1 - Math.pow(1 - lerp, (dt || 16.7) / 16.7);
+      cur += (target - cur) * k;
+      if (Math.abs(target - cur) < 0.5) {
+        cur = target;
+        moving = false;
+      }
+      window.scrollTo({ top: cur, behavior: 'instant' });
+    };
+    return {
+      start(l) {
+        lerp = Math.min(0.5, Math.max(0.02, num(l, 0.1)));
+        if (on) return;
+        on = true;
+        cur = target = window.scrollY;
+        window.addEventListener('wheel', onWheel, { passive: false });
+        window.addEventListener('scroll', onScroll, { passive: true });
+        window.addEventListener('keydown', onKey);
+        gsap.ticker.add(loop);
+      },
+      stop() {
+        if (!on) return;
+        on = false;
+        moving = false;
+        window.removeEventListener('wheel', onWheel);
+        window.removeEventListener('scroll', onScroll);
+        window.removeEventListener('keydown', onKey);
+        gsap.ticker.remove(loop);
+      },
+      get active() {
+        return on;
+      },
+    };
+  })();
+  /*@end*/
+
+  /* ------------------------------------------------------------------ */
   /*  Hover-Effekte: data-hover="img-zoom lift" an die Card              */
   /*  Signatur: (card, x) → { tl?, move?, leave?, cleanup? }             */
   /* ------------------------------------------------------------------ */
@@ -1607,13 +2303,13 @@ WFAnim.register('mein-effekt', (el, opts) =&gt; {
   /* ------------------------------------------------------------------ */
   // Diese Animationen laufen auch bei "Bewegung reduzieren", weil sie direkt
   // an den Scroll gekoppelt bzw. für die Bedienung nötig sind.
-  const RUN_IN_REDUCED = new Set(['progress-bar', 'horizontal']);
+  const RUN_IN_REDUCED = new Set(['progress-bar', 'horizontal', 'bg-color', 'nav-hide']);
 
   // Einblende-Animationen: Diese bleiben im Startbildschirm ruhig (außer mit data-anim-intro).
   // Scroll-gekoppelte Effekte (parallax, pin, marquee …) laufen immer.
   const ENTRY = new Set([
     ...REVEALS, 'stagger', 'grid-stagger', 'split-lines', 'split-words', 'split-chars',
-    'scramble', 'highlight', 'counter', 'draw-svg',
+    'scramble', 'highlight', 'counter', 'draw-svg', 'typewriter', 'image-curtain',
   ]);
   const isIntro = (el) => el.hasAttribute('data-anim-intro') && el.dataset.animIntro !== 'false';
   // im sichtbaren Bereich oder darüber (bereits vorbeigescrollt)
@@ -1639,6 +2335,7 @@ WFAnim.register('mein-effekt', (el, opts) =&gt; {
     });
   };
   let focusBound = false;
+  let smoothMM = null;
 
   const done = new WeakSet();
   const doneHover = new WeakSet();
@@ -1658,6 +2355,17 @@ WFAnim.register('mein-effekt', (el, opts) =&gt; {
         .filter(Boolean);
       gsap.registerPlugin(...plugins);
       registered = true;
+    }
+    // Smooth Scroll einmalig starten (nicht bei "Bewegung reduzieren")
+    if (!smoothMM && typeof smooth === 'object') {
+      const val = cfg.smoothScroll !== undefined ? cfg.smoothScroll : document.body.getAttribute('data-anim-smooth');
+      if (val !== undefined && val !== null && val !== false && val !== 'false') {
+        smoothMM = gsap.matchMedia();
+        smoothMM.add('(prefers-reduced-motion: no-preference)', () => {
+          smooth.start(val);
+          return () => smooth.stop();
+        });
+      }
     }
     if (!focusBound) {
       document.addEventListener('focusin', onFocus);
@@ -1707,7 +2415,8 @@ WFAnim.register('mein-effekt', (el, opts) =&gt; {
           }
           const off = (mobile && el.dataset.animMobile === 'false') || (reduce && !RUN_IN_REDUCED.has(type));
           if (off) {
-            show(el);
+            if (type === 'cursor') gsap.set(el, { display: 'none' });
+            else show(el);
             return;
           }
           // data-anim-intro ergibt nur bei Einblende-Animationen Sinn – sonst nicht versteckt lassen
@@ -1735,6 +2444,10 @@ WFAnim.register('mein-effekt', (el, opts) =&gt; {
   }
 
   function destroy() {
+    if (smoothMM) {
+      smoothMM.revert();
+      smoothMM = null;
+    }
     contexts.forEach((c) => {
       c.mm.revert();
       c.els.forEach((el) => done.delete(el));
@@ -1755,7 +2468,14 @@ WFAnim.register('mein-effekt', (el, opts) =&gt; {
     A[name] = fn;
   }
 
-  window.WFAnim = { init, destroy, refresh, register, config: cfg, animations: A, version: '1.2.0', hover: typeof H === 'object' ? H : {} };
+  // Smooth Scroll per Code an- oder ausschalten: WFAnim.smoothScroll(true | false | 0.08)
+  function smoothScroll(v) {
+    if (typeof smooth !== 'object') return warn('Smooth Scroll ist in diesem Build nicht enthalten.');
+    if (v === false) smooth.stop();
+    else smooth.start(v);
+  }
+
+  window.WFAnim = { init, destroy, refresh, register, smoothScroll, config: cfg, animations: A, version: '1.3.0', hover: typeof H === 'object' ? H : {} };
 
   const start = () => {
     if (!cfg.autoInit) return;
@@ -1798,6 +2518,18 @@ WFAnim.register('mein-effekt', (el, opts) =&gt; {
           var t = b.textContent; b.textContent = 'Kopiert'; setTimeout(function () { b.textContent = t; }, 1400);
         }, function () { var r = document.createRange(); r.selectNodeContents(pre); var s = getSelection(); s.removeAllRanges(); s.addRange(r); });
       } catch (e) {}
+    });
+  });
+  // Smooth-Scroll-Schalter
+  document.querySelectorAll('[data-smooth-toggle]').forEach(function (b) {
+    b.addEventListener('click', function () {
+      if (!window.WFAnim) return;
+      var on = b.getAttribute('aria-pressed') !== 'true';
+      WFAnim.smoothScroll(on);
+      document.querySelectorAll('[data-smooth-toggle]').forEach(function (x) {
+        x.setAttribute('aria-pressed', String(on));
+        x.textContent = on ? 'Smooth Scroll an' : 'Smooth Scroll';
+      });
     });
   });
   // Neu abspielen
