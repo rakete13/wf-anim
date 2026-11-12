@@ -1756,12 +1756,12 @@
     issues.forEach((t) => warn(`[Debug] ${type}: ${t}`, el));
   };
   const debugRun = (type, el, fn) => {
+    debugInspect(type, el); // vor der Animation prüfen (z. B. bevor pin das Element umbaut)
     ScrollTrigger.defaults({ markers: true, id: type });
     try {
       return fn();
     } finally {
       ScrollTrigger.defaults({ markers: false, id: undefined });
-      debugInspect(type, el);
     }
   };
   const showDebugBadge = () => {
