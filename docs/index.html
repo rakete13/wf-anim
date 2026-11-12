@@ -11,6 +11,7 @@
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
 <script>
   document.documentElement.classList.add('js-anim');
+  try { if (sessionStorage.getItem('wfa-preloaded')) document.documentElement.classList.add('wfa-preloaded'); } catch (e) {}
   setTimeout(function () { if (!window.WFAnim) document.documentElement.classList.remove('js-anim'); }, 3000);
 </script>
 <style>
@@ -47,6 +48,8 @@
 
 /* Head-Code der Library (wie im Webflow-Head) */
 .js-anim [data-anim-intro]:not([data-anim-intro="false"]) { opacity: 0; }
+.js-anim:not(.wfa-preloaded) [data-anim="preloader"] { display: flex !important; }
+.js-anim [data-accordion-content] { height: 0; overflow: hidden; }
 [data-anim="split-chars"] { font-kerning: none; }
 
 * { box-sizing: border-box; }
@@ -175,6 +178,31 @@ section.cat { display: grid; gap: 28px; scroll-margin-top: 32px; }
 .bg-band h3 { font-size: clamp(2rem, 5vw, 3.6rem); font-weight: 800; max-width: 16ch; }
 .rw { color: var(--accent); }
 
+.preloader { display: none; position: fixed; inset: 0; z-index: 100; background: var(--ink); color: var(--bg); flex-direction: column; align-items: center; justify-content: center; gap: 18px; }
+.pre-brand { font-family: var(--font-display); font-weight: 800; font-size: clamp(2rem, 6vw, 3.4rem); }
+.pre-brand span { color: var(--accent); }
+.pre-count { font-family: var(--font-mono); font-size: 0.9rem; opacity: 0.7; font-variant-numeric: tabular-nums; }
+.pre-bar { width: min(260px, 60vw); height: 2px; background: rgba(127, 127, 127, 0.35); }
+.pre-bar div { height: 100%; background: var(--accent); transform: scaleX(0); transform-origin: left center; }
+.video-box { width: 100%; max-width: 360px; aspect-ratio: 16 / 10; border-radius: 8px; overflow: hidden; }
+.video-box video { display: block; width: 100%; height: 100%; object-fit: cover; }
+.acc { width: 100%; max-width: 460px; display: grid; gap: 8px; }
+.acc-item { background: var(--surface); border: 1px solid var(--line); border-radius: 8px; }
+.acc-trigger { width: 100%; display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 14px 16px; background: none; border: 0; color: var(--ink); font: 600 0.95rem var(--font-body); text-align: left; cursor: pointer; }
+.acc-icon { font-size: 1.3rem; line-height: 1; color: var(--accent); display: inline-block; }
+.acc-inner { padding: 0 16px 16px; color: var(--muted); font-size: 0.92rem; }
+.menu-demo { width: 100%; max-width: 420px; display: grid; gap: 14px; justify-items: start; }
+.menu-panel { width: 100%; background: var(--ink); color: var(--bg); border-radius: 10px; padding: 22px 24px; display: grid; gap: 6px; }
+.menu-panel a { color: var(--bg); text-decoration: none; font-family: var(--font-display); font-weight: 700; font-size: 1.7rem; }
+.scrolly { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 32px; }
+.scrolly-steps { display: grid; gap: 0; }
+.scrolly-step { min-height: 55vh; display: grid; align-content: center; gap: 8px; }
+.scrolly-step h4 { margin: 0; font-family: var(--font-display); font-size: clamp(1.3rem, 2.6vw, 1.8rem); }
+.scrolly-step p { margin: 0; color: var(--muted); }
+.scrolly-media { aspect-ratio: 4 / 5; border-radius: 10px; overflow: hidden; }
+.scrolly-media img { display: block; width: 100%; height: 100%; object-fit: cover; }
+.debug-toggle[aria-pressed="true"] { background: #b4231b; border-color: #b4231b; color: #fff; }
+
 .wide-stage { background: var(--stage); border-radius: 10px; overflow: hidden; }
 .pin-stage { min-height: 100vh; display: grid; align-content: center; gap: 16px; padding: 32px; }
 .pin-stage .step { background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 16px 20px; max-width: 460px; }
@@ -229,6 +257,12 @@ td code { white-space: nowrap; }
   </div>
 </header>
 
+<div class="preloader" data-anim="preloader" data-anim-once="session" aria-hidden="true">
+  <div class="pre-brand">WF<span>.</span>Anim</div>
+  <div class="pre-bar"><div data-preloader-bar></div></div>
+  <div class="pre-count"><span data-preloader-counter>0</span> %</div>
+</div>
+
 <div class="cursor" data-anim="cursor" data-anim-scale="2.5" aria-hidden="true"><span data-cursor-label></span></div>
 
 <div class="shell">
@@ -248,7 +282,7 @@ td code { white-space: nowrap; }
 
   <main>
     <header class="hero">
-      <div class="eyebrow">WF Anim · v1.3.0 · GSAP 3.13</div>
+      <div class="eyebrow">WF Anim · v1.4.0 · GSAP 3.13</div>
       <h1 data-anim="split-lines" data-anim-intro>Ein Attribut,<br><em>eine Animation.</em></h1>
       <p>Standard-Animationen für jedes Webflow-Projekt. Element auswählen, unter <em>Custom Attributes</em> <span class="attr">data-anim</span> mit einem Wert aus dieser Liste setzen, fertig. Jede Zeile unten zeigt die Animation live; ein Klick auf das Attribut kopiert es. Was beim Laden schon im Bild ist, bleibt ruhig. Die Überschrift hier oben animiert trotzdem, weil sie <span class="attr">data-anim-intro</span> trägt.</p>
       <div class="notice" id="rm-notice" hidden>Dein System hat „Bewegung reduzieren“ aktiviert. Die Library zeigt Inhalte dann bewusst ohne Animation an, genau wie bei deinen Besuchern mit dieser Einstellung.</div>
@@ -264,13 +298,17 @@ td code { white-space: nowrap; }
       <div class="step-list">
         <div>
           <h3>Head Code</h3>
-          <p>Wird nur für Elemente mit <code>data-anim-intro</code> gebraucht: Er versteckt sie, bevor sie zum ersten Mal gezeichnet werden, damit nichts aufblitzt. Lädt die Library nicht innerhalb von drei Sekunden, wird alles wieder sichtbar. Am besten trotzdem in jedes Projekt, er ist klein.</p>
-<pre class="code-block" id="code-head"><code>&lt;script&gt;
+          <p>Verhindert, dass beim Laden etwas aufblitzt: Er versteckt Intro-Elemente und zugeklappte Akkordeon-Inhalte und zeigt den Preloader, bevor die Seite zum ersten Mal gezeichnet wird. Lädt die Library nicht innerhalb von drei Sekunden, wird alles wieder normal angezeigt.</p>
+<pre class="code-block" id="code-head"><code>&lt;!-- WF Anim · Head Code --&gt;
+&lt;script&gt;
 document.documentElement.classList.add('js-anim');
+try{if(sessionStorage.getItem('wfa-preloaded'))document.documentElement.classList.add('wfa-preloaded')}catch(e){}
 setTimeout(function(){if(!window.WFAnim)document.documentElement.classList.remove('js-anim')},3000);
 &lt;/script&gt;
 &lt;style&gt;
 .js-anim [data-anim-intro]:not([data-anim-intro="false"]) { opacity: 0; }
+.js-anim:not(.wfa-preloaded) [data-anim="preloader"] { display: flex !important; }
+.js-anim [data-accordion-content] { height: 0; overflow: hidden; }
 [data-anim="split-chars"] { font-kerning: none; }
 &lt;/style&gt;</code></pre>
           <button class="copy-block" data-copy-target="code-head">Head Code kopieren</button>
@@ -282,7 +320,7 @@ setTimeout(function(){if(!window.WFAnim)document.documentElement.classList.remov
         <div>
           <h3>Footer Code</h3>
           <p>Entweder eine Zeile, die die Library aus GitHub lädt. Bequem für eigene und betreute Projekte; die IP-Adresse der Besucher geht dabei an jsDelivr.</p>
-<pre class="code-block" id="code-footer"><code>&lt;script src="https://cdn.jsdelivr.net/gh/rakete13/wf-anim@1.3.0/src/wf-anim.min.js"&gt;&lt;/script&gt;</code></pre>
+<pre class="code-block" id="code-footer"><code>&lt;script src="https://cdn.jsdelivr.net/gh/rakete13/wf-anim@1.4.0/src/wf-anim.min.js"&gt;&lt;/script&gt;</code></pre>
           <button class="copy-block" data-copy-target="code-footer">Footer-Zeile kopieren</button>
           <p>Oder eingebettet: den Inhalt von <code>webflow/footer-code.html</code> aus dem Repo einfügen. Dann hängt das Projekt an keinem fremden Server, ideal bei Übergabe an Kunden.</p>
         </div>
@@ -624,6 +662,30 @@ setTimeout(function(){if(!window.WFAnim)document.documentElement.classList.remov
         <div class="cover-a" data-anim="cover" data-anim-radius="24px"><small style="font-family:var(--font-mono);color:var(--muted)">Section A</small><h3>Diese Section bleibt stehen.</h3></div>
         <div class="cover-b"><small style="font-family:var(--font-mono);opacity:.8">Section B</small><h3>Und diese schiebt sich darüber.</h3></div>
       </div>
+
+      <div class="demo">
+        <div class="info">
+          <h3>Scrollytelling</h3>
+          <p>Links Textabschnitte, rechts ein stehendes Bild, das zum jeweils aktiven Abschnitt wechselt. Attribut an den Container. Die Abschnitte bekommen <code>data-scrolly-step</code>, die Bilder <code>data-scrolly-media</code> und liegen gemeinsam in einem Wrapper. Die Library lässt diesen Wrapper festkleben und die Bilder übereinander liegen.</p>
+          <button class="copy" data-copy='data-anim="scrolly"'><code>data-anim="scrolly"</code><span class="hint">kopieren</span></button>
+          <ul class="opts"><li>Aktiver Abschnitt: Klasse <code>is-active</code></li><li><code>data-anim-dim="1"</code> inaktive Abschnitte nicht abdunkeln (Standard 0.35)</li><li><code>data-anim-top="20vh"</code> Abstand des Bildes oben</li><li>Kein <code>overflow: hidden</code> auf dem Container oder darüber</li></ul>
+        </div>
+        <div class="stage" style="min-height:120px"><p style="margin:0;color:var(--muted)">↓ Demo direkt darunter</p></div>
+      </div>
+      <div class="plain-stage">
+        <div class="scrolly" data-anim="scrolly">
+          <div class="scrolly-steps">
+            <div class="scrolly-step" data-scrolly-step><h4>1 · Zuhören</h4><p>Im Workshop klären wir Ziele, Zielgruppen und was die Website leisten muss.</p></div>
+            <div class="scrolly-step" data-scrolly-step><h4>2 · Gestalten</h4><p>Aus dem Konzept entsteht das Design, Seite für Seite, direkt in Webflow.</p></div>
+            <div class="scrolly-step" data-scrolly-step><h4>3 · Bewegen</h4><p>Animationen geben der Seite Rhythmus und lenken den Blick.</p></div>
+          </div>
+          <div class="scrolly-media">
+            <img data-scrolly-media data-demo-img="1" alt="">
+            <img data-scrolly-media data-demo-img="2" alt="">
+            <img data-scrolly-media data-demo-img="3" alt="">
+          </div>
+        </div>
+      </div>
     </section>
 
     <!-- 5 FUNKTIONAL -->
@@ -673,6 +735,61 @@ setTimeout(function(){if(!window.WFAnim)document.documentElement.classList.remov
             <circle cx="300" cy="110" r="28"/>
             <path d="M40 140 L 120 140"/>
           </svg>
+        </div>
+      </div>
+
+      <div class="demo">
+        <div class="info">
+          <h3>Video im Bild</h3>
+          <p>Das Video spielt nur, solange es sichtbar ist, und pausiert außerhalb. Spart Leistung, besonders bei mehreren Videos. Funktioniert mit dem Webflow Background Video: Attribut an das Background-Video-Element.</p>
+          <button class="copy" data-copy='data-anim="video"'><code>data-anim="video"</code><span class="hint">kopieren</span></button>
+          <ul class="opts"><li><code>data-anim-restart</code> bei jedem Reinscrollen von vorne</li><li>Bei „Bewegung reduzieren“ kein Autoplay</li></ul>
+        </div>
+        <div class="stage"><div class="video-box" data-anim="video"><video src="data:video/mp4;base64,AAAAIGZ0eXBpc29tAAACAGlzb21pc28yYXZjMW1wNDEAAAinbW9vdgAAAGxtdmhkAAAAAAAAAAAAAAAAAAAD6AAAE4gAAQAAAQAAAAAAAAAAAAAAAAEAAAAAAAAAAAAAAAAAAAABAAAAAAAAAAAAAAAAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAgAAB9F0cmFrAAAAXHRraGQAAAADAAAAAAAAAAAAAAABAAAAAAAAE4gAAAAAAAAAAAAAAAAAAAAAAAEAAAAAAAAAAAAAAAAAAAABAAAAAAAAAAAAAAAAAABAAAAAAoAAAAFoAAAAAAAkZWR0cwAAABxlbHN0AAAAAAAAAAEAABOIAAAEAAABAAAAAAdJbWRpYQAAACBtZGhkAAAAAAAAAAAAAAAAAAAwAAAA8ABVxAAAAAAALWhkbHIAAAAAAAAAAHZpZGUAAAAAAAAAAAAAAABWaWRlb0hhbmRsZXIAAAAG9G1pbmYAAAAUdm1oZAAAAAEAAAAAAAAAAAAAACRkaW5mAAAAHGRyZWYAAAAAAAAAAQAAAAx1cmwgAAAAAQAABrRzdGJsAAAAwHN0c2QAAAAAAAAAAQAAALBhdmMxAAAAAAAAAAEAAAAAAAAAAAAAAAAAAAAAAoABaABIAAAASAAAAAAAAAABFUxhdmM2MC4zMS4xMDIgbGlieDI2NAAAAAAAAAAAAAAAGP//AAAANmF2Y0MBZAAe/+EAGmdkAB6s2UCgL/lwEQAAAwABAAADADAPFi2WAQAFaO+CHLD9+PgAAAAAEHBhc3AAAAABAAAAAQAAABRidHJ0AAAAAAAAdu4AAHbuAAAAGHN0dHMAAAAAAAAAAQAAAHgAAAIAAAAAGHN0c3MAAAAAAAAAAgAAAAEAAABaAAADmGN0dHMAAAAAAAAAcQAAAAEAAAQAAAAAAQAACgAAAAABAAAEAAAAAAEAAAAAAAAAAQAAAgAAAAABAAAKAAAAAAEAAAQAAAAAAQAAAAAAAAABAAACAAAAAAEAAAoAAAAAAQAABAAAAAABAAAAAAAAAAEAAAIAAAAAAQAACgAAAAABAAAEAAAAAAEAAAAAAAAAAQAAAgAAAAABAAAKAAAAAAEAAAQAAAAAAQAAAAAAAAABAAACAAAAAAEAAAoAAAAAAQAABAAAAAABAAAAAAAAAAEAAAIAAAAAAQAACgAAAAABAAAEAAAAAAEAAAAAAAAAAQAAAgAAAAABAAAKAAAAAAEAAAQAAAAAAQAAAAAAAAABAAACAAAAAAEAAAoAAAAAAQAABAAAAAABAAAAAAAAAAEAAAIAAAAAAQAABgAAAAABAAACAAAAAAEAAAQAAAAAAQAACgAAAAABAAAEAAAAAAEAAAAAAAAAAQAAAgAAAAABAAAKAAAAAAEAAAQAAAAAAQAAAAAAAAABAAACAAAAAAEAAAoAAAAAAQAABAAAAAABAAAAAAAAAAEAAAIAAAAAAQAACgAAAAABAAAEAAAAAAEAAAAAAAAAAQAAAgAAAAABAAAKAAAAAAEAAAQAAAAAAQAAAAAAAAABAAACAAAAAAEAAAoAAAAAAQAABAAAAAABAAAAAAAAAAEAAAIAAAAAAQAABgAAAAABAAACAAAAAAEAAAoAAAAAAQAABAAAAAABAAAAAAAAAAEAAAIAAAAAAQAACgAAAAABAAAEAAAAAAEAAAAAAAAAAQAAAgAAAAABAAAGAAAAAAEAAAIAAAAAAQAACgAAAAABAAAEAAAAAAEAAAAAAAAAAQAAAgAAAAABAAAKAAAAAAEAAAQAAAAAAQAAAAAAAAABAAACAAAAAAgAAAQAAAAAAQAABgAAAAABAAACAAAAAAEAAAoAAAAAAQAABAAAAAABAAAAAAAAAAEAAAIAAAAAAQAACgAAAAABAAAEAAAAAAEAAAAAAAAAAQAAAgAAAAABAAAKAAAAAAEAAAQAAAAAAQAAAAAAAAABAAACAAAAAAEAAAYAAAAAAQAAAgAAAAABAAAKAAAAAAEAAAQAAAAAAQAAAAAAAAABAAACAAAAAAEAAAoAAAAAAQAABAAAAAABAAAAAAAAAAEAAAIAAAAAAQAABgAAAAABAAACAAAAAAEAAAYAAAAAAQAAAgAAAAAcc3RzYwAAAAAAAAABAAAAAQAAAHgAAAABAAAB9HN0c3oAAAAAAAAAAAAAAHgAAAYgAAAB0AAAACgAAAAeAAAAHAAAAaAAAAA2AAAAGQAAAB4AAAHgAAAAPQAAACMAAAAgAAABrwAAADUAAAAhAAAAIwAAAjsAAABaAAAAEAAAACQAAAINAAAAVwAAACsAAAAkAAAB1wAAAFkAAAAoAAAAFAAAAXoAAABSAAAAFAAAAB8AAAFEAAAAPgAAABgAAAAjAAAB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" muted loop playsinline autoplay></video></div></div>
+      </div>
+
+      <div class="demo">
+        <div class="info">
+          <h3>Akkordeon</h3>
+          <p>Weich auf- und zuklappende Einträge, z. B. für FAQs. Attribut an die Liste; jeder Eintrag hat einen Auslöser, einen Inhalt und optional ein Icon. Abstände innerhalb des Inhalts an ein inneres Element geben, nicht an den Inhalt selbst.</p>
+          <button class="copy" data-copy='data-anim="accordion"'><code>data-anim="accordion"</code><span class="hint">kopieren</span></button>
+          <ul class="opts"><li>Eintrag: <code>data-accordion-item</code> · darin <code>data-accordion-trigger</code>, <code>data-accordion-content</code>, <code>data-accordion-icon</code></li><li><code>data-anim-open="1"</code> erster Eintrag offen · <code>all</code></li><li><code>data-anim-single="false"</code> mehrere gleichzeitig offen</li><li><code>data-anim-rotate="180"</code> Icon-Drehung (Standard 45, für +)</li><li>Offener Eintrag: Klasse <code>is-open</code></li></ul>
+        </div>
+        <div class="stage">
+          <div class="acc" data-anim="accordion" data-anim-open="1">
+            <div class="acc-item" data-accordion-item>
+              <button class="acc-trigger" type="button" data-accordion-trigger>Wie lange dauert ein Projekt? <span class="acc-icon" data-accordion-icon aria-hidden="true">+</span></button>
+              <div data-accordion-content><div class="acc-inner">Eine typische Unternehmenswebsite braucht sechs bis zehn Wochen vom Workshop bis zum Launch.</div></div>
+            </div>
+            <div class="acc-item" data-accordion-item>
+              <button class="acc-trigger" type="button" data-accordion-trigger>Kann ich Inhalte selbst pflegen? <span class="acc-icon" data-accordion-icon aria-hidden="true">+</span></button>
+              <div data-accordion-content><div class="acc-inner">Ja. Texte, Bilder und CMS-Einträge änderst du direkt im Webflow Editor.</div></div>
+            </div>
+            <div class="acc-item" data-accordion-item>
+              <button class="acc-trigger" type="button" data-accordion-trigger>Was passiert nach dem Launch? <span class="acc-icon" data-accordion-icon aria-hidden="true">+</span></button>
+              <div data-accordion-content><div class="acc-inner">Wir betreuen die Seite weiter, wenn du möchtest, und spielen Updates ein.</div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="demo">
+        <div class="info">
+          <h3>Menü</h3>
+          <p>Sobald das Menü aufgeht, erscheinen die Links nacheinander. Bei der Webflow Navbar das Attribut an das Nav Menu setzen; bei eigenen Menüs an das Panel, das ein- und ausgeblendet wird. Die Library erkennt das Öffnen selbst.</p>
+          <button class="copy" data-copy='data-anim="menu"'><code>data-anim="menu"</code><span class="hint">kopieren</span></button>
+          <ul class="opts"><li>Animiert alle Links im Menü, oder die mit <code>data-anim-item</code></li><li><code>data-anim-stagger-type="fade-left"</code> jeder Reveal-Typ</li><li><code>data-anim-stagger="0.1"</code> Abstand · <code>data-anim-delay</code> Wartezeit</li></ul>
+        </div>
+        <div class="stage">
+          <div class="menu-demo">
+            <button class="btn" type="button" data-menu-toggle aria-expanded="false">Menü öffnen</button>
+            <nav class="menu-panel" data-anim="menu" aria-label="Demo-Menü" hidden>
+              <a href="#funktional">Leistungen</a>
+              <a href="#funktional">Projekte</a>
+              <a href="#funktional">Über uns</a>
+              <a href="#funktional">Kontakt</a>
+            </nav>
+          </div>
         </div>
       </div>
 
@@ -770,6 +887,16 @@ setTimeout(function(){if(!window.WFAnim)document.documentElement.classList.remov
 
       <div class="demo">
         <div class="info">
+          <h3>Preloader</h3>
+          <p>Overlay beim ersten Laden, mit Zähler und Balken, danach gleitet es weg. Intro-Animationen (<code>data-anim-intro</code>) starten erst, wenn der Preloader verschwindet. In Webflow das Element auf Display none stellen; der Head Code zeigt es während des Ladens. Zum Gestalten im Designer kurz auf Flex stellen.</p>
+          <button class="copy" data-copy='data-anim="preloader"'><code>data-anim="preloader"</code><span class="hint">kopieren</span></button>
+          <ul class="opts"><li>Kinder: <code>data-preloader-counter</code> (0–100) und <code>data-preloader-bar</code></li><li><code>data-anim-once="session"</code> nur einmal pro Besuch</li><li><code>data-anim-duration="2"</code> Mindestdauer in Sekunden</li><li><code>data-anim-exit="fade"</code> · <code>slide-down</code> (Standard slide-up)</li></ul>
+        </div>
+        <div class="stage"><button class="btn" type="button" id="replay-preloader">Preloader erneut zeigen</button></div>
+      </div>
+
+      <div class="demo">
+        <div class="info">
           <h3>Nav Hide</h3>
           <p>Der Header verschwindet beim Runterscrollen und kommt beim Hochscrollen zurück. Der Header dieser Seite nutzt es. Zusätzlich bekommt er ab dem Offset die Klasse <code>is-scrolled</code>, die du in Webflow als Combo-Klasse gestalten kannst (z. B. Schatten).</p>
           <button class="copy" data-copy='data-anim="nav-hide"'><code>data-anim="nav-hide"</code><span class="hint">kopieren</span></button>
@@ -851,7 +978,8 @@ setTimeout(function(){if(!window.WFAnim)document.documentElement.classList.remov
         <li><strong>Fehlertoleranz:</strong> Fehlt ein Plugin oder ist ein Wert unbekannt, erscheint eine Warnung in der Konsole und das Element wird normal angezeigt.</li>
         <li><strong>Hover:</strong> läuft nur mit Maus oder Trackpad und bei Tastatur-Fokus. Bei „Bewegung reduzieren“ bleiben nur Farbeffekte (img-darken, fill, underline, reveal ohne Bewegung). Webflow-Dropdowns nutzen selbst ein <code>data-hover</code>-Attribut, dort bitte keinen Effekt setzen.</li>
         <li><strong>Nicht mischen:</strong> Kein <code>data-anim</code> auf Elementen, die zusätzlich eine native Webflow Interaction haben. Beide setzen <code>transform</code> und überschreiben sich.</li>
-        <li><strong>Lazy Loading:</strong> Die Library rechnet nach dem Laden der Schriften neu. Verändert sich das Layout später (Tabs, Akkordeons), rufe <code>WFAnim.refresh()</code> auf.</li>
+        <li><strong>Debug-Modus:</strong> Zeigt farbige Start- und Endmarken jeder Scroll-Animation, eine Übersicht in der Konsole und typische Einrichtungsfehler (z. B. Bild beim Parallax nicht höher als der Wrapper, Section mit eigenem Hintergrund bei bg-color, zusätzliche Webflow Interaction am selben Element). Einschalten mit <code>?wfanim-debug</code> am Ende der Seitenadresse, mit <code>data-anim-debug</code> am body (alle) oder an einem einzelnen Element (nur dieses). Vor dem Livegang wieder entfernen. <button class="smooth-toggle debug-toggle" type="button" aria-pressed="false" id="debug-toggle">Debug hier einschalten</button></li>
+        <li><strong>Lazy Loading:</strong> Die Library rechnet nach dem Laden der Schriften und nach dem Auf- und Zuklappen eines Akkordeons neu. Verändert sich das Layout anders (Tabs, eigene Skripte), rufe <code>WFAnim.refresh()</code> auf.</li>
       </ul>
 <pre class="code-block"><code>WFAnim.init(element)   // neue Elemente animieren, z. B. nach CMS Load More
 WFAnim.refresh()       // Positionen neu berechnen
@@ -896,7 +1024,7 @@ WFAnim.register('mein-effekt', (el, opts) =&gt; {
 </script>
 <script>
 /*!
- * WF Anim v1.3.0
+ * WF Anim v1.4.0
  * Attribut-basierte GSAP-Animationen für Webflow
  *
  * Benötigt: gsap + ScrollTrigger
@@ -2004,6 +2132,271 @@ WFAnim.register('mein-effekt', (el, opts) =&gt; {
   /*@end*/
 
   /* ------------------------------------------------------------------ */
+  /*  Preloader, Video, Scrollytelling, Menü, Akkordeon                  */
+  /* ------------------------------------------------------------------ */
+  /*@block preloader*/
+  // Overlay beim ersten Laden. In Webflow: Element auf Display none stellen –
+  // der Head Code zeigt es, solange die Seite lädt.
+  // Kinder: [data-preloader-counter] (0–100) und [data-preloader-bar] (Balken)
+  A['preloader'] = (el, o, ctx) => {
+    if (html.classList.contains('wfa-preloaded')) return resolvePre();
+    const ds = el.dataset;
+    const reduce = ctx && ctx.conditions && ctx.conditions.reduce;
+    const counter = el.querySelector('[data-preloader-counter]');
+    const bar = el.querySelector('[data-preloader-bar]');
+    const prevOverflow = html.style.overflow;
+    html.style.overflow = 'hidden';
+    const state = { p: 0 };
+    const render = () => {
+      if (counter) counter.textContent = Math.round(state.p);
+      if (bar) gsap.set(bar, { scaleX: state.p / 100, transformOrigin: 'left center' });
+    };
+    render();
+    const finish = () => {
+      html.classList.add('wfa-preloaded');
+      html.style.overflow = prevOverflow;
+      gsap.set(el, { clearProps: 'opacity,transform' });
+      if (ds.animOnce === 'session') {
+        try { sessionStorage.setItem('wfa-preloaded', '1'); } catch (_) {}
+      }
+      refresh();
+    };
+    const exit = () => {
+      resolvePre(); // Intro-Animationen starten, während der Preloader verschwindet
+      const t = ds.animExit || 'slide-up';
+      const vars = reduce || t === 'fade' ? { opacity: 0 } : t === 'slide-down' ? { yPercent: 100 } : { yPercent: -100 };
+      gsap.to(el, Object.assign({ duration: reduce ? 0.3 : num(ds.animExitDuration, 0.9), ease: 'power3.inOut', onComplete: finish }, vars));
+    };
+    const loaded = new Promise((r) => (document.readyState === 'complete' ? r() : window.addEventListener('load', r, { once: true })));
+    const timeout = new Promise((r) => setTimeout(r, num(ds.animMax, 6) * 1000));
+    const counted = new Promise((r) => gsap.to(state, { p: 90, duration: reduce ? 0 : num(ds.animDuration, 1.5), ease: 'power1.out', onUpdate: render, onComplete: r }));
+    Promise.all([Promise.race([loaded, timeout]), counted]).then(() => {
+      gsap.to(state, { p: 100, duration: reduce ? 0 : 0.35, ease: 'power1.out', onUpdate: render, onComplete: () => gsap.delayedCall(reduce ? 0 : 0.2, exit) });
+    });
+    return () => {
+      html.style.overflow = prevOverflow;
+    };
+  };
+  /*@end*/
+
+  /*@block video*/
+  // Video spielt nur, solange es im Bild ist. An <video> oder an einen Wrapper
+  // (z. B. Webflow Background Video).
+  A['video'] = (el, o, ctx) => {
+    const ds = el.dataset;
+    const vids = el.tagName === 'VIDEO' ? [el] : Array.from(el.querySelectorAll('video'));
+    if (!vids.length) return warn('video: kein <video> gefunden', el);
+    const reduce = ctx && ctx.conditions && ctx.conditions.reduce;
+    const restart = bool(ds.animRestart);
+    vids.forEach((v) => {
+      v.muted = true;
+      v.playsInline = true;
+      v.setAttribute('playsinline', '');
+    });
+    const play = () => vids.forEach((v) => {
+      if (restart) v.currentTime = 0;
+      const p = v.play();
+      if (p && p.catch) p.catch(() => {});
+    });
+    const pause = () => vids.forEach((v) => v.pause());
+    pause();
+    // Bei "Bewegung reduzieren" kein Autoplay (außer data-anim-reduced="play")
+    if (reduce && ds.animReduced !== 'play') return;
+    ScrollTrigger.create({
+      trigger: el,
+      start: ds.animStart || 'top bottom',
+      end: ds.animEnd || 'bottom top',
+      onToggle: (self) => (self.isActive ? play() : pause()),
+    });
+    return pause;
+  };
+  /*@end*/
+
+  /*@block scrolly*/
+  // Scrollytelling: Textabschnitte [data-scrolly-step], daneben stehende Medien
+  // [data-scrolly-media]. Der aktive Abschnitt zeigt sein Bild.
+  A['scrolly'] = (el, o, ctx) => {
+    const ds = el.dataset;
+    const steps = Array.from(el.querySelectorAll('[data-scrolly-step]'));
+    const media = Array.from(el.querySelectorAll('[data-scrolly-media]'));
+    if (!steps.length) return warn('scrolly: keine Elemente mit data-scrolly-step', el);
+    const reduce = ctx && ctx.conditions && ctx.conditions.reduce;
+    const dur = reduce ? 0 : num(ds.animDuration, 0.6);
+    const dim = num(ds.animDim, 0.35);
+    const box = media.length ? media[0].parentElement : null;
+    if (box) {
+      // Medien-Spalte festkleben, falls in Webflow nicht schon sticky
+      let stuck = false;
+      for (let n = box; n && n !== el; n = n.parentElement) if (getComputedStyle(n).position === 'sticky') stuck = true;
+      if (!stuck && ds.animSticky !== 'false') gsap.set(box, { position: 'sticky', top: ds.animTop || '15vh', alignSelf: 'start' });
+      else if (getComputedStyle(box).position === 'static') gsap.set(box, { position: 'relative' });
+      media.forEach((m, i) => i && gsap.set(m, { position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', opacity: 0 }));
+    }
+    let cur = -1;
+    const setActive = (i, instant) => {
+      if (i === cur) return;
+      const d = instant ? 0 : dur;
+      const prevMedia = Math.min(Math.max(cur, 0), media.length - 1);
+      cur = i;
+      steps.forEach((s, j) => {
+        s.classList.toggle('is-active', j === i);
+        if (dim < 1) gsap.to(s, { opacity: j === i ? 1 : dim, duration: d, overwrite: 'auto' });
+      });
+      const mi = Math.min(i, media.length - 1);
+      media.forEach((m, j) => {
+        if (j === mi) {
+          if (mi !== prevMedia && !instant) gsap.fromTo(m, { scale: 1.04 }, { scale: 1, duration: d * 1.4, ease: 'power3.out', overwrite: 'auto' });
+          gsap.to(m, { opacity: 1, duration: d, overwrite: false });
+        } else gsap.to(m, { opacity: 0, duration: d, overwrite: false });
+      });
+    };
+    setActive(0, true);
+    steps.forEach((s, i) => ScrollTrigger.create({
+      trigger: s,
+      start: ds.animStart || 'top center',
+      end: ds.animEnd || 'bottom center',
+      onToggle: (self) => self.isActive && setActive(i),
+    }));
+    return () => steps.forEach((s) => s.classList.remove('is-active'));
+  };
+  /*@end*/
+
+  /*@block menu*/
+  // Menü-Links erscheinen nacheinander, sobald das Menü aufgeht.
+  // Webflow Navbar: an das Nav Menu. Eigene Menüs: an das Panel, das ein- und ausgeblendet wird.
+  A['menu'] = (el, o) => {
+    const marked = el.querySelectorAll('[data-anim-item]');
+    const list = marked.length ? Array.from(marked) : Array.from(el.querySelectorAll('a'));
+    if (!list.length) return;
+    const type = el.dataset.animStaggerType || 'fade-up';
+    const from = fromState(REVEALS.includes(type) ? type : 'fade-up', el, o);
+    const hasStagger = el.dataset.animStagger !== undefined;
+    const visible = () => {
+      if (el.hasAttribute('data-nav-menu-open')) return true;
+      const cs = getComputedStyle(el);
+      return cs.display !== 'none' && cs.visibility !== 'hidden' && el.getClientRects().length > 0;
+    };
+    let open = visible();
+    let raf = 0;
+    const check = () => {
+      raf = 0;
+      const now = visible();
+      if (now === open) return;
+      open = now;
+      if (open) {
+        gsap.fromTo(list, from, Object.assign(toState(from), {
+          duration: o.duration,
+          ease: o.ease,
+          delay: el.dataset.animDelay !== undefined ? o.delay : 0.15,
+          stagger: hasStagger ? o.stagger : 0.06,
+          overwrite: true,
+        }));
+      }
+    };
+    const mo = new MutationObserver(() => {
+      if (!raf) raf = requestAnimationFrame(check);
+    });
+    // Menü selbst und drei Ebenen darüber beobachten (Webflow, Interactions, eigene Skripte)
+    for (let n = el, i = 0; n && n !== document.body && i < 4; n = n.parentElement, i++) {
+      mo.observe(n, { attributes: true, attributeFilter: ['style', 'class', 'hidden', 'data-nav-menu-open'] });
+    }
+    return () => {
+      mo.disconnect();
+      if (raf) cancelAnimationFrame(raf);
+    };
+  };
+  /*@end*/
+
+  /*@block accordion*/
+  // Akkordeon: [data-accordion-item] mit [data-accordion-trigger], [data-accordion-content]
+  // und optional [data-accordion-icon]. Offene Einträge bekommen die Klasse is-open.
+  let accId = 0;
+  A['accordion'] = (el, o, ctx) => {
+    const ds = el.dataset;
+    const reduce = ctx && ctx.conditions && ctx.conditions.reduce;
+    const dur = reduce ? 0 : num(ds.animDuration, 0.45);
+    const ease = ds.animEase || 'power3.inOut';
+    const single = ds.animSingle !== 'false';
+    const rot = num(ds.animRotate, 45);
+    const openIdx = ds.animOpen === 'all' ? 'all' : num(ds.animOpen, 0) - 1;
+    const added = [];
+    const parts = Array.from(el.querySelectorAll('[data-accordion-item]')).map((item) => {
+      const trig = item.querySelector('[data-accordion-trigger]');
+      const content = item.querySelector('[data-accordion-content]');
+      if (!trig || !content) {
+        warn('accordion: Eintrag ohne data-accordion-trigger oder data-accordion-content', item);
+        return null;
+      }
+      if (!content.id) {
+        content.id = 'wfa-acc-' + ++accId;
+        added.push([content, 'id']);
+      }
+      trig.setAttribute('aria-controls', content.id);
+      added.push([trig, 'aria-controls'], [trig, 'aria-expanded']);
+      if (trig.tagName !== 'BUTTON') {
+        if (!trig.hasAttribute('role')) {
+          trig.setAttribute('role', 'button');
+          added.push([trig, 'role']);
+        }
+        if (!trig.hasAttribute('tabindex')) {
+          trig.setAttribute('tabindex', '0');
+          added.push([trig, 'tabindex']);
+        }
+      }
+      return { item, trig, content, icon: item.querySelector('[data-accordion-icon]'), open: false };
+    }).filter(Boolean);
+    if (!parts.length) return;
+    let refreshCall;
+    const setOpen = (p, open, instant) => {
+      p.open = open;
+      p.item.classList.toggle('is-open', open);
+      p.trig.setAttribute('aria-expanded', String(open));
+      const d = instant ? 0 : dur;
+      gsap.to(p.content, {
+        height: open ? 'auto' : 0,
+        duration: d,
+        ease,
+        overwrite: true,
+        onComplete: () => {
+          // Höhe hat sich geändert – Positionen der übrigen Scroll-Animationen neu berechnen
+          if (refreshCall) refreshCall.kill();
+          refreshCall = gsap.delayedCall(0.05, refresh);
+        },
+      });
+      if (p.icon) gsap.to(p.icon, { rotation: open ? rot : 0, duration: d, ease, overwrite: true });
+    };
+    gsap.set(parts.map((p) => p.content), { overflow: 'hidden' });
+    parts.forEach((p, i) => setOpen(p, openIdx === 'all' || openIdx === i, true));
+    const toggle = (p) => {
+      const next = !p.open;
+      if (next && single) parts.forEach((q) => q !== p && q.open && setOpen(q, false));
+      setOpen(p, next);
+    };
+    const onClick = (e) => {
+      const p = parts.find((q) => q.trig.contains(e.target));
+      if (!p) return;
+      if (p.trig.tagName === 'A') e.preventDefault();
+      toggle(p);
+    };
+    const onKey = (e) => {
+      if (e.key !== 'Enter' && e.key !== ' ') return;
+      const p = parts.find((q) => q.trig === e.target);
+      if (!p || p.trig.tagName === 'BUTTON') return;
+      e.preventDefault();
+      toggle(p);
+    };
+    el.addEventListener('click', onClick);
+    el.addEventListener('keydown', onKey);
+    return () => {
+      el.removeEventListener('click', onClick);
+      el.removeEventListener('keydown', onKey);
+      added.forEach(([n, a]) => n.removeAttribute(a));
+      parts.forEach((p) => p.item.classList.remove('is-open'));
+    };
+  };
+  /*@end*/
+
+  /* ------------------------------------------------------------------ */
   /*  Hover-Effekte: data-hover="img-zoom lift" an die Card              */
   /*  Signatur: (card, x) → { tl?, move?, leave?, cleanup? }             */
   /* ------------------------------------------------------------------ */
@@ -2305,7 +2698,114 @@ WFAnim.register('mein-effekt', (el, opts) =&gt; {
   /* ------------------------------------------------------------------ */
   // Diese Animationen laufen auch bei "Bewegung reduzieren", weil sie direkt
   // an den Scroll gekoppelt bzw. für die Bedienung nötig sind.
-  const RUN_IN_REDUCED = new Set(['progress-bar', 'horizontal', 'bg-color', 'nav-hide']);
+  const RUN_IN_REDUCED = new Set(['progress-bar', 'horizontal', 'bg-color', 'nav-hide', 'preloader', 'video', 'scrolly', 'accordion']);
+
+  // Wenn eine Animation ausgeschaltet ist (Mobile, reduzierte Bewegung, Fehler):
+  // so bleibt die Seite benutzbar
+  const OFF = {
+    cursor: (el) => gsap.set(el, { display: 'none' }),
+    preloader: () => {
+      html.classList.add('wfa-preloaded');
+      resolvePre();
+    },
+    accordion: (el) => el.querySelectorAll('[data-accordion-content]').forEach((c) => gsap.set(c, { height: 'auto' })),
+  };
+  const turnOff = (type, el) => (OFF[type] ? OFF[type](el) : show(el));
+
+  // Preloader: Intro-Animationen warten, bis er verschwindet
+  let preloaderDone = null;
+  let resolvePre = () => {};
+
+  /* ------------------------------------------------------------------ */
+  /*  Debug: ?wfanim-debug in der URL, data-anim-debug am body oder an   */
+  /*  einzelnen Elementen, oder WFAnimConfig.debug = true                */
+  /* ------------------------------------------------------------------ */
+  const debugAll = () => {
+    if (cfg.debug) return true;
+    try {
+      if (/[?&]wfanim-debug\b/.test(window.location.search)) return true;
+    } catch (_) {}
+    return document.body.hasAttribute('data-anim-debug');
+  };
+  const isTransparent = (c) => !c || c === 'transparent' || /rgba\(.*,\s*0\)$/.test(c);
+  // Typische Einrichtungsfehler in Webflow erkennen
+  const CHECKS = {
+    parallax: (el) => {
+      const img = el.querySelector('img');
+      if (!img) return 'Kein Bild im Wrapper gefunden.';
+      if (img.offsetHeight <= el.offsetHeight + 1 && el.dataset.animAmount === undefined)
+        return 'Das Bild ist nicht höher als der Wrapper – Parallax hat keinen Spielraum. Bildhöhe z. B. auf 110 % stellen oder data-anim-amount setzen.';
+    },
+    'image-expand': (el) => {
+      if (el.getBoundingClientRect().width < window.innerWidth * 0.9)
+        return 'Der Wrapper ist nicht annähernd voll breit. Er sollte außerhalb eines Containers liegen, sonst kann das Bild nicht auf volle Breite wachsen.';
+    },
+    stack: (el) => {
+      for (let n = el; n && n !== html; n = n.parentElement) {
+        const ov = getComputedStyle(n).overflow;
+        if (ov !== 'visible' && ov !== 'clip') return `Ein Element hat overflow: ${ov} – damit kleben die Cards nicht fest: ${n.className || n.tagName}`;
+      }
+    },
+    cover: (el) => {
+      const next = el.nextElementSibling;
+      if (!next) return 'Nach dieser Section folgt kein Element, das sie überdecken kann.';
+      if (isTransparent(getComputedStyle(next).backgroundColor)) return 'Die nächste Section hat keinen Hintergrund – die stehende Section scheint durch.';
+    },
+    'bg-color': (el) => {
+      if (!isTransparent(getComputedStyle(el).backgroundColor)) return 'Die Section hat einen eigenen Hintergrund und verdeckt damit den Farbwechsel. In Webflow transparent stellen.';
+      if (!el.dataset.animColor && !el.dataset.animTextColor) return 'Weder data-anim-color noch data-anim-text-color gesetzt.';
+    },
+    'nav-hide': (el) => {
+      const p = getComputedStyle(el).position;
+      if (p !== 'fixed' && p !== 'sticky') return `Die Navbar hat position: ${p}. Für nav-hide auf fixed oder sticky stellen.`;
+    },
+    scrolly: (el) => {
+      const s = el.querySelectorAll('[data-scrolly-step]').length;
+      const m = el.querySelectorAll('[data-scrolly-media]').length;
+      if (!s) return 'Keine Elemente mit data-scrolly-step.';
+      if (m && m !== s) return `${s} Abschnitte, aber ${m} Medien. Überzählige Abschnitte zeigen das letzte Bild.`;
+    },
+    accordion: (el) => {
+      if (!el.querySelector('[data-accordion-item]')) return 'Keine Elemente mit data-accordion-item.';
+    },
+    video: (el) => {
+      if (el.tagName !== 'VIDEO' && !el.querySelector('video')) return 'Kein <video> im Element.';
+    },
+    cursor: (el) => {
+      if (el.offsetWidth === 0 && el.offsetHeight === 0) return 'Das Cursor-Element hat keine Größe. In Webflow Breite und Höhe setzen.';
+    },
+  };
+  CHECKS['image-shrink'] = CHECKS['image-expand'];
+  const debugReport = [];
+  let debugBadge = null;
+  const debugRun = (type, el, fn) => {
+    const issues = [];
+    if (el.hasAttribute('data-w-id')) issues.push('Element hat zusätzlich eine Webflow Interaction – beide setzen transform und können sich stören.');
+    const chk = CHECKS[type] && CHECKS[type](el);
+    if (chk) issues.push(chk);
+    ScrollTrigger.defaults({ markers: true, id: type });
+    try {
+      return fn();
+    } finally {
+      ScrollTrigger.defaults({ markers: false, id: undefined });
+      debugReport.push({ Animation: type, Element: el, Hinweise: issues.join(' ') || '–' });
+      issues.forEach((t) => warn(`[Debug] ${type}: ${t}`, el));
+    }
+  };
+  const showDebugBadge = () => {
+    if (!debugReport.length) return;
+    const n = debugReport.filter((r) => r.Hinweise !== '–').length;
+    console.groupCollapsed(`[WFAnim] Debug · ${debugReport.length} Animationen · ${n} mit Hinweisen`);
+    console.table(debugReport.map((r) => ({ Animation: r.Animation, Element: r.Element.className || r.Element.tagName, Hinweise: r.Hinweise })));
+    console.groupEnd();
+    if (!debugBadge) {
+      debugBadge = document.createElement('div');
+      debugBadge.setAttribute('style', 'position:fixed;left:12px;bottom:12px;z-index:2147483647;font:600 12px/1.4 system-ui,sans-serif;background:#141824;color:#fff;padding:8px 12px;border-radius:8px;box-shadow:0 6px 20px rgba(0,0,0,.3);pointer-events:none');
+      document.body.appendChild(debugBadge);
+    }
+    debugBadge.textContent = `WF Anim Debug · ${debugReport.length} Animationen · ${n ? n + ' mit Hinweisen (Konsole)' : 'keine Hinweise'}`;
+    debugBadge.style.background = n ? '#b4231b' : '#141824';
+  };
 
   // Einblende-Animationen: Diese bleiben im Startbildschirm ruhig (außer mit data-anim-intro).
   // Scroll-gekoppelte Effekte (parallax, pin, marquee …) laufen immer.
@@ -2387,6 +2887,11 @@ WFAnim.register('mein-effekt', (el, opts) =&gt; {
     });
     if (!fresh.length && !freshHover.length) return;
     fresh.forEach((el) => done.add(el));
+    const dbgAll = debugAll();
+    if (!preloaderDone) {
+      const pre = document.querySelector('[data-anim="preloader"]');
+      if (pre && !html.classList.contains('wfa-preloaded') && A.preloader) preloaderDone = new Promise((r) => (resolvePre = r));
+    }
     freshHover.forEach((el) => doneHover.add(el));
 
     const mm = gsap.matchMedia();
@@ -2417,8 +2922,24 @@ WFAnim.register('mein-effekt', (el, opts) =&gt; {
           }
           const off = (mobile && el.dataset.animMobile === 'false') || (reduce && !RUN_IN_REDUCED.has(type));
           if (off) {
-            if (type === 'cursor') gsap.set(el, { display: 'none' });
-            else show(el);
+            turnOff(type, el);
+            return;
+          }
+          const dbg = dbgAll || el.hasAttribute('data-anim-debug');
+          const run = () => {
+            try {
+              const c = dbg ? debugRun(type, el, () => fn(el, opts(el), ctx)) : fn(el, opts(el), ctx);
+              if (typeof c === 'function') cleanups.push(c);
+              return true;
+            } catch (err) {
+              warn(`Fehler bei "${type}"`, err, el);
+              turnOff(type, el);
+              return false;
+            }
+          };
+          // Intro-Animationen warten auf den Preloader
+          if (preloaderDone && type !== 'preloader' && isIntro(el) && ENTRY.has(type)) {
+            preloaderDone.then(() => ctx.add(run));
             return;
           }
           // data-anim-intro ergibt nur bei Einblende-Animationen Sinn – sonst nicht versteckt lassen
@@ -2429,15 +2950,9 @@ WFAnim.register('mein-effekt', (el, opts) =&gt; {
             show(el);
             return;
           }
-          try {
-            const c = fn(el, opts(el), ctx);
-            if (typeof c === 'function') cleanups.push(c);
-            if (still) finish(el); // highlight: Markierung direkt fertig zeigen
-          } catch (err) {
-            warn(`Fehler bei "${type}"`, err, el);
-            show(el);
-          }
+          if (run() && still) finish(el); // highlight: Markierung direkt fertig zeigen
         });
+        if (dbgAll || fresh.some((el) => el.hasAttribute('data-anim-debug'))) showDebugBadge();
         return () => cleanups.forEach((c) => c());
       }
     );
@@ -2449,6 +2964,11 @@ WFAnim.register('mein-effekt', (el, opts) =&gt; {
     if (smoothMM) {
       smoothMM.revert();
       smoothMM = null;
+    }
+    debugReport.length = 0;
+    if (debugBadge) {
+      debugBadge.remove();
+      debugBadge = null;
     }
     contexts.forEach((c) => {
       c.mm.revert();
@@ -2477,7 +2997,7 @@ WFAnim.register('mein-effekt', (el, opts) =&gt; {
     else smooth.start(v);
   }
 
-  window.WFAnim = { init, destroy, refresh, register, smoothScroll, config: cfg, animations: A, version: '1.3.0', hover: typeof H === 'object' ? H : {} };
+  window.WFAnim = { init, destroy, refresh, register, smoothScroll, config: cfg, animations: A, version: '1.4.0', hover: typeof H === 'object' ? H : {} };
 
   const start = () => {
     if (!cfg.autoInit) return;
@@ -2533,6 +3053,33 @@ WFAnim.register('mein-effekt', (el, opts) =&gt; {
         x.textContent = on ? 'Smooth Scroll an' : 'Smooth Scroll';
       });
     });
+  });
+  // Menü-Demo
+  (function () {
+    var b = document.querySelector('[data-menu-toggle]');
+    var p = document.querySelector('.menu-panel');
+    if (!b || !p) return;
+    b.addEventListener('click', function () {
+      var open = p.hidden;
+      p.hidden = !open;
+      b.setAttribute('aria-expanded', String(open));
+      b.textContent = open ? 'Menü schließen' : 'Menü öffnen';
+    });
+  })();
+  // Preloader erneut zeigen
+  document.getElementById('replay-preloader').addEventListener('click', function () {
+    try { sessionStorage.removeItem('wfa-preloaded'); } catch (e) {}
+    location.reload();
+  });
+  // Debug-Schalter
+  document.getElementById('debug-toggle').addEventListener('click', function () {
+    if (!window.WFAnim) return;
+    var b = this, on = b.getAttribute('aria-pressed') !== 'true';
+    WFAnim.config.debug = on;
+    WFAnim.destroy();
+    WFAnim.init();
+    b.setAttribute('aria-pressed', String(on));
+    b.textContent = on ? 'Debug ausschalten' : 'Debug hier einschalten';
   });
   // Neu abspielen
   document.getElementById('replay').addEventListener('click', function () {

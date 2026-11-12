@@ -1,5 +1,5 @@
 /*!
- * WF Anim v1.3.0
+ * WF Anim v1.4.0
  * Attribut-basierte GSAP-Animationen für Webflow
  *
  * Benötigt: gsap + ScrollTrigger
@@ -1107,6 +1107,271 @@
   /*@end*/
 
   /* ------------------------------------------------------------------ */
+  /*  Preloader, Video, Scrollytelling, Menü, Akkordeon                  */
+  /* ------------------------------------------------------------------ */
+  /*@block preloader*/
+  // Overlay beim ersten Laden. In Webflow: Element auf Display none stellen –
+  // der Head Code zeigt es, solange die Seite lädt.
+  // Kinder: [data-preloader-counter] (0–100) und [data-preloader-bar] (Balken)
+  A['preloader'] = (el, o, ctx) => {
+    if (html.classList.contains('wfa-preloaded')) return resolvePre();
+    const ds = el.dataset;
+    const reduce = ctx && ctx.conditions && ctx.conditions.reduce;
+    const counter = el.querySelector('[data-preloader-counter]');
+    const bar = el.querySelector('[data-preloader-bar]');
+    const prevOverflow = html.style.overflow;
+    html.style.overflow = 'hidden';
+    const state = { p: 0 };
+    const render = () => {
+      if (counter) counter.textContent = Math.round(state.p);
+      if (bar) gsap.set(bar, { scaleX: state.p / 100, transformOrigin: 'left center' });
+    };
+    render();
+    const finish = () => {
+      html.classList.add('wfa-preloaded');
+      html.style.overflow = prevOverflow;
+      gsap.set(el, { clearProps: 'opacity,transform' });
+      if (ds.animOnce === 'session') {
+        try { sessionStorage.setItem('wfa-preloaded', '1'); } catch (_) {}
+      }
+      refresh();
+    };
+    const exit = () => {
+      resolvePre(); // Intro-Animationen starten, während der Preloader verschwindet
+      const t = ds.animExit || 'slide-up';
+      const vars = reduce || t === 'fade' ? { opacity: 0 } : t === 'slide-down' ? { yPercent: 100 } : { yPercent: -100 };
+      gsap.to(el, Object.assign({ duration: reduce ? 0.3 : num(ds.animExitDuration, 0.9), ease: 'power3.inOut', onComplete: finish }, vars));
+    };
+    const loaded = new Promise((r) => (document.readyState === 'complete' ? r() : window.addEventListener('load', r, { once: true })));
+    const timeout = new Promise((r) => setTimeout(r, num(ds.animMax, 6) * 1000));
+    const counted = new Promise((r) => gsap.to(state, { p: 90, duration: reduce ? 0 : num(ds.animDuration, 1.5), ease: 'power1.out', onUpdate: render, onComplete: r }));
+    Promise.all([Promise.race([loaded, timeout]), counted]).then(() => {
+      gsap.to(state, { p: 100, duration: reduce ? 0 : 0.35, ease: 'power1.out', onUpdate: render, onComplete: () => gsap.delayedCall(reduce ? 0 : 0.2, exit) });
+    });
+    return () => {
+      html.style.overflow = prevOverflow;
+    };
+  };
+  /*@end*/
+
+  /*@block video*/
+  // Video spielt nur, solange es im Bild ist. An <video> oder an einen Wrapper
+  // (z. B. Webflow Background Video).
+  A['video'] = (el, o, ctx) => {
+    const ds = el.dataset;
+    const vids = el.tagName === 'VIDEO' ? [el] : Array.from(el.querySelectorAll('video'));
+    if (!vids.length) return warn('video: kein <video> gefunden', el);
+    const reduce = ctx && ctx.conditions && ctx.conditions.reduce;
+    const restart = bool(ds.animRestart);
+    vids.forEach((v) => {
+      v.muted = true;
+      v.playsInline = true;
+      v.setAttribute('playsinline', '');
+    });
+    const play = () => vids.forEach((v) => {
+      if (restart) v.currentTime = 0;
+      const p = v.play();
+      if (p && p.catch) p.catch(() => {});
+    });
+    const pause = () => vids.forEach((v) => v.pause());
+    pause();
+    // Bei "Bewegung reduzieren" kein Autoplay (außer data-anim-reduced="play")
+    if (reduce && ds.animReduced !== 'play') return;
+    ScrollTrigger.create({
+      trigger: el,
+      start: ds.animStart || 'top bottom',
+      end: ds.animEnd || 'bottom top',
+      onToggle: (self) => (self.isActive ? play() : pause()),
+    });
+    return pause;
+  };
+  /*@end*/
+
+  /*@block scrolly*/
+  // Scrollytelling: Textabschnitte [data-scrolly-step], daneben stehende Medien
+  // [data-scrolly-media]. Der aktive Abschnitt zeigt sein Bild.
+  A['scrolly'] = (el, o, ctx) => {
+    const ds = el.dataset;
+    const steps = Array.from(el.querySelectorAll('[data-scrolly-step]'));
+    const media = Array.from(el.querySelectorAll('[data-scrolly-media]'));
+    if (!steps.length) return warn('scrolly: keine Elemente mit data-scrolly-step', el);
+    const reduce = ctx && ctx.conditions && ctx.conditions.reduce;
+    const dur = reduce ? 0 : num(ds.animDuration, 0.6);
+    const dim = num(ds.animDim, 0.35);
+    const box = media.length ? media[0].parentElement : null;
+    if (box) {
+      // Medien-Spalte festkleben, falls in Webflow nicht schon sticky
+      let stuck = false;
+      for (let n = box; n && n !== el; n = n.parentElement) if (getComputedStyle(n).position === 'sticky') stuck = true;
+      if (!stuck && ds.animSticky !== 'false') gsap.set(box, { position: 'sticky', top: ds.animTop || '15vh', alignSelf: 'start' });
+      else if (getComputedStyle(box).position === 'static') gsap.set(box, { position: 'relative' });
+      media.forEach((m, i) => i && gsap.set(m, { position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', opacity: 0 }));
+    }
+    let cur = -1;
+    const setActive = (i, instant) => {
+      if (i === cur) return;
+      const d = instant ? 0 : dur;
+      const prevMedia = Math.min(Math.max(cur, 0), media.length - 1);
+      cur = i;
+      steps.forEach((s, j) => {
+        s.classList.toggle('is-active', j === i);
+        if (dim < 1) gsap.to(s, { opacity: j === i ? 1 : dim, duration: d, overwrite: 'auto' });
+      });
+      const mi = Math.min(i, media.length - 1);
+      media.forEach((m, j) => {
+        if (j === mi) {
+          if (mi !== prevMedia && !instant) gsap.fromTo(m, { scale: 1.04 }, { scale: 1, duration: d * 1.4, ease: 'power3.out', overwrite: 'auto' });
+          gsap.to(m, { opacity: 1, duration: d, overwrite: false });
+        } else gsap.to(m, { opacity: 0, duration: d, overwrite: false });
+      });
+    };
+    setActive(0, true);
+    steps.forEach((s, i) => ScrollTrigger.create({
+      trigger: s,
+      start: ds.animStart || 'top center',
+      end: ds.animEnd || 'bottom center',
+      onToggle: (self) => self.isActive && setActive(i),
+    }));
+    return () => steps.forEach((s) => s.classList.remove('is-active'));
+  };
+  /*@end*/
+
+  /*@block menu*/
+  // Menü-Links erscheinen nacheinander, sobald das Menü aufgeht.
+  // Webflow Navbar: an das Nav Menu. Eigene Menüs: an das Panel, das ein- und ausgeblendet wird.
+  A['menu'] = (el, o) => {
+    const marked = el.querySelectorAll('[data-anim-item]');
+    const list = marked.length ? Array.from(marked) : Array.from(el.querySelectorAll('a'));
+    if (!list.length) return;
+    const type = el.dataset.animStaggerType || 'fade-up';
+    const from = fromState(REVEALS.includes(type) ? type : 'fade-up', el, o);
+    const hasStagger = el.dataset.animStagger !== undefined;
+    const visible = () => {
+      if (el.hasAttribute('data-nav-menu-open')) return true;
+      const cs = getComputedStyle(el);
+      return cs.display !== 'none' && cs.visibility !== 'hidden' && el.getClientRects().length > 0;
+    };
+    let open = visible();
+    let raf = 0;
+    const check = () => {
+      raf = 0;
+      const now = visible();
+      if (now === open) return;
+      open = now;
+      if (open) {
+        gsap.fromTo(list, from, Object.assign(toState(from), {
+          duration: o.duration,
+          ease: o.ease,
+          delay: el.dataset.animDelay !== undefined ? o.delay : 0.15,
+          stagger: hasStagger ? o.stagger : 0.06,
+          overwrite: true,
+        }));
+      }
+    };
+    const mo = new MutationObserver(() => {
+      if (!raf) raf = requestAnimationFrame(check);
+    });
+    // Menü selbst und drei Ebenen darüber beobachten (Webflow, Interactions, eigene Skripte)
+    for (let n = el, i = 0; n && n !== document.body && i < 4; n = n.parentElement, i++) {
+      mo.observe(n, { attributes: true, attributeFilter: ['style', 'class', 'hidden', 'data-nav-menu-open'] });
+    }
+    return () => {
+      mo.disconnect();
+      if (raf) cancelAnimationFrame(raf);
+    };
+  };
+  /*@end*/
+
+  /*@block accordion*/
+  // Akkordeon: [data-accordion-item] mit [data-accordion-trigger], [data-accordion-content]
+  // und optional [data-accordion-icon]. Offene Einträge bekommen die Klasse is-open.
+  let accId = 0;
+  A['accordion'] = (el, o, ctx) => {
+    const ds = el.dataset;
+    const reduce = ctx && ctx.conditions && ctx.conditions.reduce;
+    const dur = reduce ? 0 : num(ds.animDuration, 0.45);
+    const ease = ds.animEase || 'power3.inOut';
+    const single = ds.animSingle !== 'false';
+    const rot = num(ds.animRotate, 45);
+    const openIdx = ds.animOpen === 'all' ? 'all' : num(ds.animOpen, 0) - 1;
+    const added = [];
+    const parts = Array.from(el.querySelectorAll('[data-accordion-item]')).map((item) => {
+      const trig = item.querySelector('[data-accordion-trigger]');
+      const content = item.querySelector('[data-accordion-content]');
+      if (!trig || !content) {
+        warn('accordion: Eintrag ohne data-accordion-trigger oder data-accordion-content', item);
+        return null;
+      }
+      if (!content.id) {
+        content.id = 'wfa-acc-' + ++accId;
+        added.push([content, 'id']);
+      }
+      trig.setAttribute('aria-controls', content.id);
+      added.push([trig, 'aria-controls'], [trig, 'aria-expanded']);
+      if (trig.tagName !== 'BUTTON') {
+        if (!trig.hasAttribute('role')) {
+          trig.setAttribute('role', 'button');
+          added.push([trig, 'role']);
+        }
+        if (!trig.hasAttribute('tabindex')) {
+          trig.setAttribute('tabindex', '0');
+          added.push([trig, 'tabindex']);
+        }
+      }
+      return { item, trig, content, icon: item.querySelector('[data-accordion-icon]'), open: false };
+    }).filter(Boolean);
+    if (!parts.length) return;
+    let refreshCall;
+    const setOpen = (p, open, instant) => {
+      p.open = open;
+      p.item.classList.toggle('is-open', open);
+      p.trig.setAttribute('aria-expanded', String(open));
+      const d = instant ? 0 : dur;
+      gsap.to(p.content, {
+        height: open ? 'auto' : 0,
+        duration: d,
+        ease,
+        overwrite: true,
+        onComplete: () => {
+          // Höhe hat sich geändert – Positionen der übrigen Scroll-Animationen neu berechnen
+          if (refreshCall) refreshCall.kill();
+          refreshCall = gsap.delayedCall(0.05, refresh);
+        },
+      });
+      if (p.icon) gsap.to(p.icon, { rotation: open ? rot : 0, duration: d, ease, overwrite: true });
+    };
+    gsap.set(parts.map((p) => p.content), { overflow: 'hidden' });
+    parts.forEach((p, i) => setOpen(p, openIdx === 'all' || openIdx === i, true));
+    const toggle = (p) => {
+      const next = !p.open;
+      if (next && single) parts.forEach((q) => q !== p && q.open && setOpen(q, false));
+      setOpen(p, next);
+    };
+    const onClick = (e) => {
+      const p = parts.find((q) => q.trig.contains(e.target));
+      if (!p) return;
+      if (p.trig.tagName === 'A') e.preventDefault();
+      toggle(p);
+    };
+    const onKey = (e) => {
+      if (e.key !== 'Enter' && e.key !== ' ') return;
+      const p = parts.find((q) => q.trig === e.target);
+      if (!p || p.trig.tagName === 'BUTTON') return;
+      e.preventDefault();
+      toggle(p);
+    };
+    el.addEventListener('click', onClick);
+    el.addEventListener('keydown', onKey);
+    return () => {
+      el.removeEventListener('click', onClick);
+      el.removeEventListener('keydown', onKey);
+      added.forEach(([n, a]) => n.removeAttribute(a));
+      parts.forEach((p) => p.item.classList.remove('is-open'));
+    };
+  };
+  /*@end*/
+
+  /* ------------------------------------------------------------------ */
   /*  Hover-Effekte: data-hover="img-zoom lift" an die Card              */
   /*  Signatur: (card, x) → { tl?, move?, leave?, cleanup? }             */
   /* ------------------------------------------------------------------ */
@@ -1408,7 +1673,114 @@
   /* ------------------------------------------------------------------ */
   // Diese Animationen laufen auch bei "Bewegung reduzieren", weil sie direkt
   // an den Scroll gekoppelt bzw. für die Bedienung nötig sind.
-  const RUN_IN_REDUCED = new Set(['progress-bar', 'horizontal', 'bg-color', 'nav-hide']);
+  const RUN_IN_REDUCED = new Set(['progress-bar', 'horizontal', 'bg-color', 'nav-hide', 'preloader', 'video', 'scrolly', 'accordion']);
+
+  // Wenn eine Animation ausgeschaltet ist (Mobile, reduzierte Bewegung, Fehler):
+  // so bleibt die Seite benutzbar
+  const OFF = {
+    cursor: (el) => gsap.set(el, { display: 'none' }),
+    preloader: () => {
+      html.classList.add('wfa-preloaded');
+      resolvePre();
+    },
+    accordion: (el) => el.querySelectorAll('[data-accordion-content]').forEach((c) => gsap.set(c, { height: 'auto' })),
+  };
+  const turnOff = (type, el) => (OFF[type] ? OFF[type](el) : show(el));
+
+  // Preloader: Intro-Animationen warten, bis er verschwindet
+  let preloaderDone = null;
+  let resolvePre = () => {};
+
+  /* ------------------------------------------------------------------ */
+  /*  Debug: ?wfanim-debug in der URL, data-anim-debug am body oder an   */
+  /*  einzelnen Elementen, oder WFAnimConfig.debug = true                */
+  /* ------------------------------------------------------------------ */
+  const debugAll = () => {
+    if (cfg.debug) return true;
+    try {
+      if (/[?&]wfanim-debug\b/.test(window.location.search)) return true;
+    } catch (_) {}
+    return document.body.hasAttribute('data-anim-debug');
+  };
+  const isTransparent = (c) => !c || c === 'transparent' || /rgba\(.*,\s*0\)$/.test(c);
+  // Typische Einrichtungsfehler in Webflow erkennen
+  const CHECKS = {
+    parallax: (el) => {
+      const img = el.querySelector('img');
+      if (!img) return 'Kein Bild im Wrapper gefunden.';
+      if (img.offsetHeight <= el.offsetHeight + 1 && el.dataset.animAmount === undefined)
+        return 'Das Bild ist nicht höher als der Wrapper – Parallax hat keinen Spielraum. Bildhöhe z. B. auf 110 % stellen oder data-anim-amount setzen.';
+    },
+    'image-expand': (el) => {
+      if (el.getBoundingClientRect().width < window.innerWidth * 0.9)
+        return 'Der Wrapper ist nicht annähernd voll breit. Er sollte außerhalb eines Containers liegen, sonst kann das Bild nicht auf volle Breite wachsen.';
+    },
+    stack: (el) => {
+      for (let n = el; n && n !== html; n = n.parentElement) {
+        const ov = getComputedStyle(n).overflow;
+        if (ov !== 'visible' && ov !== 'clip') return `Ein Element hat overflow: ${ov} – damit kleben die Cards nicht fest: ${n.className || n.tagName}`;
+      }
+    },
+    cover: (el) => {
+      const next = el.nextElementSibling;
+      if (!next) return 'Nach dieser Section folgt kein Element, das sie überdecken kann.';
+      if (isTransparent(getComputedStyle(next).backgroundColor)) return 'Die nächste Section hat keinen Hintergrund – die stehende Section scheint durch.';
+    },
+    'bg-color': (el) => {
+      if (!isTransparent(getComputedStyle(el).backgroundColor)) return 'Die Section hat einen eigenen Hintergrund und verdeckt damit den Farbwechsel. In Webflow transparent stellen.';
+      if (!el.dataset.animColor && !el.dataset.animTextColor) return 'Weder data-anim-color noch data-anim-text-color gesetzt.';
+    },
+    'nav-hide': (el) => {
+      const p = getComputedStyle(el).position;
+      if (p !== 'fixed' && p !== 'sticky') return `Die Navbar hat position: ${p}. Für nav-hide auf fixed oder sticky stellen.`;
+    },
+    scrolly: (el) => {
+      const s = el.querySelectorAll('[data-scrolly-step]').length;
+      const m = el.querySelectorAll('[data-scrolly-media]').length;
+      if (!s) return 'Keine Elemente mit data-scrolly-step.';
+      if (m && m !== s) return `${s} Abschnitte, aber ${m} Medien. Überzählige Abschnitte zeigen das letzte Bild.`;
+    },
+    accordion: (el) => {
+      if (!el.querySelector('[data-accordion-item]')) return 'Keine Elemente mit data-accordion-item.';
+    },
+    video: (el) => {
+      if (el.tagName !== 'VIDEO' && !el.querySelector('video')) return 'Kein <video> im Element.';
+    },
+    cursor: (el) => {
+      if (el.offsetWidth === 0 && el.offsetHeight === 0) return 'Das Cursor-Element hat keine Größe. In Webflow Breite und Höhe setzen.';
+    },
+  };
+  CHECKS['image-shrink'] = CHECKS['image-expand'];
+  const debugReport = [];
+  let debugBadge = null;
+  const debugRun = (type, el, fn) => {
+    const issues = [];
+    if (el.hasAttribute('data-w-id')) issues.push('Element hat zusätzlich eine Webflow Interaction – beide setzen transform und können sich stören.');
+    const chk = CHECKS[type] && CHECKS[type](el);
+    if (chk) issues.push(chk);
+    ScrollTrigger.defaults({ markers: true, id: type });
+    try {
+      return fn();
+    } finally {
+      ScrollTrigger.defaults({ markers: false, id: undefined });
+      debugReport.push({ Animation: type, Element: el, Hinweise: issues.join(' ') || '–' });
+      issues.forEach((t) => warn(`[Debug] ${type}: ${t}`, el));
+    }
+  };
+  const showDebugBadge = () => {
+    if (!debugReport.length) return;
+    const n = debugReport.filter((r) => r.Hinweise !== '–').length;
+    console.groupCollapsed(`[WFAnim] Debug · ${debugReport.length} Animationen · ${n} mit Hinweisen`);
+    console.table(debugReport.map((r) => ({ Animation: r.Animation, Element: r.Element.className || r.Element.tagName, Hinweise: r.Hinweise })));
+    console.groupEnd();
+    if (!debugBadge) {
+      debugBadge = document.createElement('div');
+      debugBadge.setAttribute('style', 'position:fixed;left:12px;bottom:12px;z-index:2147483647;font:600 12px/1.4 system-ui,sans-serif;background:#141824;color:#fff;padding:8px 12px;border-radius:8px;box-shadow:0 6px 20px rgba(0,0,0,.3);pointer-events:none');
+      document.body.appendChild(debugBadge);
+    }
+    debugBadge.textContent = `WF Anim Debug · ${debugReport.length} Animationen · ${n ? n + ' mit Hinweisen (Konsole)' : 'keine Hinweise'}`;
+    debugBadge.style.background = n ? '#b4231b' : '#141824';
+  };
 
   // Einblende-Animationen: Diese bleiben im Startbildschirm ruhig (außer mit data-anim-intro).
   // Scroll-gekoppelte Effekte (parallax, pin, marquee …) laufen immer.
@@ -1490,6 +1862,11 @@
     });
     if (!fresh.length && !freshHover.length) return;
     fresh.forEach((el) => done.add(el));
+    const dbgAll = debugAll();
+    if (!preloaderDone) {
+      const pre = document.querySelector('[data-anim="preloader"]');
+      if (pre && !html.classList.contains('wfa-preloaded') && A.preloader) preloaderDone = new Promise((r) => (resolvePre = r));
+    }
     freshHover.forEach((el) => doneHover.add(el));
 
     const mm = gsap.matchMedia();
@@ -1520,8 +1897,24 @@
           }
           const off = (mobile && el.dataset.animMobile === 'false') || (reduce && !RUN_IN_REDUCED.has(type));
           if (off) {
-            if (type === 'cursor') gsap.set(el, { display: 'none' });
-            else show(el);
+            turnOff(type, el);
+            return;
+          }
+          const dbg = dbgAll || el.hasAttribute('data-anim-debug');
+          const run = () => {
+            try {
+              const c = dbg ? debugRun(type, el, () => fn(el, opts(el), ctx)) : fn(el, opts(el), ctx);
+              if (typeof c === 'function') cleanups.push(c);
+              return true;
+            } catch (err) {
+              warn(`Fehler bei "${type}"`, err, el);
+              turnOff(type, el);
+              return false;
+            }
+          };
+          // Intro-Animationen warten auf den Preloader
+          if (preloaderDone && type !== 'preloader' && isIntro(el) && ENTRY.has(type)) {
+            preloaderDone.then(() => ctx.add(run));
             return;
           }
           // data-anim-intro ergibt nur bei Einblende-Animationen Sinn – sonst nicht versteckt lassen
@@ -1532,15 +1925,9 @@
             show(el);
             return;
           }
-          try {
-            const c = fn(el, opts(el), ctx);
-            if (typeof c === 'function') cleanups.push(c);
-            if (still) finish(el); // highlight: Markierung direkt fertig zeigen
-          } catch (err) {
-            warn(`Fehler bei "${type}"`, err, el);
-            show(el);
-          }
+          if (run() && still) finish(el); // highlight: Markierung direkt fertig zeigen
         });
+        if (dbgAll || fresh.some((el) => el.hasAttribute('data-anim-debug'))) showDebugBadge();
         return () => cleanups.forEach((c) => c());
       }
     );
@@ -1552,6 +1939,11 @@
     if (smoothMM) {
       smoothMM.revert();
       smoothMM = null;
+    }
+    debugReport.length = 0;
+    if (debugBadge) {
+      debugBadge.remove();
+      debugBadge = null;
     }
     contexts.forEach((c) => {
       c.mm.revert();
@@ -1580,7 +1972,7 @@
     else smooth.start(v);
   }
 
-  window.WFAnim = { init, destroy, refresh, register, smoothScroll, config: cfg, animations: A, version: '1.3.0', hover: typeof H === 'object' ? H : {} };
+  window.WFAnim = { init, destroy, refresh, register, smoothScroll, config: cfg, animations: A, version: '1.4.0', hover: typeof H === 'object' ? H : {} };
 
   const start = () => {
     if (!cfg.autoInit) return;

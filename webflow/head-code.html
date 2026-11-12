@@ -1,9 +1,12 @@
 <!-- WF Anim · Head Code -->
 <script>
 document.documentElement.classList.add('js-anim');
+try{if(sessionStorage.getItem('wfa-preloaded'))document.documentElement.classList.add('wfa-preloaded')}catch(e){}
 setTimeout(function(){if(!window.WFAnim)document.documentElement.classList.remove('js-anim')},3000);
 </script>
 <style>
 .js-anim [data-anim-intro]:not([data-anim-intro="false"]) { opacity: 0; }
+.js-anim:not(.wfa-preloaded) [data-anim="preloader"] { display: flex !important; }
+.js-anim [data-accordion-content] { height: 0; overflow: hidden; }
 [data-anim="split-chars"] { font-kerning: none; }
 </style>

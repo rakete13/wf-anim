@@ -18,7 +18,7 @@ Die Library ist komplett in den Footer Code eingebettet. Ein Webflow-Projekt hä
 Statt des langen Footer Codes reicht diese eine Zeile (Head Code und GSAP-Integration bleiben gleich):
 
 ```html
-<script src="https://cdn.jsdelivr.net/gh/rakete13/wf-anim@1.3.0/src/wf-anim.min.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/rakete13/wf-anim@1.4.0/src/wf-anim.min.js"></script>
 ```
 
 Bequem für eigene und betreute Projekte. Die Seite hängt dann aber an diesem Repo und an jsDelivr, und die IP-Adresse der Besucher geht an jsDelivr (in der Datenschutzerklärung erwähnen). Bei Übergabe an einen Kunden besser auf den eingebetteten Footer Code wechseln.
@@ -43,11 +43,19 @@ Soll ein Element im Startbildschirm trotzdem animieren (z. B. die Hero-Headline)
 | Reveals | `fade-in` `fade-up` `fade-down` `fade-left` `fade-right` `scale-in` `blur-in` `clip-up` `clip-down` `clip-left` `clip-right` `image-curtain` |
 | Gruppen | `stagger` `grid-stagger` |
 | Text | `split-lines` `split-words` `split-chars` `scramble` `highlight` `rotate-words` `typewriter` |
-| Scroll | `parallax` `parallax-element` `image-zoom` `image-expand` `image-shrink` `text-fill` `progress-bar` `pin` `horizontal` `stack` `cover` |
-| Funktional | `counter` `marquee` `draw-svg` |
-| Seite & Navigation | `nav-hide` `bg-color` `cursor` · Smooth Scroll global über `data-anim-smooth` am body oder `WFAnimConfig.smoothScroll` |
+| Scroll | `parallax` `parallax-element` `image-zoom` `image-expand` `image-shrink` `text-fill` `progress-bar` `pin` `horizontal` `stack` `cover` `scrolly` |
+| Funktional | `counter` `marquee` `draw-svg` `video` `accordion` `menu` |
+| Seite & Navigation | `preloader` `nav-hide` `bg-color` `cursor` · Smooth Scroll global über `data-anim-smooth` am body oder `WFAnimConfig.smoothScroll` |
 
 Globale Modifier: `data-anim-intro`, `data-anim-delay`, `data-anim-duration`, `data-anim-ease`, `data-anim-start`, `data-anim-end`, `data-anim-distance`, `data-anim-stagger`, `data-anim-repeat`, `data-anim-scrub`, `data-anim-mobile="false"`. Details und alle Optionen je Animation stehen in der Doku.
+
+## Debug-Modus
+
+Zeigt Start- und Endmarken jeder Scroll-Animation, eine Übersicht in der Konsole und typische Einrichtungsfehler (Bild beim Parallax nicht höher als der Wrapper, Section mit eigenem Hintergrund bei `bg-color`, zusätzliche Webflow Interaction am selben Element usw.).
+
+- `?wfanim-debug` an die Seitenadresse hängen (z. B. `https://projekt.webflow.io/?wfanim-debug`), ohne etwas in Webflow zu ändern
+- `data-anim-debug` am body (alle Animationen) oder an einem einzelnen Element (nur dieses)
+- oder `WFAnimConfig.debug = true`
 
 ## Hinweise zu einzelnen Effekten
 
@@ -57,7 +65,13 @@ Globale Modifier: `data-anim-intro`, `data-anim-delay`, `data-anim-duration`, `d
 - **bg-color:** Die Section selbst transparent lassen. Farben auch als Variablen `--anim-bg` / `--anim-text`.
 - **nav-hide:** Navbar auf fixed oder sticky. Setzt die Klasse `is-scrolled` zum Gestalten.
 - **cursor:** Element in Webflow gestalten (Position fixed, Deckkraft 0). Klassen `is-hover` und `is-text`, Text aus `data-cursor="…"` landet im Kind mit `data-cursor-label`.
-- **Größe:** Die Vollversion eingebettet hat inzwischen rund 43.000 Zeichen. Webflow erlaubt 50.000 insgesamt. Beim Einbetten daher besser per `build.js` ausdünnen oder die Library über jsDelivr laden.
+- **preloader:** In Webflow auf Display none stellen, der Head Code zeigt ihn beim Laden. Kinder `data-preloader-counter` und `data-preloader-bar`. `data-anim-once="session"` zeigt ihn nur einmal pro Besuch. Intro-Animationen warten, bis er verschwindet.
+- **scrolly:** Abschnitte `data-scrolly-step`, Bilder `data-scrolly-media` gemeinsam in einem Wrapper. Kein `overflow: hidden` darüber.
+- **accordion:** Einträge `data-accordion-item` mit `data-accordion-trigger`, `data-accordion-content` und optional `data-accordion-icon`. Innenabstände an ein inneres Element im Inhalt.
+- **menu:** Bei der Webflow Navbar an das Nav Menu, bei eigenen Menüs an das Panel, das ein- und ausgeblendet wird.
+- **video:** An `<video>` oder das Webflow Background Video.
+- **Größe:** Die eingebettete Vollversion hat rund 42.000 Zeichen (Webflow erlaubt 50.000 insgesamt). Mit `build.js` lässt sie sich auf die genutzten Effekte ausdünnen.
+- **Head Code:** Seit 1.4.0 enthält er zusätzlich Zeilen für Preloader und Akkordeon. Bei einem Update von älteren Versionen bitte ersetzen.
 
 ## Hover-Effekte
 
