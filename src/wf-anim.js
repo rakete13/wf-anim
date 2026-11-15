@@ -1672,7 +1672,8 @@
 
     /* ---------- Desktop / Mobile umschalten ---------- */
     const mmNav = gsap.matchMedia();
-    mmNav.add({ isMobile: `(max-width: ${bp}px)` }, (c) => {
+    // "always" sorgt dafür, dass die Funktion auch auf dem Desktop läuft
+    mmNav.add({ always: 'all', isMobile: `(max-width: ${bp}px)` }, (c) => {
       mobile = c.conditions.isMobile;
       if (menu) {
         menu.classList.toggle('is-static', !mobile);
@@ -1776,6 +1777,7 @@
           trigger: t,
           start: 'top center',
           end: 'bottom center',
+          refreshPriority: -1, // nach Pins weiter oben berechnen
           onToggle: (self) => {
             if (self.isActive) setAct(t);
             else if (act === t) setAct(null);
@@ -1805,6 +1807,7 @@
           start: () => `top ${line()}px`,
           end: () => `bottom ${line()}px`,
           invalidateOnRefresh: true,
+          refreshPriority: -1, // nach Pins weiter oben berechnen
           onToggle: (self) => {
             if (self.isActive) activeSet.add(s);
             else activeSet.delete(s);
