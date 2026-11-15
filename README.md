@@ -18,7 +18,7 @@ Die Library ist komplett in den Footer Code eingebettet. Ein Webflow-Projekt hä
 Statt des langen Footer Codes reicht diese eine Zeile (Head Code und GSAP-Integration bleiben gleich):
 
 ```html
-<script src="https://cdn.jsdelivr.net/gh/rakete13/wf-anim@1.5.0/src/wf-anim.min.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/rakete13/wf-anim@1.6.0/src/wf-anim.min.js"></script>
 ```
 
 Bequem für eigene und betreute Projekte. Die Seite hängt dann aber an diesem Repo und an jsDelivr, und die IP-Adresse der Besucher geht an jsDelivr (in der Datenschutzerklärung erwähnen). Bei Übergabe an einen Kunden besser auf den eingebetteten Footer Code wechseln.
@@ -55,7 +55,7 @@ Der Name beschreibt die Bewegungsrichtung: `fade-left` bewegt sich nach links, k
 | Reveals | `fade-in` `fade-up` `fade-down` `fade-left` `fade-right` `scale-in` `blur-in` `clip-up` `clip-down` `clip-left` `clip-right` `image-curtain` |
 | Gruppen | `stagger` `grid-stagger` |
 | Text | `split-lines` `split-words` `split-chars` `scramble` `highlight` `rotate-words` `typewriter` |
-| Scroll | `parallax` `parallax-element` `image-zoom` `image-expand` `image-shrink` `text-fill` `progress-bar` `pin` `horizontal` `stack` `cover` `scrolly` |
+| Scroll | `parallax` `parallax-element` `image-zoom` `image-expand` `image-shrink` `box-expand` `box-shrink` `text-fill` `progress-bar` `pin` `horizontal` `stack` `cover` `scrolly` |
 | Funktional | `counter` `marquee` `draw-svg` `video` `accordion` `menu` |
 | Seite & Navigation | `preloader` `nav-hide` `bg-color` `cursor` · Smooth Scroll global über `data-anim-smooth` am body oder `WFAnimConfig.smoothScroll` |
 
@@ -71,6 +71,7 @@ Zeigt Start- und Endmarken jeder Scroll-Animation, eine Übersicht in der Konsol
 
 ## Hinweise zu einzelnen Effekten
 
+- **box-expand / box-shrink:** Wie image-expand, aber ohne Bild-Zoom: Die Box wächst, der Inhalt bleibt frei. So lässt sich darin z. B. ein Image-Wrapper mit `data-anim="parallax"` kombinieren: Box (`box-expand`) › Image-Wrapper (`parallax`) › Bild.
 - **image-expand / image-shrink:** Wrapper im Layout voll breit anlegen, eine clip-path-Maske schneidet ihn zu. `data-anim-inset="container"` richtet den kleinen Zustand am Element mit `data-anim-container` aus.
 - **stack:** Container ohne `overflow: hidden` (auch nicht darüber), sonst greift das Festkleben nicht.
 - **cover:** Die nachfolgende Section braucht eine Hintergrundfarbe.

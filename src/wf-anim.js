@@ -1,5 +1,5 @@
 /*!
- * WF Anim v1.5.0
+ * WF Anim v1.6.0
  * Attribut-basierte GSAP-Animationen für Webflow
  *
  * Benötigt: gsap + ScrollTrigger
@@ -614,9 +614,11 @@
   /* ------------------------------------------------------------------ */
   /*  Bilder                                                             */
   /* ------------------------------------------------------------------ */
-  /*@block image-expand,image-shrink*/
+  /*@block image-expand,image-shrink,box-expand,box-shrink*/
   // Wrapper ist im Layout voll breit; eine clip-path-Maske schneidet ihn zu
-  const expandFx = (shrink) => (el) => {
+  // image-*: zoomt zusätzlich das erste Bild. box-*: nur die Maske – der Inhalt bleibt frei,
+  // z. B. für einen Image-Wrapper mit data-anim="parallax" darin.
+  const expandFx = (shrink, box) => (el) => {
     const ds = el.dataset;
     const media = el.querySelector('img, video');
     const len = (v, base) => (String(v).trim().endsWith('%') ? (parseFloat(v) / 100) * base : toPx(v));
@@ -646,7 +648,7 @@
       return `inset(${i.y}px ${i.r}px ${i.y}px ${i.l}px round ${rad}px)`;
     };
     const full = 'inset(0px 0px 0px 0px round 0px)';
-    const zoom = ds.animZoom === 'false' ? 1 : num(ds.animZoom, 1.15);
+    const zoom = ds.animZoom === 'false' ? 1 : num(ds.animZoom, box ? 1 : 1.15);
     const pin = bool(ds.animPin);
     // clip-path schneidet nur optisch – overflow verhindert seitliches Scrollen durch das gezoomte Bild
     gsap.set(el, { overflow: 'hidden' });
@@ -659,8 +661,10 @@
     tl.fromTo(el, { clipPath: () => (shrink ? full : small()) }, { clipPath: () => (shrink ? small() : full) }, 0);
     if (media && zoom !== 1) tl.fromTo(media, { scale: shrink ? 1 : zoom }, { scale: shrink ? zoom : 1 }, 0);
   };
-  A['image-expand'] = expandFx(false);
-  A['image-shrink'] = expandFx(true);
+  A['image-expand'] = expandFx(false, false);
+  A['image-shrink'] = expandFx(true, false);
+  A['box-expand'] = expandFx(false, true);
+  A['box-shrink'] = expandFx(true, true);
   /*@end*/
 
   /*@block image-curtain*/
@@ -1711,7 +1715,7 @@
     },
     'image-expand': (el) => {
       if (el.getBoundingClientRect().width < window.innerWidth * 0.9)
-        return 'Der Wrapper ist nicht annähernd voll breit. Er sollte außerhalb eines Containers liegen, sonst kann das Bild nicht auf volle Breite wachsen.';
+        return 'Der Wrapper ist nicht annähernd voll breit. Er sollte außerhalb eines Containers liegen, sonst kann der Inhalt nicht auf volle Breite wachsen.';
     },
     stack: (el) => {
       for (let n = el; n && n !== html; n = n.parentElement) {
@@ -1748,7 +1752,7 @@
       if (el.offsetWidth === 0 && el.offsetHeight === 0) return 'Das Cursor-Element hat keine Größe. In Webflow Breite und Höhe setzen.';
     },
   };
-  CHECKS['image-shrink'] = CHECKS['image-expand'];
+  CHECKS['image-shrink'] = CHECKS['box-expand'] = CHECKS['box-shrink'] = CHECKS['image-expand'];
   const debugReport = [];
   let debugBadge = null;
   const debugInspect = (type, el, note) => {
@@ -1974,7 +1978,7 @@
     else smooth.start(v);
   }
 
-  window.WFAnim = { init, destroy, refresh, register, smoothScroll, config: cfg, animations: A, version: '1.5.0', hover: typeof H === 'object' ? H : {} };
+  window.WFAnim = { init, destroy, refresh, register, smoothScroll, config: cfg, animations: A, version: '1.6.0', hover: typeof H === 'object' ? H : {} };
 
   const start = () => {
     if (!cfg.autoInit) return;

@@ -162,6 +162,8 @@ section.cat { display: grid; gap: 28px; scroll-margin-top: 32px; }
 
 .expand-wrap { width: 100%; aspect-ratio: 16 / 9; max-width: 100%; }
 .expand-wrap img { display: block; width: 100%; height: 100%; object-fit: cover; }
+.expand-wrap > .img-wrapper { aspect-ratio: auto; height: 100%; border-radius: 0; }
+.expand-wrap .img-wrapper img { height: 115%; }
 .plain-stage { background: var(--stage); border-radius: 10px; padding: 32px; }
 .stack { display: grid; gap: 24px; padding-bottom: 12vh; }
 .stack-card { height: 46vh; min-height: 260px; border-radius: 14px; padding: 28px; display: grid; align-content: space-between; font-family: var(--font-display); font-weight: 700; font-size: 1.6rem; color: #fff; }
@@ -282,7 +284,7 @@ td code { white-space: nowrap; }
 
   <main>
     <header class="hero">
-      <div class="eyebrow" data-anim="fade-down" data-anim-intro="load">WF Anim · v1.5.0 · GSAP 3.13</div>
+      <div class="eyebrow" data-anim="fade-down" data-anim-intro="load">WF Anim · v1.6.0 · GSAP 3.13</div>
       <h1 data-anim="split-lines" data-anim-intro>Ein Attribut,<br><em>eine Animation.</em></h1>
       <p>Standard-Animationen für jedes Webflow-Projekt. Element auswählen, unter <em>Custom Attributes</em> <span class="attr">data-anim</span> mit einem Wert aus dieser Liste setzen, fertig. Jede Zeile unten zeigt die Animation live; ein Klick auf das Attribut kopiert es. Was beim Laden schon im Bild ist, bleibt ruhig. Die Überschrift hier oben animiert trotzdem, weil sie <span class="attr">data-anim-intro</span> trägt; die Zeile darüber fährt mit <span class="attr">data-anim-intro="load"</span> beim Laden von oben herein.</p>
       <div class="notice" id="rm-notice" hidden>Dein System hat „Bewegung reduzieren“ aktiviert. Die Library zeigt Inhalte dann bewusst ohne Animation an, genau wie bei deinen Besuchern mit dieser Einstellung.</div>
@@ -320,7 +322,7 @@ setTimeout(function(){if(!window.WFAnim)document.documentElement.classList.remov
         <div>
           <h3>Footer Code</h3>
           <p>Entweder eine Zeile, die die Library aus GitHub lädt. Bequem für eigene und betreute Projekte; die IP-Adresse der Besucher geht dabei an jsDelivr.</p>
-<pre class="code-block" id="code-footer"><code>&lt;script src="https://cdn.jsdelivr.net/gh/rakete13/wf-anim@1.5.0/src/wf-anim.min.js"&gt;&lt;/script&gt;</code></pre>
+<pre class="code-block" id="code-footer"><code>&lt;script src="https://cdn.jsdelivr.net/gh/rakete13/wf-anim@1.6.0/src/wf-anim.min.js"&gt;&lt;/script&gt;</code></pre>
           <button class="copy-block" data-copy-target="code-footer">Footer-Zeile kopieren</button>
           <p>Oder eingebettet: den Inhalt von <code>webflow/footer-code.html</code> aus dem Repo einfügen. Dann hängt das Projekt an keinem fremden Server, ideal bei Übergabe an Kunden.</p>
         </div>
@@ -625,25 +627,29 @@ setTimeout(function(){if(!window.WFAnim)document.documentElement.classList.remov
 
       <div class="demo">
         <div class="info">
-          <h3>Image Expand</h3>
-          <p>Das Bild wächst beim Scrollen von einer kleineren Fläche auf die volle Breite. Der Wrapper ist im Layout voll breit, eine Maske (clip-path) schneidet ihn anfangs zu. Nichts im Grid verschiebt sich.</p>
-          <button class="copy" data-copy='data-anim="image-expand"'><code>data-anim="image-expand"</code><span class="hint">kopieren</span></button>
-          <ul class="opts"><li><code>data-anim-inset="container"</code> Startgröße = Breite des Elements mit <code>data-anim-container</code>; sonst z. B. <code>8vw</code> oder <code>10%</code></li><li><code>data-anim-radius="24px"</code> Ecken im kleinen Zustand</li><li><code>data-anim-zoom="false"</code> ohne Bild-Zoom</li><li><code>data-anim-pin</code> Section bleibt stehen, bis das Bild voll ist</li></ul>
+          <h3>Box Expand</h3>
+          <p>Eine Box wächst beim Scrollen von einer kleineren Fläche auf die volle Breite, egal was darin ist. Die Box ist im Layout voll breit, eine Maske (clip-path) schneidet sie anfangs zu; nichts im Grid verschiebt sich. Weil die Box selbst animiert wird, kann der Inhalt eine eigene Animation haben, z. B. ein Image-Wrapper mit Parallax, wie in dieser Demo.</p>
+          <button class="copy" data-copy='data-anim="box-expand"'><code>data-anim="box-expand"</code><span class="hint">kopieren</span></button>
+          <ul class="opts"><li>Aufbau: Box (<code>box-expand</code>) › Image-Wrapper (<code>parallax</code>) › Bild</li><li><code>data-anim-inset="container"</code> Startgröße = Breite des Elements mit <code>data-anim-container</code>; sonst z. B. <code>8vw</code> oder <code>10%</code></li><li><code>data-anim-radius="24px"</code> Ecken im kleinen Zustand</li><li><code>data-anim-pin</code> Section bleibt stehen, bis die Box voll ist</li><li>Variante <code>image-expand</code>: direkt am Bild-Wrapper, zoomt das Bild zusätzlich (nicht mit Parallax kombinierbar)</li></ul>
         </div>
         <div class="stage" style="min-height:120px"><p style="margin:0;color:var(--muted)">↓ Demo direkt darunter</p></div>
       </div>
-      <div class="expand-wrap" data-anim="image-expand" data-anim-inset="12%"><img data-demo-img="1" alt="Abstrakte Landschaft"></div>
+      <div class="expand-wrap" data-anim="box-expand" data-anim-inset="12%">
+        <div class="img-wrapper" data-anim="parallax"><img data-demo-img="1" alt="Abstrakte Landschaft"></div>
+      </div>
 
       <div class="demo">
         <div class="info">
-          <h3>Image Shrink</h3>
-          <p>Umgekehrt: Das Bild kommt in voller Breite und zieht sich beim Scrollen auf die kleinere Fläche zusammen. In der Stage oben auf der Seite zusätzlich <code>data-anim-start="top top"</code> setzen.</p>
-          <button class="copy" data-copy='data-anim="image-shrink"'><code>data-anim="image-shrink"</code><span class="hint">kopieren</span></button>
-          <ul class="opts"><li>gleiche Optionen wie Image Expand</li></ul>
+          <h3>Box Shrink</h3>
+          <p>Umgekehrt: Die Box kommt in voller Breite und zieht sich beim Scrollen auf die kleinere Fläche zusammen. Auch hier mit Parallax-Bild darin. In der Stage oben auf der Seite zusätzlich <code>data-anim-start="top top"</code> setzen.</p>
+          <button class="copy" data-copy='data-anim="box-shrink"'><code>data-anim="box-shrink"</code><span class="hint">kopieren</span></button>
+          <ul class="opts"><li>gleiche Optionen wie Box Expand</li><li>Variante mit Bild-Zoom: <code>image-shrink</code></li></ul>
         </div>
         <div class="stage" style="min-height:120px"><p style="margin:0;color:var(--muted)">↓ Demo direkt darunter</p></div>
       </div>
-      <div class="expand-wrap" data-anim="image-shrink" data-anim-inset="12%"><img data-demo-img="3" alt="Abstrakte Landschaft"></div>
+      <div class="expand-wrap" data-anim="box-shrink" data-anim-inset="12%">
+        <div class="img-wrapper" data-anim="parallax"><img data-demo-img="3" alt="Abstrakte Landschaft"></div>
+      </div>
 
       <div class="demo">
         <div class="info">
@@ -993,7 +999,7 @@ setTimeout(function(){if(!window.WFAnim)document.documentElement.classList.remov
         <li><strong>Fehlertoleranz:</strong> Fehlt ein Plugin oder ist ein Wert unbekannt, erscheint eine Warnung in der Konsole und das Element wird normal angezeigt.</li>
         <li><strong>Hover:</strong> läuft nur mit Maus oder Trackpad und bei Tastatur-Fokus. Bei „Bewegung reduzieren“ bleiben nur Farbeffekte (img-darken, fill, underline, reveal ohne Bewegung). Webflow-Dropdowns nutzen selbst ein <code>data-hover</code>-Attribut, dort bitte keinen Effekt setzen.</li>
         <li><strong>Nicht mischen:</strong> Kein <code>data-anim</code> auf Elementen, die zusätzlich eine native Webflow Interaction haben. Beide setzen <code>transform</code> und überschreiben sich.</li>
-        <li><strong>Debug-Modus:</strong> Zeigt farbige Start- und Endmarken jeder Scroll-Animation, eine Übersicht in der Konsole und typische Einrichtungsfehler (z. B. Bild beim Parallax nicht höher als der Wrapper, Section mit eigenem Hintergrund bei bg-color, zusätzliche Webflow Interaction am selben Element). Einschalten mit <code>?wfanim-debug</code> am Ende der Seitenadresse, mit <code>data-anim-debug</code> am body (alle) oder an einem einzelnen Element (nur dieses). Vor dem Livegang wieder entfernen. Auf dieser Seite meldet er Image Expand und Shrink, weil die Demos in der Textspalte liegen statt in voller Breite – genau dafür ist die Prüfung da. <button class="smooth-toggle debug-toggle" type="button" aria-pressed="false" id="debug-toggle">Debug hier einschalten</button></li>
+        <li><strong>Debug-Modus:</strong> Zeigt farbige Start- und Endmarken jeder Scroll-Animation, eine Übersicht in der Konsole und typische Einrichtungsfehler (z. B. Bild beim Parallax nicht höher als der Wrapper, Section mit eigenem Hintergrund bei bg-color, zusätzliche Webflow Interaction am selben Element). Einschalten mit <code>?wfanim-debug</code> am Ende der Seitenadresse, mit <code>data-anim-debug</code> am body (alle) oder an einem einzelnen Element (nur dieses). Vor dem Livegang wieder entfernen. Auf dieser Seite meldet er Box Expand und Shrink, weil die Demos in der Textspalte liegen statt in voller Breite – genau dafür ist die Prüfung da. <button class="smooth-toggle debug-toggle" type="button" aria-pressed="false" id="debug-toggle">Debug hier einschalten</button></li>
         <li><strong>Lazy Loading:</strong> Die Library rechnet nach dem Laden der Schriften und nach dem Auf- und Zuklappen eines Akkordeons neu. Verändert sich das Layout anders (Tabs, eigene Skripte), rufe <code>WFAnim.refresh()</code> auf.</li>
       </ul>
 <pre class="code-block"><code>WFAnim.init(element)   // neue Elemente animieren, z. B. nach CMS Load More
@@ -1039,7 +1045,7 @@ WFAnim.register('mein-effekt', (el, opts) =&gt; {
 </script>
 <script>
 /*!
- * WF Anim v1.5.0
+ * WF Anim v1.6.0
  * Attribut-basierte GSAP-Animationen für Webflow
  *
  * Benötigt: gsap + ScrollTrigger
@@ -1654,9 +1660,11 @@ WFAnim.register('mein-effekt', (el, opts) =&gt; {
   /* ------------------------------------------------------------------ */
   /*  Bilder                                                             */
   /* ------------------------------------------------------------------ */
-  /*@block image-expand,image-shrink*/
+  /*@block image-expand,image-shrink,box-expand,box-shrink*/
   // Wrapper ist im Layout voll breit; eine clip-path-Maske schneidet ihn zu
-  const expandFx = (shrink) => (el) => {
+  // image-*: zoomt zusätzlich das erste Bild. box-*: nur die Maske – der Inhalt bleibt frei,
+  // z. B. für einen Image-Wrapper mit data-anim="parallax" darin.
+  const expandFx = (shrink, box) => (el) => {
     const ds = el.dataset;
     const media = el.querySelector('img, video');
     const len = (v, base) => (String(v).trim().endsWith('%') ? (parseFloat(v) / 100) * base : toPx(v));
@@ -1686,7 +1694,7 @@ WFAnim.register('mein-effekt', (el, opts) =&gt; {
       return `inset(${i.y}px ${i.r}px ${i.y}px ${i.l}px round ${rad}px)`;
     };
     const full = 'inset(0px 0px 0px 0px round 0px)';
-    const zoom = ds.animZoom === 'false' ? 1 : num(ds.animZoom, 1.15);
+    const zoom = ds.animZoom === 'false' ? 1 : num(ds.animZoom, box ? 1 : 1.15);
     const pin = bool(ds.animPin);
     // clip-path schneidet nur optisch – overflow verhindert seitliches Scrollen durch das gezoomte Bild
     gsap.set(el, { overflow: 'hidden' });
@@ -1699,8 +1707,10 @@ WFAnim.register('mein-effekt', (el, opts) =&gt; {
     tl.fromTo(el, { clipPath: () => (shrink ? full : small()) }, { clipPath: () => (shrink ? small() : full) }, 0);
     if (media && zoom !== 1) tl.fromTo(media, { scale: shrink ? 1 : zoom }, { scale: shrink ? zoom : 1 }, 0);
   };
-  A['image-expand'] = expandFx(false);
-  A['image-shrink'] = expandFx(true);
+  A['image-expand'] = expandFx(false, false);
+  A['image-shrink'] = expandFx(true, false);
+  A['box-expand'] = expandFx(false, true);
+  A['box-shrink'] = expandFx(true, true);
   /*@end*/
 
   /*@block image-curtain*/
@@ -2751,7 +2761,7 @@ WFAnim.register('mein-effekt', (el, opts) =&gt; {
     },
     'image-expand': (el) => {
       if (el.getBoundingClientRect().width < window.innerWidth * 0.9)
-        return 'Der Wrapper ist nicht annähernd voll breit. Er sollte außerhalb eines Containers liegen, sonst kann das Bild nicht auf volle Breite wachsen.';
+        return 'Der Wrapper ist nicht annähernd voll breit. Er sollte außerhalb eines Containers liegen, sonst kann der Inhalt nicht auf volle Breite wachsen.';
     },
     stack: (el) => {
       for (let n = el; n && n !== html; n = n.parentElement) {
@@ -2788,7 +2798,7 @@ WFAnim.register('mein-effekt', (el, opts) =&gt; {
       if (el.offsetWidth === 0 && el.offsetHeight === 0) return 'Das Cursor-Element hat keine Größe. In Webflow Breite und Höhe setzen.';
     },
   };
-  CHECKS['image-shrink'] = CHECKS['image-expand'];
+  CHECKS['image-shrink'] = CHECKS['box-expand'] = CHECKS['box-shrink'] = CHECKS['image-expand'];
   const debugReport = [];
   let debugBadge = null;
   const debugInspect = (type, el, note) => {
@@ -3014,7 +3024,7 @@ WFAnim.register('mein-effekt', (el, opts) =&gt; {
     else smooth.start(v);
   }
 
-  window.WFAnim = { init, destroy, refresh, register, smoothScroll, config: cfg, animations: A, version: '1.5.0', hover: typeof H === 'object' ? H : {} };
+  window.WFAnim = { init, destroy, refresh, register, smoothScroll, config: cfg, animations: A, version: '1.6.0', hover: typeof H === 'object' ? H : {} };
 
   const start = () => {
     if (!cfg.autoInit) return;
