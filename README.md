@@ -18,7 +18,7 @@ Die Library ist komplett in den Footer Code eingebettet. Ein Webflow-Projekt hä
 Statt des langen Footer Codes reicht diese eine Zeile (Head Code und GSAP-Integration bleiben gleich):
 
 ```html
-<script src="https://cdn.jsdelivr.net/gh/rakete13/wf-anim@1.7.0/src/wf-anim.min.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/rakete13/wf-anim@1.8.0/src/wf-anim.min.js"></script>
 ```
 
 Bequem für eigene und betreute Projekte. Die Seite hängt dann aber an diesem Repo und an jsDelivr, und die IP-Adresse der Besucher geht an jsDelivr (in der Datenschutzerklärung erwähnen). Bei Übergabe an einen Kunden besser auf den eingebetteten Footer Code wechseln.
@@ -108,7 +108,7 @@ header             ← data-nav
 - **Dropdowns / Mega-Menüs:** Desktop bei Hover mit Verzögerung (`data-nav-hover-delay`, `data-nav-close-delay`), Klick und Tastatur; auf dem Handy Akkordeon.
 - **Indikator:** gleitet zum Link unter der Maus und zurück zum aktiven (`w--current` bzw. `is-active`).
 - **Scroll-Spy:** `data-nav-spy` am Header markiert bei Ankerlinks die sichtbare Section (`is-active`, `aria-current`).
-- **Nav-Farbe:** Sections mit `data-nav-theme="dark"` geben dem Header die Klasse `is-dark`, solange sie dahinter liegen.
+- **Nav-Farbe je Section:** Farben einmal an der Navigation festlegen, z. B. `data-nav-theme-dark="transparent, #ffffff"` (Hintergrund, Schrift, optional Rahmen; Variablen erlaubt). Sections bekommen `data-nav-theme="dark"`. Berührt eine solche Section die Navigation (runter: Unterkante, hoch: Oberkante), wechseln die Farben in 0,25 s (`data-nav-theme-duration`), dazu kommt die Klasse `is-dark`. Über anderen Sections gilt die Gestaltung aus Webflow. Bei offenem Mobile-Menü bleiben die Standardfarben. Links und Burger-Linien auf `inherit`/`currentColor`, Logo als eingebettetes SVG mit `fill="currentColor"`.
 - **Klassen:** `is-open` (Header, Panel, offenes Dropdown), `is-active` (Link), `is-static` (Panel auf Desktop).
 - **Barrierefreiheit (fest eingebaut):** `aria-expanded`/`aria-controls`, Beschriftung des Burgers (`data-nav-label-open`/`-close`), Bedienung per Tastatur (Enter, Leertaste, Pfeiltasten, Esc), Fokusfalle und `inert` für die Seite dahinter, Scroll-Sperre, Fokus zurück zum Burger, Schließen bei Linkklick und beim Wechsel auf Desktop, `aria-current` am aktiven Link, ohne Animation bei „Bewegung reduzieren“. `data-nav-modal="false"` schaltet Fokusfalle, Sperre und Scroll-Sperre ab (nur für Sonderfälle).
 - **Umschaltpunkt geändert?** Dann die Zahl 991 in der Nav-Zeile des Head Codes ebenfalls ändern.

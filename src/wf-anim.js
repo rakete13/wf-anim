@@ -1,5 +1,5 @@
 /*!
- * WF Anim v1.7.0
+ * WF Anim v1.8.0
  * Attribut-basierte GSAP-Animationen für Webflow
  *
  * Benötigt: gsap + ScrollTrigger
@@ -1514,6 +1514,7 @@
 
     /* ---------- Mobile-Menü ---------- */
     let open = false;
+    let onMenuToggle = () => {};
     let tl = null;
     let ownLabel = false;
     let prevOverflow = '';
@@ -1593,6 +1594,7 @@
         if (ownLabel) toggle.setAttribute('aria-label', open ? labelClose : labelOpen);
       }
       burger(open, instant);
+      onMenuToggle(open);
       if (tl) tl.kill();
       const items = navItems();
       if (open) {
@@ -1787,34 +1789,113 @@
       spied.push(...pairs.map((p) => p.a));
     }
 
-    /* ---------- Nav-Farbe passend zur Section (data-nav-theme) ---------- */
+    /* ---------- Nav-Farbe passend zur Section ---------- */
+    // An der Nav: data-nav-theme-dark="transparent, #ffffff" (Hintergrund, Schrift, optional Rahmen)
+    // An der Section: data-nav-theme="dark" → Farben werden animiert, Klasse is-dark kommt dazu
     let theme = null;
+    const themes = {};
+    // Kommas innerhalb von Klammern (rgba, var) nicht trennen
+    const splitList = (v) => {
+      const out = [];
+      let depth = 0;
+      let cur = '';
+      for (const ch of v) {
+        if (ch === '(') depth++;
+        if (ch === ')') depth--;
+        if (ch === ',' && depth === 0) {
+          out.push(cur.trim());
+          cur = '';
+        } else cur += ch;
+      }
+      out.push(cur.trim());
+      return out.map((x) => x || undefined);
+    };
+    Array.from(nav.attributes).forEach((a) => {
+      const m = /^data-nav-theme-(.+)$/.exec(a.name);
+      if (!m || m[1] === 'duration' || m[1] === 'at') return;
+      const [bg, color, border] = splitList(a.value);
+      themes[m[1]] = { bg, color, border };
+    });
     const themed = Array.from(document.querySelectorAll('[data-nav-theme]'));
+    const usesColors = Object.keys(themes).length > 0;
+    const usesBorder = Object.values(themes).some((t) => t.border);
+    const tDur = reduce ? 0 : num(ds.navThemeDuration, 0.25);
+    let themeTween = null;
+    let frozen = false;
+    let lastDir = 1;
+    // Standardfarben aus Webflow lesen (Inline-Farben kurz entfernen)
+    const readDefault = () => {
+      const st = nav.style;
+      const saved = [st.backgroundColor, st.color, st.borderColor];
+      st.backgroundColor = st.color = '';
+      if (usesBorder) st.borderColor = '';
+      const cs = getComputedStyle(nav);
+      const d = { bg: cs.backgroundColor, color: cs.color, border: cs.borderBottomColor };
+      [st.backgroundColor, st.color] = saved;
+      if (usesBorder) st.borderColor = saved[2];
+      return d;
+    };
+    const clearColors = () => {
+      nav.style.backgroundColor = '';
+      nav.style.color = '';
+      if (usesBorder) nav.style.borderColor = '';
+    };
+    const applyTheme = (th, instant) => {
+      if (th === theme && !instant) return;
+      if (theme) nav.classList.remove('is-' + theme);
+      theme = th;
+      if (theme) nav.classList.add('is-' + theme);
+      if (!usesColors) return;
+      if (themeTween) themeTween.kill();
+      const d = instant ? 0 : tDur;
+      const t = theme && themes[theme];
+      const target = t ? { bg: t.bg, color: t.color, border: t.border } : readDefault();
+      const v = { duration: d, ease: 'power2.out' };
+      if (t ? t.bg : true) v.backgroundColor = resolveColor(target.bg, nav);
+      if (t ? t.color : true) v.color = resolveColor(target.color, nav);
+      if (usesBorder && (t ? t.border : true)) v.borderColor = resolveColor(target.border, nav);
+      if (!t) v.onComplete = clearColors; // zurück zur Gestaltung aus Webflow
+      themeTween = gsap.to(nav, v);
+    };
+    // Position der Nav ohne nav-hide-Verschiebung
+    const navEdges = () => {
+      const r = nav.getBoundingClientRect();
+      const shift = ((gsap.getProperty(nav, 'yPercent') || 0) * nav.offsetHeight) / 100 + (gsap.getProperty(nav, 'y') || 0);
+      return { top: r.top - shift, bottom: r.top - shift + nav.offsetHeight };
+    };
+    const computeTheme = (instant) => {
+      if (frozen) return;
+      const e = navEdges();
+      // Rechtzeitig: runter → Unterkante der Nav, hoch → Oberkante; Option center
+      const y = ds.navThemeAt === 'center' ? (e.top + e.bottom) / 2 : lastDir >= 0 ? e.bottom - 1 : e.top + 1;
+      let hit = null;
+      themed.forEach((sec) => {
+        const r = sec.getBoundingClientRect();
+        if (r.height && r.top <= y && r.bottom > y) hit = sec;
+      });
+      applyTheme(hit ? hit.getAttribute('data-nav-theme') : null, instant);
+    };
     if (themed.length) {
-      const activeSet = new Set();
-      const apply = () => {
-        const s = themed.filter((x) => activeSet.has(x)).pop();
-        const th = s ? s.getAttribute('data-nav-theme') : null;
-        if (th === theme) return;
-        if (theme) nav.classList.remove('is-' + theme);
-        theme = th;
-        if (theme) nav.classList.add('is-' + theme);
+      ScrollTrigger.create({
+        start: 0,
+        end: 'max',
+        onUpdate: (self) => {
+          lastDir = self.direction;
+          computeTheme();
+        },
+        onRefresh: () => computeTheme(true),
+      });
+      computeTheme(true);
+      // Offenes Mobile-Menü: Standardfarben, kein Wechsel beim Scrollen
+      onMenuToggle = (o) => {
+        if (o) {
+          applyTheme(null);
+          frozen = true;
+        } else {
+          frozen = false;
+          computeTheme();
+        }
       };
-      const line = () => (parseFloat(getComputedStyle(nav).top) || 0) + nav.offsetHeight / 2;
-      themed.forEach((s) =>
-        ScrollTrigger.create({
-          trigger: s,
-          start: () => `top ${line()}px`,
-          end: () => `bottom ${line()}px`,
-          invalidateOnRefresh: true,
-          refreshPriority: -1, // nach Pins weiter oben berechnen
-          onToggle: (self) => {
-            if (self.isActive) activeSet.add(s);
-            else activeSet.delete(s);
-            apply();
-          },
-        })
-      );
     }
 
     return () => {
@@ -1824,6 +1905,8 @@
       html.classList.remove('wfa-nav-open');
       nav.classList.remove('is-open');
       if (theme) nav.classList.remove('is-' + theme);
+      if (themeTween) themeTween.kill();
+      if (usesColors) clearColors();
       spied.forEach((a) => {
         a.classList.remove('is-active');
         if (a.getAttribute('aria-current') === 'location') a.removeAttribute('aria-current');
@@ -2465,7 +2548,7 @@
     else smooth.start(v);
   }
 
-  window.WFAnim = { init, destroy, refresh, register, smoothScroll, config: cfg, animations: A, version: '1.7.0', hover: typeof H === 'object' ? H : {} };
+  window.WFAnim = { init, destroy, refresh, register, smoothScroll, config: cfg, animations: A, version: '1.8.0', hover: typeof H === 'object' ? H : {} };
 
   const start = () => {
     if (!cfg.autoInit) return;
