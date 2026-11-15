@@ -18,7 +18,7 @@ Die Library ist komplett in den Footer Code eingebettet. Ein Webflow-Projekt hä
 Statt des langen Footer Codes reicht diese eine Zeile (Head Code und GSAP-Integration bleiben gleich):
 
 ```html
-<script src="https://cdn.jsdelivr.net/gh/rakete13/wf-anim@1.4.0/src/wf-anim.min.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/rakete13/wf-anim@1.5.0/src/wf-anim.min.js"></script>
 ```
 
 Bequem für eigene und betreute Projekte. Die Seite hängt dann aber an diesem Repo und an jsDelivr, und die IP-Adresse der Besucher geht an jsDelivr (in der Datenschutzerklärung erwähnen). Bei Übergabe an einen Kunden besser auf den eingebetteten Footer Code wechseln.
@@ -28,6 +28,18 @@ Bequem für eigene und betreute Projekte. Die Seite hängt dann aber an diesem R
 Elemente, die beim Laden schon im sichtbaren Bereich (oder darüber) liegen, bleiben ruhig und sind sofort sichtbar. Animiert wird nur, was beim Scrollen neu ins Bild kommt. Das verhindert Aufblitzen, verbessert die Ladezeit-Werte und ist besser für Screenreader.
 
 Soll ein Element im Startbildschirm trotzdem animieren (z. B. die Hero-Headline), bekommt es zusätzlich das Attribut `data-anim-intro`. Dafür ist der Head Code nötig.
+
+Mit `data-anim-intro="load"` startet die Animation sofort beim Laden der Seite, unabhängig von Position und Scrollen (bei Preloader: wenn er verschwindet). Ideal für die Stage: Elemente fahren beim Laden an ihre Position oder blenden sich ein. Reihenfolge über `data-anim-delay`. Gilt für Einblende-Animationen, nicht für Scroll-Effekte.
+
+| Element soll … | `data-anim` |
+|---|---|
+| von links hereinfahren | `fade-right` |
+| von rechts hereinfahren | `fade-left` |
+| von unten hereinfahren | `fade-up` |
+| von oben hereinfahren | `fade-down` |
+| nur einblenden | `fade-in` |
+
+Für einen Start ganz außerhalb des Bildschirms `data-anim-distance="100vw"` bzw. `100vh` setzen.
 
 ## Barrierefreiheit
 

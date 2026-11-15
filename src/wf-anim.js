@@ -1,5 +1,5 @@
 /*!
- * WF Anim v1.4.0
+ * WF Anim v1.5.0
  * Attribut-basierte GSAP-Animationen für Webflow
  *
  * Benötigt: gsap + ScrollTrigger
@@ -67,8 +67,10 @@
 
   const opts = (el) => {
     const d = el.dataset;
+    // data-anim-intro="load": sofort beim Laden abspielen, unabhängig von Position und Scrollen
+    const load = d.animIntro === 'load';
     let scrub = false;
-    if (bool(d.animScrub)) scrub = d.animScrub === '' || d.animScrub === 'true' ? true : num(d.animScrub, true);
+    if (!load && bool(d.animScrub)) scrub = d.animScrub === '' || d.animScrub === 'true' ? true : num(d.animScrub, true);
     return {
       delay: num(d.animDelay, 0),
       duration: num(d.animDuration, cfg.duration),
@@ -80,12 +82,14 @@
       hasStagger: d.animStagger !== undefined,
       repeat: bool(d.animRepeat),
       scrub,
+      load,
     };
   };
 
   // ScrollTrigger-Konfiguration für Reveal-Animationen
+  // Ohne ScrollTrigger (undefined) startet die Animation sofort – so funktioniert data-anim-intro="load"
   const st = (el, o, extra) =>
-    Object.assign(
+    o.load ? undefined : Object.assign(
       o.scrub
         ? { trigger: el, start: o.start, end: o.end, scrub: o.scrub }
         : {
@@ -1970,7 +1974,7 @@
     else smooth.start(v);
   }
 
-  window.WFAnim = { init, destroy, refresh, register, smoothScroll, config: cfg, animations: A, version: '1.4.0', hover: typeof H === 'object' ? H : {} };
+  window.WFAnim = { init, destroy, refresh, register, smoothScroll, config: cfg, animations: A, version: '1.5.0', hover: typeof H === 'object' ? H : {} };
 
   const start = () => {
     if (!cfg.autoInit) return;
