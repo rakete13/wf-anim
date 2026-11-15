@@ -1,5 +1,5 @@
 /*!
- * WF Anim v1.6.0
+ * WF Anim v1.6.1
  * Attribut-basierte GSAP-Animationen für Webflow
  *
  * Benötigt: gsap + ScrollTrigger
@@ -1755,7 +1755,19 @@
   CHECKS['image-shrink'] = CHECKS['box-expand'] = CHECKS['box-shrink'] = CHECKS['image-expand'];
   const debugReport = [];
   let debugBadge = null;
-  const debugInspect = (type, el, note) => {
+  const debugInspect = (type, el, note, late) => {
+    // Element hat noch keine Größe (z. B. Seite beim Laden ausgeblendet, Slider noch nicht bereit):
+    // erst nach dem Laden prüfen, sonst gäbe es Fehlalarme
+    if (!late && !el.offsetWidth && !el.offsetHeight) {
+      const later = () =>
+        setTimeout(() => {
+          debugInspect(type, el, note, true);
+          showDebugBadge();
+        }, 800);
+      if (document.readyState === 'complete') later();
+      else window.addEventListener('load', later, { once: true });
+      return;
+    }
     const issues = [];
     if (el.hasAttribute('data-w-id')) issues.push('Element hat zusätzlich eine Webflow Interaction – beide setzen transform und können sich stören.');
     const chk = CHECKS[type] && CHECKS[type](el);
@@ -1978,7 +1990,7 @@
     else smooth.start(v);
   }
 
-  window.WFAnim = { init, destroy, refresh, register, smoothScroll, config: cfg, animations: A, version: '1.6.0', hover: typeof H === 'object' ? H : {} };
+  window.WFAnim = { init, destroy, refresh, register, smoothScroll, config: cfg, animations: A, version: '1.6.1', hover: typeof H === 'object' ? H : {} };
 
   const start = () => {
     if (!cfg.autoInit) return;
