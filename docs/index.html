@@ -330,17 +330,18 @@ setTimeout(function(){if(!window.WFAnim)document.documentElement.classList.remov
           <button class="copy" data-copy='data-anim-intro' style="justify-self:start; width:auto"><code>data-anim-intro</code><span class="hint">kopieren</span></button>
           <p>Mit dem Wert <code>load</code> startet die Animation sofort beim Laden der Seite, unabhängig davon, wo das Element sitzt und ob gescrollt wird (bei Preloader: wenn er verschwindet). Ideal für die Stage: Elemente fahren beim Laden an ihre Position oder blenden sich ein. Die Reihenfolge legst du mit <code>data-anim-delay</code> fest. Gilt für alle Einblende-Animationen, nicht für Scroll-Effekte wie Parallax.</p>
           <button class="copy" data-copy='data-anim-intro="load"' style="justify-self:start; width:auto"><code>data-anim-intro="load"</code><span class="hint">kopieren</span></button>
-          <div class="table-wrap"><table style="min-width:0">
-            <thead><tr><th>Element soll …</th><th>data-anim</th></tr></thead>
+          <h3 style="font-size:1.05rem">Von außerhalb des Bildschirms hereinfahren</h3>
+          <div class="table-wrap"><table>
+            <thead><tr><th>Element kommt von …</th><th>data-anim</th><th>data-anim-distance</th><th>Sanftere Variante</th><th>data-anim-intro</th><th>data-anim-duration</th><th>Hinweis</th></tr></thead>
             <tbody>
-              <tr><td>von links hereinfahren</td><td><code>fade-right</code></td></tr>
-              <tr><td>von rechts hereinfahren</td><td><code>fade-left</code></td></tr>
-              <tr><td>von unten hereinfahren</td><td><code>fade-up</code></td></tr>
-              <tr><td>von oben hereinfahren</td><td><code>fade-down</code></td></tr>
-              <tr><td>nur einblenden</td><td><code>fade-in</code></td></tr>
+              <tr><td>unten</td><td><code>fade-up</code></td><td><code>100vh</code></td><td><code>30vh</code></td><td><code>load</code></td><td><code>1.2</code></td><td>Stage auf Overflow: Hidden, sonst wird die Seite kurz länger</td></tr>
+              <tr><td>oben</td><td><code>fade-down</code></td><td><code>100vh</code></td><td><code>30vh</code></td><td><code>load</code></td><td><code>1.2</code></td><td>Stage ganz oben oder Overflow: Hidden, sonst fährt es über die Navbar</td></tr>
+              <tr><td>rechts</td><td><code>fade-left</code></td><td><code>100vw</code></td><td><code>40vw</code></td><td><code>load</code></td><td><code>1.2</code></td><td>Stage auf Overflow: Hidden, sonst wird die Seite kurz seitlich scrollbar</td></tr>
+              <tr><td>links</td><td><code>fade-right</code></td><td><code>100vw</code></td><td><code>40vw</code></td><td><code>load</code></td><td><code>1.2</code></td><td>Stage auf Overflow: Hidden, sonst wird die Seite kurz seitlich scrollbar</td></tr>
+              <tr><td>nirgends, nur einblenden</td><td><code>fade-in</code></td><td>–</td><td>–</td><td><code>load</code></td><td><code>0.9</code> (Standard)</td><td>–</td></tr>
             </tbody>
           </table></div>
-          <p>Der Name beschreibt die Bewegungsrichtung: <code>fade-right</code> bewegt sich nach rechts, kommt also von links. Für einen Start ganz außerhalb des Bildschirms <code>data-anim-distance="100vw"</code> (seitlich) oder <code>100vh</code> (oben/unten) setzen.</p>
+          <p>Der Name beschreibt die Bewegungsrichtung: <code>fade-left</code> bewegt sich nach links, kommt also von rechts. Mit den Werten unter <code>data-anim-distance</code> startet das Element komplett außerhalb des Bildschirms; mit der sanfteren Variante blendet es gleichzeitig ein und fährt nur das letzte Stück herein. Eine Reihenfolge mehrerer Elemente legst du mit <code>data-anim-delay</code> fest, z. B. 0 / 0.2 / 0.4.</p>
         </div>
         <div>
           <h3>Projekt-Defaults (optional)</h3>

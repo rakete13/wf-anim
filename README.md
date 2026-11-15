@@ -31,15 +31,15 @@ Soll ein Element im Startbildschirm trotzdem animieren (z. B. die Hero-Headline)
 
 Mit `data-anim-intro="load"` startet die Animation sofort beim Laden der Seite, unabhängig von Position und Scrollen (bei Preloader: wenn er verschwindet). Ideal für die Stage: Elemente fahren beim Laden an ihre Position oder blenden sich ein. Reihenfolge über `data-anim-delay`. Gilt für Einblende-Animationen, nicht für Scroll-Effekte.
 
-| Element soll … | `data-anim` |
-|---|---|
-| von links hereinfahren | `fade-right` |
-| von rechts hereinfahren | `fade-left` |
-| von unten hereinfahren | `fade-up` |
-| von oben hereinfahren | `fade-down` |
-| nur einblenden | `fade-in` |
+| Element kommt von … | `data-anim` | `data-anim-distance` | Sanftere Variante | `data-anim-intro` | `data-anim-duration` | Hinweis |
+|---|---|---|---|---|---|---|
+| unten | `fade-up` | `100vh` | `30vh` | `load` | `1.2` | Stage auf Overflow: Hidden, sonst wird die Seite kurz länger |
+| oben | `fade-down` | `100vh` | `30vh` | `load` | `1.2` | Stage ganz oben oder Overflow: Hidden, sonst fährt es über die Navbar |
+| rechts | `fade-left` | `100vw` | `40vw` | `load` | `1.2` | Stage auf Overflow: Hidden, sonst wird die Seite kurz seitlich scrollbar |
+| links | `fade-right` | `100vw` | `40vw` | `load` | `1.2` | Stage auf Overflow: Hidden, sonst wird die Seite kurz seitlich scrollbar |
+| nur einblenden | `fade-in` | – | – | `load` | `0.9` (Standard) | – |
 
-Für einen Start ganz außerhalb des Bildschirms `data-anim-distance="100vw"` bzw. `100vh` setzen.
+Der Name beschreibt die Bewegungsrichtung: `fade-left` bewegt sich nach links, kommt also von rechts. Mit den Werten unter `data-anim-distance` startet das Element komplett außerhalb des Bildschirms, mit der sanfteren Variante fährt es nur das letzte Stück herein.
 
 ## Barrierefreiheit
 
