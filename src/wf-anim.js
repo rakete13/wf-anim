@@ -877,7 +877,7 @@
         yPercent: h ? -100 : 0,
         duration: dur,
         ease: 'power3.out',
-        overwrite: true,
+        overwrite: 'auto', // nur die eigene Bewegung ersetzen, z. B. Farbwechsel der Nav weiterlaufen lassen
         // Sichtbar: Transformation entfernen – sonst sitzt ein fixes Mobile-Menü im Header falsch
         onComplete: () => !hidden && gsap.set(el, { clearProps: 'transform' }),
       });
