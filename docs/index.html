@@ -344,7 +344,7 @@ td code { white-space: nowrap; }
 
   <main>
     <header class="hero">
-      <div class="eyebrow" data-anim="fade-down" data-anim-intro="load">WF Anim · v1.8.0 · GSAP 3.13</div>
+      <div class="eyebrow" data-anim="fade-down" data-anim-intro="load">WF Anim · v1.8.1 · GSAP 3.13</div>
       <h1 data-anim="split-lines" data-anim-intro>Ein Attribut,<br><em>eine Animation.</em></h1>
       <p>Standard-Animationen für jedes Webflow-Projekt. Element auswählen, unter <em>Custom Attributes</em> <span class="attr">data-anim</span> mit einem Wert aus dieser Liste setzen, fertig. Jede Zeile unten zeigt die Animation live; ein Klick auf das Attribut kopiert es. Was beim Laden schon im Bild ist, bleibt ruhig. Die Überschrift hier oben animiert trotzdem, weil sie <span class="attr">data-anim-intro</span> trägt; die Zeile darüber fährt mit <span class="attr">data-anim-intro="load"</span> beim Laden von oben herein.</p>
       <div class="notice" id="rm-notice" hidden>Dein System hat „Bewegung reduzieren“ aktiviert. Die Library zeigt Inhalte dann bewusst ohne Animation an, genau wie bei deinen Besuchern mit dieser Einstellung.</div>
@@ -384,7 +384,7 @@ setTimeout(function(){if(!window.WFAnim)document.documentElement.classList.remov
         <div>
           <h3>Footer Code</h3>
           <p>Entweder eine Zeile, die die Library aus GitHub lädt. Bequem für eigene und betreute Projekte; die IP-Adresse der Besucher geht dabei an jsDelivr.</p>
-<pre class="code-block" id="code-footer"><code>&lt;script src="https://cdn.jsdelivr.net/gh/rakete13/wf-anim@1.8.0/src/wf-anim.min.js"&gt;&lt;/script&gt;</code></pre>
+<pre class="code-block" id="code-footer"><code>&lt;script src="https://cdn.jsdelivr.net/gh/rakete13/wf-anim@1.8.1/src/wf-anim.min.js"&gt;&lt;/script&gt;</code></pre>
           <button class="copy-block" data-copy-target="code-footer">Footer-Zeile kopieren</button>
           <p>Oder eingebettet: den Inhalt von <code>webflow/footer-code.html</code> aus dem Repo einfügen. Dann hängt das Projekt an keinem fremden Server, ideal bei Übergabe an Kunden.</p>
         </div>
@@ -1055,7 +1055,7 @@ setTimeout(function(){if(!window.WFAnim)document.documentElement.classList.remov
           <h3>Mobile-Menü</h3>
           <p>Der Burger verwandelt sich in ein X, das Panel öffnet sich in der gewählten Variante, die Links erscheinen nacheinander. Dropdowns werden auf dem Handy zum Akkordeon. Probier die Varianten im Handy-Rahmen aus.</p>
           <button class="copy" data-copy='data-nav-open="side"'><code>data-nav-open="side"</code><span class="hint">kopieren</span></button>
-          <ul class="opts"><li><code>down</code> (Standard) · <code>side</code> · <code>side-left</code> · <code>circle</code> · <code>fade</code></li><li><code>data-nav-breakpoint="767"</code> Umschaltpunkt in px (dann auch im Head Code ändern)</li><li><code>data-nav-duration="0.8"</code> · <code>data-nav-stagger="0.08"</code></li><li><code>data-nav-burger="false"</code> Burger ohne X-Animation</li></ul>
+          <ul class="opts"><li><code>down</code> (Standard) · <code>side</code> · <code>side-left</code> · <code>circle</code> · <code>fade</code></li><li><code>data-nav-breakpoint="767"</code> Umschaltpunkt in px (dann auch im Head Code ändern)</li><li><code>data-nav-duration="0.8"</code> Dauer, bis das Panel offen ist</li><li><code>data-nav-stagger="0.15"</code> Abstand zwischen den Links (Standard 0.06)</li><li><code>data-nav-item-duration="0.8"</code> Dauer je Link (Standard 0.5)</li><li><code>data-nav-item-delay="0.4"</code> wann die Links nach dem Öffnen starten</li><li><code>data-nav-item-distance="40px"</code> Weg, den jeder Link nach oben fährt (Standard 24px)</li><li><code>data-nav-burger="false"</code> Burger ohne X-Animation</li></ul>
         </div>
         <div class="stage nav-demo">
           <div class="phone">
@@ -1226,7 +1226,7 @@ WFAnim.register('mein-effekt', (el, opts) =&gt; {
 </script>
 <script>
 /*!
- * WF Anim v1.8.0
+ * WF Anim v1.8.1
  * Attribut-basierte GSAP-Animationen für Webflow
  *
  * Benötigt: gsap + ScrollTrigger
@@ -2836,7 +2836,19 @@ WFAnim.register('mein-effekt', (el, opts) =&gt; {
         tl.fromTo(menu, from, Object.assign({ duration: dur, ease: 'power3.inOut' }, to));
         if (backdrop) tl.fromTo(backdrop, { autoAlpha: 0 }, { autoAlpha: 1, duration: dur }, 0);
         if (items.length && !reduce) {
-          tl.fromTo(items, { opacity: 0, y: 24 }, { opacity: 1, y: 0, duration: 0.5, ease: 'power3.out', stagger: num(ds.navStagger, 0.06) }, dur * 0.45);
+          // Links einblenden: Abstand (stagger), Dauer je Link, Start nach Öffnen, Weg
+          tl.fromTo(
+            items,
+            { opacity: 0, y: toPx(ds.navItemDistance || '24px') },
+            {
+              opacity: 1,
+              y: 0,
+              duration: num(ds.navItemDuration, 0.5),
+              ease: ds.navItemEase || 'power3.out',
+              stagger: num(ds.navStagger, 0.06),
+            },
+            num(ds.navItemDelay, dur * 0.45)
+          );
         }
         if (modal) {
           const f = items.find((i) => i.matches(NAV_FOCUS)) || menu.querySelector(NAV_FOCUS);
@@ -3775,7 +3787,7 @@ WFAnim.register('mein-effekt', (el, opts) =&gt; {
     else smooth.start(v);
   }
 
-  window.WFAnim = { init, destroy, refresh, register, smoothScroll, config: cfg, animations: A, version: '1.8.0', hover: typeof H === 'object' ? H : {} };
+  window.WFAnim = { init, destroy, refresh, register, smoothScroll, config: cfg, animations: A, version: '1.8.1', hover: typeof H === 'object' ? H : {} };
 
   const start = () => {
     if (!cfg.autoInit) return;

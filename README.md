@@ -18,7 +18,7 @@ Die Library ist komplett in den Footer Code eingebettet. Ein Webflow-Projekt hä
 Statt des langen Footer Codes reicht diese eine Zeile (Head Code und GSAP-Integration bleiben gleich):
 
 ```html
-<script src="https://cdn.jsdelivr.net/gh/rakete13/wf-anim@1.8.0/src/wf-anim.min.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/rakete13/wf-anim@1.8.1/src/wf-anim.min.js"></script>
 ```
 
 Bequem für eigene und betreute Projekte. Die Seite hängt dann aber an diesem Repo und an jsDelivr, und die IP-Adresse der Besucher geht an jsDelivr (in der Datenschutzerklärung erwähnen). Bei Übergabe an einen Kunden besser auf den eingebetteten Footer Code wechseln.
@@ -104,7 +104,7 @@ header             ← data-nav
                     └── Liste    ← data-nav-dropdown-list
 ```
 
-- **Mobile-Menü** unter dem Umschaltpunkt (`data-nav-breakpoint`, Standard 991): Burger wird zum X, Panel öffnet als `down` (Standard), `side`, `side-left`, `circle` oder `fade` (`data-nav-open`), Links erscheinen nacheinander. Panel in Webflow auf Tablet so gestalten, wie es geöffnet aussieht; der Head Code blendet es geschlossen aus.
+- **Mobile-Menü** unter dem Umschaltpunkt (`data-nav-breakpoint`, Standard 991): Burger wird zum X, Panel öffnet als `down` (Standard), `side`, `side-left`, `circle` oder `fade` (`data-nav-open`), Links erscheinen nacheinander (`data-nav-stagger` Abstand, `data-nav-item-duration` Dauer je Link, `data-nav-item-delay` Start, `data-nav-item-distance` Weg). Panel in Webflow auf Tablet so gestalten, wie es geöffnet aussieht; der Head Code blendet es geschlossen aus.
 - **Dropdowns / Mega-Menüs:** Desktop bei Hover mit Verzögerung (`data-nav-hover-delay`, `data-nav-close-delay`), Klick und Tastatur; auf dem Handy Akkordeon.
 - **Indikator:** gleitet zum Link unter der Maus und zurück zum aktiven (`w--current` bzw. `is-active`).
 - **Scroll-Spy:** `data-nav-spy` am Header markiert bei Ankerlinks die sichtbare Section (`is-active`, `aria-current`).

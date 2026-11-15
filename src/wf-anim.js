@@ -1,5 +1,5 @@
 /*!
- * WF Anim v1.8.0
+ * WF Anim v1.8.1
  * Attribut-basierte GSAP-Animationen für Webflow
  *
  * Benötigt: gsap + ScrollTrigger
@@ -1609,7 +1609,19 @@
         tl.fromTo(menu, from, Object.assign({ duration: dur, ease: 'power3.inOut' }, to));
         if (backdrop) tl.fromTo(backdrop, { autoAlpha: 0 }, { autoAlpha: 1, duration: dur }, 0);
         if (items.length && !reduce) {
-          tl.fromTo(items, { opacity: 0, y: 24 }, { opacity: 1, y: 0, duration: 0.5, ease: 'power3.out', stagger: num(ds.navStagger, 0.06) }, dur * 0.45);
+          // Links einblenden: Abstand (stagger), Dauer je Link, Start nach Öffnen, Weg
+          tl.fromTo(
+            items,
+            { opacity: 0, y: toPx(ds.navItemDistance || '24px') },
+            {
+              opacity: 1,
+              y: 0,
+              duration: num(ds.navItemDuration, 0.5),
+              ease: ds.navItemEase || 'power3.out',
+              stagger: num(ds.navStagger, 0.06),
+            },
+            num(ds.navItemDelay, dur * 0.45)
+          );
         }
         if (modal) {
           const f = items.find((i) => i.matches(NAV_FOCUS)) || menu.querySelector(NAV_FOCUS);
@@ -2548,7 +2560,7 @@
     else smooth.start(v);
   }
 
-  window.WFAnim = { init, destroy, refresh, register, smoothScroll, config: cfg, animations: A, version: '1.8.0', hover: typeof H === 'object' ? H : {} };
+  window.WFAnim = { init, destroy, refresh, register, smoothScroll, config: cfg, animations: A, version: '1.8.1', hover: typeof H === 'object' ? H : {} };
 
   const start = () => {
     if (!cfg.autoInit) return;
