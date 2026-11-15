@@ -47,7 +47,7 @@ if (used) {
 kept.splice(0, kept.length, ...new Set(kept));
 
 // Lizenzkopf behalten, Rest minimieren
-const header = '/*! WF Anim v1.6.1 · ' + (used ? 'Auswahl: ' + kept.join(', ') : 'Vollversion') + ' */';
+const header = '/*! WF Anim v1.7.0 · ' + (used ? 'Auswahl: ' + kept.join(', ') : 'Vollversion') + ' */';
 if (esbuild) {
   code = esbuild.transformSync(code, { minify: true, target: 'es2020', legalComments: 'none' }).code.trim();
 } else {
@@ -75,6 +75,10 @@ const preLine = has('preloader')
 const cssLines = ['.js-anim [data-anim-intro]:not([data-anim-intro="false"]) { opacity: 0; }'];
 if (has('preloader')) cssLines.push('.js-anim:not(.wfa-preloaded) [data-anim="preloader"] { display: flex !important; }');
 if (has('accordion')) cssLines.push('.js-anim [data-accordion-content] { height: 0; overflow: hidden; }');
+if (has('nav')) {
+  cssLines.push('@media (max-width: 991px) { .js-anim [data-nav-menu]:not(.is-open):not(.is-static) { display: none; } }');
+  cssLines.push('.js-anim [data-nav-dropdown-list] { visibility: hidden; }');
+}
 if (has('split-chars')) cssLines.push('[data-anim="split-chars"] { font-kerning: none; }');
 const head = `<!-- WF Anim · Head Code -->
 <script>

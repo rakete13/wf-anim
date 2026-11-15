@@ -18,7 +18,7 @@ Die Library ist komplett in den Footer Code eingebettet. Ein Webflow-Projekt hä
 Statt des langen Footer Codes reicht diese eine Zeile (Head Code und GSAP-Integration bleiben gleich):
 
 ```html
-<script src="https://cdn.jsdelivr.net/gh/rakete13/wf-anim@1.6.1/src/wf-anim.min.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/rakete13/wf-anim@1.7.0/src/wf-anim.min.js"></script>
 ```
 
 Bequem für eigene und betreute Projekte. Die Seite hängt dann aber an diesem Repo und an jsDelivr, und die IP-Adresse der Besucher geht an jsDelivr (in der Datenschutzerklärung erwähnen). Bei Übergabe an einen Kunden besser auf den eingebetteten Footer Code wechseln.
@@ -83,8 +83,35 @@ Zeigt Start- und Endmarken jeder Scroll-Animation, eine Übersicht in der Konsol
 - **accordion:** Einträge `data-accordion-item` mit `data-accordion-trigger`, `data-accordion-content` und optional `data-accordion-icon`. Innenabstände an ein inneres Element im Inhalt.
 - **menu:** Bei der Webflow Navbar an das Nav Menu, bei eigenen Menüs an das Panel, das ein- und ausgeblendet wird.
 - **video:** An `<video>` oder das Webflow Background Video.
-- **Größe:** Die eingebettete Vollversion hat rund 42.000 Zeichen (Webflow erlaubt 50.000 insgesamt). Mit `build.js` lässt sie sich auf die genutzten Effekte ausdünnen.
-- **Head Code:** Seit 1.4.0 enthält er zusätzlich Zeilen für Preloader und Akkordeon. Bei einem Update von älteren Versionen bitte ersetzen.
+- **Größe:** Die eingebettete Vollversion hat rund 53.500 Zeichen und passt damit nicht mehr komplett in Webflows Limit von 50.000. Entweder über jsDelivr laden oder mit `build.js` auf die genutzten Effekte ausdünnen.
+- **Head Code:** Seit 1.4.0 enthält er Zeilen für Preloader und Akkordeon, seit 1.7.0 zwei für die Navigation. Bei einem Update von älteren Versionen bitte ersetzen.
+
+## Navigation
+
+Eigene Navigation per Attributen (ohne Webflows Navbar-Komponente). `data-nav` kommt an den Header.
+
+```
+header             ← data-nav
+  ├── Logo
+  ├── Burger         ← data-nav-toggle
+  ├── Overlay        ← data-nav-backdrop (optional)
+  └── Menü-Panel     ← data-nav-menu
+        └── Link-Liste
+              ├── Indikator   ← data-nav-indicator (optional, Wert pill = Hintergrundfläche)
+              ├── Link
+              └── Dropdown    ← data-nav-dropdown
+                    ├── Auslöser ← data-nav-dropdown-toggle (Icon: data-nav-dropdown-icon)
+                    └── Liste    ← data-nav-dropdown-list
+```
+
+- **Mobile-Menü** unter dem Umschaltpunkt (`data-nav-breakpoint`, Standard 991): Burger wird zum X, Panel öffnet als `down` (Standard), `side`, `side-left`, `circle` oder `fade` (`data-nav-open`), Links erscheinen nacheinander. Panel in Webflow auf Tablet so gestalten, wie es geöffnet aussieht; der Head Code blendet es geschlossen aus.
+- **Dropdowns / Mega-Menüs:** Desktop bei Hover mit Verzögerung (`data-nav-hover-delay`, `data-nav-close-delay`), Klick und Tastatur; auf dem Handy Akkordeon.
+- **Indikator:** gleitet zum Link unter der Maus und zurück zum aktiven (`w--current` bzw. `is-active`).
+- **Scroll-Spy:** `data-nav-spy` am Header markiert bei Ankerlinks die sichtbare Section (`is-active`, `aria-current`).
+- **Nav-Farbe:** Sections mit `data-nav-theme="dark"` geben dem Header die Klasse `is-dark`, solange sie dahinter liegen.
+- **Klassen:** `is-open` (Header, Panel, offenes Dropdown), `is-active` (Link), `is-static` (Panel auf Desktop).
+- **Barrierefreiheit (fest eingebaut):** `aria-expanded`/`aria-controls`, Beschriftung des Burgers (`data-nav-label-open`/`-close`), Bedienung per Tastatur (Enter, Leertaste, Pfeiltasten, Esc), Fokusfalle und `inert` für die Seite dahinter, Scroll-Sperre, Fokus zurück zum Burger, Schließen bei Linkklick und beim Wechsel auf Desktop, `aria-current` am aktiven Link, ohne Animation bei „Bewegung reduzieren“. `data-nav-modal="false"` schaltet Fokusfalle, Sperre und Scroll-Sperre ab (nur für Sonderfälle).
+- **Umschaltpunkt geändert?** Dann die Zahl 991 in der Nav-Zeile des Head Codes ebenfalls ändern.
 
 ## Hover-Effekte
 

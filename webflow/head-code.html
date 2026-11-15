@@ -8,5 +8,7 @@ setTimeout(function(){if(!window.WFAnim)document.documentElement.classList.remov
 .js-anim [data-anim-intro]:not([data-anim-intro="false"]) { opacity: 0; }
 .js-anim:not(.wfa-preloaded) [data-anim="preloader"] { display: flex !important; }
 .js-anim [data-accordion-content] { height: 0; overflow: hidden; }
+@media (max-width: 991px) { .js-anim [data-nav-menu]:not(.is-open):not(.is-static) { display: none; } }
+.js-anim [data-nav-dropdown-list] { visibility: hidden; }
 [data-anim="split-chars"] { font-kerning: none; }
 </style>
