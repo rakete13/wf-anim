@@ -231,7 +231,7 @@ section.cat { display: grid; gap: 28px; scroll-margin-top: 32px; }
 .phone-nav.is-open .phone-bar { background: var(--ink); border-color: transparent; }
 .phone-nav.is-open .phone-bar .brand { color: var(--bg); }
 .phone-nav.is-open .burger span { background: var(--bg); }
-.phone-menu { position: absolute; inset: 0; z-index: 2; display: flex; flex-direction: column; gap: 2px; padding: 76px 22px 22px; background: var(--ink); color: var(--bg); overflow-y: auto; }
+.phone-menu { position: absolute; inset: 0; z-index: 2; display: none; flex-direction: column; gap: 2px; padding: 76px 22px 22px; background: var(--ink); color: var(--bg); overflow-y: auto; }
 .phone-menu > a, .phone-dd-toggle { display: flex; justify-content: space-between; align-items: center; width: 100%; padding: 8px 0; color: var(--bg); text-decoration: none; font: 700 1.5rem var(--font-display); background: none; border: 0; cursor: pointer; text-align: left; }
 .phone-dd-toggle [data-nav-dropdown-icon] { display: inline-block; font-size: 0.6em; }
 .phone-dd-list { display: grid; gap: 2px; padding: 0 0 8px 12px; }
@@ -275,11 +275,11 @@ td code { white-space: nowrap; }
   .shell { grid-template-columns: minmax(0, 1fr); gap: 32px; padding-block: 88px 100px; }
   .smooth-toggle { margin-left: auto; }
   .burger { display: flex; }
-  .site-head .links { position: fixed; top: 0; right: 0; bottom: 0; z-index: 2; width: min(320px, 86vw); margin: 0; display: flex; flex-direction: column; align-items: stretch; padding: calc(76px + env(safe-area-inset-top, 0px)) 24px 24px; background: var(--surface); box-shadow: -24px 0 48px -24px rgba(10, 12, 20, 0.5); overflow-y: auto; font-size: 1.15rem; }
+  .site-head .links { position: fixed; top: 0; right: 0; bottom: 0; z-index: 2; width: min(320px, 86vw); margin: 0; display: none; flex-direction: column; align-items: stretch; padding: calc(76px + env(safe-area-inset-top, 0px)) 24px 24px; background: var(--surface); box-shadow: -24px 0 48px -24px rgba(10, 12, 20, 0.5); overflow-y: auto; font-size: 1.15rem; }
   .nav-links { flex-direction: column; align-items: stretch; gap: 2px; }
   .nav-links > a, .nav-dd-toggle { padding: 10px 0; border-radius: 0; color: var(--ink); width: 100%; justify-content: space-between; }
   .nav-dd-list { position: static; min-width: 0; padding: 0 0 6px 14px; background: none; border: 0; box-shadow: none; }
-  .nav-backdrop { display: block; position: fixed; inset: 0; z-index: 1; background: rgba(10, 12, 20, 0.45); }
+  .nav-backdrop { display: none; position: fixed; inset: 0; z-index: 1; background: rgba(10, 12, 20, 0.45); }
   nav.toc { display: none; }
   .demo { grid-template-columns: minmax(0, 1fr); }
   main { gap: 72px; }
@@ -344,7 +344,7 @@ td code { white-space: nowrap; }
 
   <main>
     <header class="hero">
-      <div class="eyebrow" data-anim="fade-down" data-anim-intro="load">WF Anim · v1.8.1 · GSAP 3.13</div>
+      <div class="eyebrow" data-anim="fade-down" data-anim-intro="load">WF Anim · v1.8.2 · GSAP 3.13</div>
       <h1 data-anim="split-lines" data-anim-intro>Ein Attribut,<br><em>eine Animation.</em></h1>
       <p>Standard-Animationen für jedes Webflow-Projekt. Element auswählen, unter <em>Custom Attributes</em> <span class="attr">data-anim</span> mit einem Wert aus dieser Liste setzen, fertig. Jede Zeile unten zeigt die Animation live; ein Klick auf das Attribut kopiert es. Was beim Laden schon im Bild ist, bleibt ruhig. Die Überschrift hier oben animiert trotzdem, weil sie <span class="attr">data-anim-intro</span> trägt; die Zeile darüber fährt mit <span class="attr">data-anim-intro="load"</span> beim Laden von oben herein.</p>
       <div class="notice" id="rm-notice" hidden>Dein System hat „Bewegung reduzieren“ aktiviert. Die Library zeigt Inhalte dann bewusst ohne Animation an, genau wie bei deinen Besuchern mit dieser Einstellung.</div>
@@ -384,7 +384,7 @@ setTimeout(function(){if(!window.WFAnim)document.documentElement.classList.remov
         <div>
           <h3>Footer Code</h3>
           <p>Entweder eine Zeile, die die Library aus GitHub lädt. Bequem für eigene und betreute Projekte; die IP-Adresse der Besucher geht dabei an jsDelivr.</p>
-<pre class="code-block" id="code-footer"><code>&lt;script src="https://cdn.jsdelivr.net/gh/rakete13/wf-anim@1.8.1/src/wf-anim.min.js"&gt;&lt;/script&gt;</code></pre>
+<pre class="code-block" id="code-footer"><code>&lt;script src="https://cdn.jsdelivr.net/gh/rakete13/wf-anim@1.8.2/src/wf-anim.min.js"&gt;&lt;/script&gt;</code></pre>
           <button class="copy-block" data-copy-target="code-footer">Footer-Zeile kopieren</button>
           <p>Oder eingebettet: den Inhalt von <code>webflow/footer-code.html</code> aus dem Repo einfügen. Dann hängt das Projekt an keinem fremden Server, ideal bei Übergabe an Kunden.</p>
         </div>
@@ -1033,8 +1033,8 @@ setTimeout(function(){if(!window.WFAnim)document.documentElement.classList.remov
       <div class="demo">
         <div class="info">
           <h3>Aufbau</h3>
-          <p><code>data-nav</code> kommt an den Header. Darin der Burger, das Menü-Panel und optional Dropdowns, ein Indikator und ein Hintergrund-Overlay. Gestalte das Panel in Webflow auf der Tablet-Ansicht so, wie es geöffnet aussehen soll; der Head Code blendet es im geschlossenen Zustand aus.</p>
-          <ul class="opts"><li>Unter dem Umschaltpunkt (Standard 991 px) ist das Panel ein Mobile-Menü, darüber ganz normal sichtbar</li><li>Klassen zum Gestalten: <code>is-open</code> (Header und Panel offen), <code>is-open</code> am offenen Dropdown, <code>is-active</code> am aktiven Link</li><li>Burger: zwei oder drei leere Elemente darin werden zum X</li></ul>
+          <p><code>data-nav</code> kommt an den Header. Darin der Burger, das Menü-Panel und optional Dropdowns, ein Indikator und ein Hintergrund-Overlay. Gestalte das Panel in Webflow auf der Tablet-Ansicht so, wie es geöffnet aussehen soll, und stelle es danach auf <strong>Display: None</strong>, ebenso das Overlay. So sind Designer und Editor frei, und die Library blendet beides beim Öffnen ein (Panel als Flex, Overlay als Block).</p>
+          <ul class="opts"><li>Unter dem Umschaltpunkt (Standard 991 px) ist das Panel ein Mobile-Menü, darüber ganz normal sichtbar</li><li>Klassen zum Gestalten: <code>is-open</code> (Header und Panel offen), <code>is-open</code> am offenen Dropdown, <code>is-active</code> am aktiven Link</li><li>Burger: zwei oder drei leere Elemente darin werden zum X</li><li><code>data-nav-menu-display="grid"</code> falls das Panel nicht als Flex, sondern als Grid oder Block erscheinen soll</li><li>Zum Gestalten im Designer: dem Panel kurz die Combo-Klasse <code>is-open</code> mit Display: Flex geben; die Library setzt dieselbe Klasse beim Öffnen</li></ul>
         </div>
 <pre class="code-block"><code>header             ← data-nav
   ├── Logo
@@ -1226,7 +1226,7 @@ WFAnim.register('mein-effekt', (el, opts) =&gt; {
 </script>
 <script>
 /*!
- * WF Anim v1.8.1
+ * WF Anim v1.8.2
  * Attribut-basierte GSAP-Animationen für Webflow
  *
  * Benötigt: gsap + ScrollTrigger
@@ -2814,7 +2814,8 @@ WFAnim.register('mein-effekt', (el, opts) =&gt; {
       if (!menu || (!mobile && want) || want === open) return;
       open = want;
       nav.classList.toggle('is-open', open);
-      menu.classList.toggle('is-open', open);
+      // Am Panel bleibt is-open beim Schließen bis zum Ende der Animation (für Combo-Klassen in Webflow)
+      if (open) menu.classList.add('is-open');
       html.classList.toggle('wfa-nav-open', open);
       if (toggle) {
         toggle.setAttribute('aria-expanded', String(open));
@@ -2825,7 +2826,14 @@ WFAnim.register('mein-effekt', (el, opts) =&gt; {
       if (tl) tl.kill();
       const items = navItems();
       if (open) {
+        // Panel und Overlay dürfen in Webflow auf Display none stehen (sauber im Designer
+        // und für Kunden im Editor) – die Library blendet sie beim Öffnen ein
         menu.style.display = '';
+        if (getComputedStyle(menu).display === 'none') menu.style.display = ds.navMenuDisplay || 'flex';
+        if (backdrop) {
+          backdrop.style.display = '';
+          if (getComputedStyle(backdrop).display === 'none') backdrop.style.display = 'block';
+        }
         if (lock) {
           prevOverflow = html.style.overflow;
           html.style.overflow = 'hidden';
@@ -2862,7 +2870,9 @@ WFAnim.register('mein-effekt', (el, opts) =&gt; {
         const [from] = panel(nav.dataset.navOpen || 'down');
         const done = () => {
           if (open) return;
+          menu.classList.remove('is-open');
           menu.style.display = mobile ? 'none' : '';
+          if (backdrop) backdrop.style.display = '';
           resetPanel();
         };
         if (instant) return done();
@@ -3787,7 +3797,7 @@ WFAnim.register('mein-effekt', (el, opts) =&gt; {
     else smooth.start(v);
   }
 
-  window.WFAnim = { init, destroy, refresh, register, smoothScroll, config: cfg, animations: A, version: '1.8.1', hover: typeof H === 'object' ? H : {} };
+  window.WFAnim = { init, destroy, refresh, register, smoothScroll, config: cfg, animations: A, version: '1.8.2', hover: typeof H === 'object' ? H : {} };
 
   const start = () => {
     if (!cfg.autoInit) return;

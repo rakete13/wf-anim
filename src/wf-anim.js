@@ -1,5 +1,5 @@
 /*!
- * WF Anim v1.8.1
+ * WF Anim v1.8.2
  * Attribut-basierte GSAP-Animationen für Webflow
  *
  * Benötigt: gsap + ScrollTrigger
@@ -1587,7 +1587,8 @@
       if (!menu || (!mobile && want) || want === open) return;
       open = want;
       nav.classList.toggle('is-open', open);
-      menu.classList.toggle('is-open', open);
+      // Am Panel bleibt is-open beim Schließen bis zum Ende der Animation (für Combo-Klassen in Webflow)
+      if (open) menu.classList.add('is-open');
       html.classList.toggle('wfa-nav-open', open);
       if (toggle) {
         toggle.setAttribute('aria-expanded', String(open));
@@ -1598,7 +1599,14 @@
       if (tl) tl.kill();
       const items = navItems();
       if (open) {
+        // Panel und Overlay dürfen in Webflow auf Display none stehen (sauber im Designer
+        // und für Kunden im Editor) – die Library blendet sie beim Öffnen ein
         menu.style.display = '';
+        if (getComputedStyle(menu).display === 'none') menu.style.display = ds.navMenuDisplay || 'flex';
+        if (backdrop) {
+          backdrop.style.display = '';
+          if (getComputedStyle(backdrop).display === 'none') backdrop.style.display = 'block';
+        }
         if (lock) {
           prevOverflow = html.style.overflow;
           html.style.overflow = 'hidden';
@@ -1635,7 +1643,9 @@
         const [from] = panel(nav.dataset.navOpen || 'down');
         const done = () => {
           if (open) return;
+          menu.classList.remove('is-open');
           menu.style.display = mobile ? 'none' : '';
+          if (backdrop) backdrop.style.display = '';
           resetPanel();
         };
         if (instant) return done();
@@ -2560,7 +2570,7 @@
     else smooth.start(v);
   }
 
-  window.WFAnim = { init, destroy, refresh, register, smoothScroll, config: cfg, animations: A, version: '1.8.1', hover: typeof H === 'object' ? H : {} };
+  window.WFAnim = { init, destroy, refresh, register, smoothScroll, config: cfg, animations: A, version: '1.8.2', hover: typeof H === 'object' ? H : {} };
 
   const start = () => {
     if (!cfg.autoInit) return;
