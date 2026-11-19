@@ -18,7 +18,7 @@ Die Library ist komplett in den Footer Code eingebettet. Ein Webflow-Projekt hä
 Statt des langen Footer Codes reicht diese eine Zeile (Head Code und GSAP-Integration bleiben gleich):
 
 ```html
-<script src="https://cdn.jsdelivr.net/gh/rakete13/wf-anim@1.8.2/src/wf-anim.min.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/rakete13/wf-anim@1.9.0/src/wf-anim.min.js"></script>
 ```
 
 Bequem für eigene und betreute Projekte. Die Seite hängt dann aber an diesem Repo und an jsDelivr, und die IP-Adresse der Besucher geht an jsDelivr (in der Datenschutzerklärung erwähnen). Bei Übergabe an einen Kunden besser auf den eingebetteten Footer Code wechseln.
@@ -129,10 +129,11 @@ card-item        ← data-hover = img-zoom lift arrow
 |---|---|
 | Bilder | `img-zoom` `img-zoom-out` `img-darken` |
 | Cards | `lift` `reveal` `tilt` |
-| Links & Buttons | `underline` `arrow` `fill` `text-roll` `magnetic` |
+| Links & Buttons | `underline` `arrow` `arrow-in` `fill` `text-roll` `magnetic` |
 
 - Das Ziel findet die Library selbst (Bild-Effekte: erstes `img`, sonst das Element selbst). Ein anderes Ziel markierst du mit `data-hover-target`, bei mehreren Effekten mit dem Namen als Wert (`data-hover-target="arrow"`). `reveal` braucht immer ein markiertes Ziel.
-- Modifier: `data-hover-scale`, `data-hover-brightness`, `data-hover-distance`, `data-hover-shadow`, `data-hover-color`, `data-hover-text-color`, `data-hover-direction`, `data-hover-thickness`, `data-hover-strength`, `data-hover-max`, `data-hover-duration`, `data-hover-ease`. Sie können an der Card oder am Ziel stehen.
+- `arrow-in`: Ein Pfeil fährt ein und schiebt den Text zur Seite (z. B. für Listen). Ohne markiertes Ziel setzt die Library das Zeichen `⟶` vor den ersten Text, mit `data-hover-icon` ein anderes Zeichen, mit `data-hover-size` (z. B. `1.5em`) eine andere Größe, mit `data-hover-target="arrow-in"` ein eigenes Element (z. B. SVG). `data-hover-direction="right"` setzt den Pfeil hinter den Text, `data-hover-gap` (Standard `0.3em`) ist der Abstand, `data-hover-distance` (Standard `10px`) der Einflugweg. Bleibt auch bei „Bewegung reduzieren“, dann ohne Bewegung.
+- Modifier: `data-hover-scale`, `data-hover-brightness`, `data-hover-distance`, `data-hover-shadow`, `data-hover-color`, `data-hover-text-color`, `data-hover-direction`, `data-hover-thickness`, `data-hover-strength`, `data-hover-max`, `data-hover-icon`, `data-hover-size`, `data-hover-gap`, `data-hover-duration`, `data-hover-ease`. Sie können an der Card oder am Ziel stehen.
 - Läuft mit Maus/Trackpad und bei Tastatur-Fokus. Auf Touch-Geräten aus. Bei „Bewegung reduzieren“ bleiben nur Farbeffekte.
 - `data-anim="magnetic"` und `data-anim="tilt"` aus Version 1.0/1.1 funktionieren weiter.
 - Webflow-Dropdowns nutzen selbst `data-hover`, dort keinen Effekt setzen.

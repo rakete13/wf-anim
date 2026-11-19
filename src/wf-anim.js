@@ -1,5 +1,5 @@
 /*!
- * WF Anim v1.8.2
+ * WF Anim v1.9.0
  * Attribut-basierte GSAP-Animationen für Webflow
  *
  * Benötigt: gsap + ScrollTrigger
@@ -1942,10 +1942,10 @@
   /*  Hover-Effekte: data-hover="img-zoom lift" an die Card              */
   /*  Signatur: (card, x) → { tl?, move?, leave?, cleanup? }             */
   /* ------------------------------------------------------------------ */
-  /*@block hover:img-zoom,hover:img-zoom-out,hover:img-darken,hover:lift,hover:reveal,hover:tilt,hover:underline,hover:arrow,hover:fill,hover:text-roll,hover:magnetic,magnetic,tilt*/
+  /*@block hover:img-zoom,hover:img-zoom-out,hover:img-darken,hover:lift,hover:reveal,hover:tilt,hover:underline,hover:arrow,hover:arrow-in,hover:fill,hover:text-roll,hover:magnetic,magnetic,tilt*/
   const H = {};
   // Diese Effekte laufen auch bei "Bewegung reduzieren" (ohne Bewegung)
-  const HOVER_SAFE = new Set(['img-darken', 'fill', 'underline', 'reveal']);
+  const HOVER_SAFE = new Set(['img-darken', 'fill', 'underline', 'reveal', 'arrow-in']);
 
   // Ziel finden: data-hover-target="effekt" > data-hover-target (ohne Wert) > Standard
   const hoverTarget = (card, name, fallback) => {
@@ -2163,6 +2163,70 @@
     const dirs = { right: { x: d }, left: { x: -d }, up: { y: -d }, down: { y: d }, 'up-right': { x: d, y: -d } };
     const v = dirs[x.get(t, 'Direction', 'right')] || dirs.right;
     return { tl: gsap.to(t, Object.assign({ duration: x.dur(t, 0.35), ease: x.ease(t), paused: true }, v)) };
+  };
+  /*@end*/
+
+  /*@block hover:arrow-in*/
+  // Pfeil fährt beim Hover ein und schiebt den Text zur Seite.
+  // Ziel: eigenes Element mit data-hover-target="arrow-in" (z. B. SVG) –
+  // sonst wird ein Zeichen (data-hover-icon, Standard ⟶) in das erste Textelement eingefügt.
+  H['arrow-in'] = (card, x) => {
+    let t = hoverTarget(card, 'arrow-in', null);
+    const right = x.get(t, 'Direction', 'left') === 'right';
+    let injected = false;
+    if (!t) {
+      // erstes Element mit eigenem Text (z. B. die Überschrift im Listeneintrag)
+      const walker = document.createTreeWalker(card, NodeFilter.SHOW_TEXT, {
+        acceptNode: (n) => (n.textContent.trim() ? NodeFilter.FILTER_ACCEPT : NodeFilter.FILTER_REJECT),
+      });
+      const node = walker.nextNode();
+      const host = node ? node.parentElement : card;
+      t = document.createElement('span');
+      t.setAttribute('aria-hidden', 'true');
+      t.textContent = x.get(null, 'Icon', '⟶');
+      t.style.display = 'inline-block';
+      t.style.lineHeight = '1';
+      const size = x.get(null, 'Size', '');
+      if (size) t.style.fontSize = size;
+      if (right) host.append(t);
+      else host.prepend(t);
+      injected = true;
+    }
+    const prev = t.getAttribute('style');
+    if (getComputedStyle(t).display === 'inline') t.style.display = 'inline-block';
+    t.style.overflow = 'hidden';
+    t.style.whiteSpace = 'nowrap';
+    t.style.flexShrink = '0';
+    t.style.verticalAlign = 'baseline';
+    // Breite in em messen, damit sie mit fluiden Schriftgrößen mitwächst
+    t.style.width = 'auto';
+    const fs = parseFloat(getComputedStyle(t).fontSize) || 16;
+    const w = t.getBoundingClientRect().width / fs || 1.2; // unsichtbar beim Start → Schätzwert
+    const gap = x.get(t, 'Gap', '0.3em');
+    const side = right ? 'marginLeft' : 'marginRight';
+    const d = x.reduce ? 0 : toPx(x.get(t, 'Distance', '10px'));
+    const tl = gsap.fromTo(
+      t,
+      { width: 0, [side]: 0, opacity: 0, x: right ? d : -d },
+      {
+        width: `${w}em`,
+        [side]: gap,
+        opacity: 1,
+        x: 0,
+        duration: x.reduce ? 0.01 : x.dur(t, 0.4),
+        ease: x.ease(t, 'power3.out'),
+        paused: true,
+      }
+    );
+    return {
+      tl,
+      cleanup: () => {
+        tl.kill();
+        if (injected) t.remove();
+        else if (prev === null) t.removeAttribute('style');
+        else t.setAttribute('style', prev);
+      },
+    };
   };
   /*@end*/
 
@@ -2570,7 +2634,7 @@
     else smooth.start(v);
   }
 
-  window.WFAnim = { init, destroy, refresh, register, smoothScroll, config: cfg, animations: A, version: '1.8.2', hover: typeof H === 'object' ? H : {} };
+  window.WFAnim = { init, destroy, refresh, register, smoothScroll, config: cfg, animations: A, version: '1.9.0', hover: typeof H === 'object' ? H : {} };
 
   const start = () => {
     if (!cfg.autoInit) return;
