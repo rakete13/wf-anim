@@ -1,5 +1,5 @@
 /*!
- * WF Anim v1.9.1
+ * WF Anim v1.9.2
  * Attribut-basierte GSAP-Animationen für Webflow
  *
  * Benötigt: gsap + ScrollTrigger
@@ -2001,17 +2001,65 @@
         if (!on && f.leave) f.leave();
       });
     };
+    // Verschiebt der Effekt das Layout (z. B. arrow-in in einer umbrechenden Zeile), rutscht
+    // die Card unter dem ruhenden Mauszeiger weg und der Browser meldet "verlassen" –
+    // ohne Schutz entsteht eine Endlosschleife. Daher: Verlassen ohne Mausbewegung zählt erst,
+    // wenn sich die Maus wirklich außerhalb der Card bewegt (oder die Seite scrollt).
+    let px = null;
+    let py = null;
+    let ghost = false;
+    let home = null; // Position der Card beim Betreten
+    const track = (e) => {
+      px = e.clientX;
+      py = e.clientY;
+    };
+    const outside = () => {
+      const el = px === null ? null : document.elementFromPoint(px, py);
+      return !el || !card.contains(el);
+    };
+    const ghostMove = (e) => {
+      if (e.clientX === px && e.clientY === py) return;
+      track(e);
+      const atHome = home && px >= home.left && px <= home.right && py >= home.top && py <= home.bottom;
+      if (!card.contains(e.target) && !atHome) endGhost(true);
+    };
+    const ghostScroll = () => {
+      home = null; // nach dem Scrollen stimmt die alte Position nicht mehr
+      if (outside()) endGhost(true);
+    };
+    const ghostOut = (e) => !e.relatedTarget && endGhost(true); // Maus verlässt das Fenster
+    const G = [[document, 'pointermove', ghostMove], [window, 'scroll', ghostScroll], [document, 'pointerout', ghostOut]];
+    const endGhost = (left) => {
+      if (!ghost) return;
+      ghost = false;
+      G.forEach(([t, ev, f]) => t.removeEventListener(ev, f, { passive: true }));
+      if (left) {
+        hover = false;
+        sync();
+      }
+    };
     const enter = (e) => {
       if (e.pointerType === 'touch') return;
+      track(e);
+      if (!ghost) home = card.getBoundingClientRect();
+      endGhost(false);
       hover = true;
       sync();
     };
-    const leave = () => {
+    const leave = (e) => {
+      if (on && e && e.pointerType !== 'touch' && e.clientX === px && e.clientY === py) {
+        if (!ghost) {
+          ghost = true;
+          G.forEach(([t, ev, f]) => t.addEventListener(ev, f, { passive: true }));
+        }
+        return;
+      }
       hover = false;
       sync();
     };
     const move = (e) => {
       if (e.pointerType === 'touch') return;
+      track(e);
       fx.forEach((f) => f.move && f.move(e));
     };
     // Tastatur: nur bei sichtbarem Fokus (Tab), nicht beim Antippen
@@ -2032,6 +2080,7 @@
     L.forEach(([t, f]) => card.addEventListener(t, f));
     return () => {
       L.forEach(([t, f]) => card.removeEventListener(t, f));
+      endGhost(false);
       fx.forEach((f) => f.cleanup && f.cleanup());
     };
   };
@@ -2661,7 +2710,7 @@
     else smooth.start(v);
   }
 
-  window.WFAnim = { init, destroy, refresh, register, smoothScroll, config: cfg, animations: A, version: '1.9.1', hover: typeof H === 'object' ? H : {} };
+  window.WFAnim = { init, destroy, refresh, register, smoothScroll, config: cfg, animations: A, version: '1.9.2', hover: typeof H === 'object' ? H : {} };
 
   const start = () => {
     if (!cfg.autoInit) return;

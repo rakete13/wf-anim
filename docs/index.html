@@ -176,6 +176,8 @@ section.cat { display: grid; gap: 28px; scroll-margin-top: 32px; }
 .link-grid { display: flex; flex-wrap: wrap; gap: 20px 28px; align-items: center; justify-content: center; }
 .tlink { color: var(--ink); text-decoration: none; font-weight: 600; font-size: 1.05rem; }
 .tlink span { display: inline-block; color: var(--accent); }
+.alist { width: 100%; max-width: 420px; margin: 28px auto 0; }
+.alist a { display: block; padding: 10px 0; border-bottom: 1px solid var(--line, rgba(255,255,255,.12)); color: var(--ink); text-decoration: none; font-weight: 600; font-size: 1.15rem; }
 .btn { display: inline-block; text-decoration: none; }
 .btn-ghost { background: transparent; color: var(--ink); box-shadow: inset 0 0 0 1.5px var(--ink); }
 
@@ -344,7 +346,7 @@ td code { white-space: nowrap; }
 
   <main>
     <header class="hero">
-      <div class="eyebrow" data-anim="fade-down" data-anim-intro="load">WF Anim · v1.9.1 · GSAP 3.13</div>
+      <div class="eyebrow" data-anim="fade-down" data-anim-intro="load">WF Anim · v1.9.2 · GSAP 3.13</div>
       <h1 data-anim="split-lines" data-anim-intro>Ein Attribut,<br><em>eine Animation.</em></h1>
       <p>Standard-Animationen für jedes Webflow-Projekt. Element auswählen, unter <em>Custom Attributes</em> <span class="attr">data-anim</span> mit einem Wert aus dieser Liste setzen, fertig. Jede Zeile unten zeigt die Animation live; ein Klick auf das Attribut kopiert es. Was beim Laden schon im Bild ist, bleibt ruhig. Die Überschrift hier oben animiert trotzdem, weil sie <span class="attr">data-anim-intro</span> trägt; die Zeile darüber fährt mit <span class="attr">data-anim-intro="load"</span> beim Laden von oben herein.</p>
       <div class="notice" id="rm-notice" hidden>Dein System hat „Bewegung reduzieren“ aktiviert. Die Library zeigt Inhalte dann bewusst ohne Animation an, genau wie bei deinen Besuchern mit dieser Einstellung.</div>
@@ -384,7 +386,7 @@ setTimeout(function(){if(!window.WFAnim)document.documentElement.classList.remov
         <div>
           <h3>Footer Code</h3>
           <p>Entweder eine Zeile, die die Library aus GitHub lädt. Bequem für eigene und betreute Projekte; die IP-Adresse der Besucher geht dabei an jsDelivr.</p>
-<pre class="code-block" id="code-footer"><code>&lt;script src="https://cdn.jsdelivr.net/gh/rakete13/wf-anim@1.9.1/src/wf-anim.min.js"&gt;&lt;/script&gt;</code></pre>
+<pre class="code-block" id="code-footer"><code>&lt;script src="https://cdn.jsdelivr.net/gh/rakete13/wf-anim@1.9.2/src/wf-anim.min.js"&gt;&lt;/script&gt;</code></pre>
           <button class="copy-block" data-copy-target="code-footer">Footer-Zeile kopieren</button>
           <p>Oder eingebettet: den Inhalt von <code>webflow/footer-code.html</code> aus dem Repo einfügen. Dann hängt das Projekt an keinem fremden Server, ideal bei Übergabe an Kunden.</p>
         </div>
@@ -938,10 +940,14 @@ setTimeout(function(){if(!window.WFAnim)document.documentElement.classList.remov
         <div class="stage"><div class="link-grid">
           <a class="tlink" href="#hover" data-hover="underline">Unterstreichen</a>
           <a class="tlink" href="#hover" data-hover="arrow">Zum Projekt <span aria-hidden="true">→</span></a>
-          <a class="tlink" href="#hover" data-hover="arrow-in">Pfeil schiebt Text</a>
           <a class="btn btn-ghost" href="#hover" data-hover="fill" data-hover-color="var(--ink)" data-hover-text-color="var(--bg)">fill</a>
           <a class="btn" href="#hover" data-hover="text-roll">text-roll</a>
           <a class="btn" href="#hover" data-hover="magnetic">magnetic</a>
+        </div>
+        <div class="alist">
+          <a href="#hover" data-hover="arrow-in">arrow-in · Markenentwicklung</a>
+          <a href="#hover" data-hover="arrow-in">Corporate Design</a>
+          <a href="#hover" data-hover="arrow-in">Editorial Design</a>
         </div></div>
       </div>
 
@@ -1227,7 +1233,7 @@ WFAnim.register('mein-effekt', (el, opts) =&gt; {
 </script>
 <script>
 /*!
- * WF Anim v1.9.1
+ * WF Anim v1.9.2
  * Attribut-basierte GSAP-Animationen für Webflow
  *
  * Benötigt: gsap + ScrollTrigger
@@ -3229,17 +3235,65 @@ WFAnim.register('mein-effekt', (el, opts) =&gt; {
         if (!on && f.leave) f.leave();
       });
     };
+    // Verschiebt der Effekt das Layout (z. B. arrow-in in einer umbrechenden Zeile), rutscht
+    // die Card unter dem ruhenden Mauszeiger weg und der Browser meldet "verlassen" –
+    // ohne Schutz entsteht eine Endlosschleife. Daher: Verlassen ohne Mausbewegung zählt erst,
+    // wenn sich die Maus wirklich außerhalb der Card bewegt (oder die Seite scrollt).
+    let px = null;
+    let py = null;
+    let ghost = false;
+    let home = null; // Position der Card beim Betreten
+    const track = (e) => {
+      px = e.clientX;
+      py = e.clientY;
+    };
+    const outside = () => {
+      const el = px === null ? null : document.elementFromPoint(px, py);
+      return !el || !card.contains(el);
+    };
+    const ghostMove = (e) => {
+      if (e.clientX === px && e.clientY === py) return;
+      track(e);
+      const atHome = home && px >= home.left && px <= home.right && py >= home.top && py <= home.bottom;
+      if (!card.contains(e.target) && !atHome) endGhost(true);
+    };
+    const ghostScroll = () => {
+      home = null; // nach dem Scrollen stimmt die alte Position nicht mehr
+      if (outside()) endGhost(true);
+    };
+    const ghostOut = (e) => !e.relatedTarget && endGhost(true); // Maus verlässt das Fenster
+    const G = [[document, 'pointermove', ghostMove], [window, 'scroll', ghostScroll], [document, 'pointerout', ghostOut]];
+    const endGhost = (left) => {
+      if (!ghost) return;
+      ghost = false;
+      G.forEach(([t, ev, f]) => t.removeEventListener(ev, f, { passive: true }));
+      if (left) {
+        hover = false;
+        sync();
+      }
+    };
     const enter = (e) => {
       if (e.pointerType === 'touch') return;
+      track(e);
+      if (!ghost) home = card.getBoundingClientRect();
+      endGhost(false);
       hover = true;
       sync();
     };
-    const leave = () => {
+    const leave = (e) => {
+      if (on && e && e.pointerType !== 'touch' && e.clientX === px && e.clientY === py) {
+        if (!ghost) {
+          ghost = true;
+          G.forEach(([t, ev, f]) => t.addEventListener(ev, f, { passive: true }));
+        }
+        return;
+      }
       hover = false;
       sync();
     };
     const move = (e) => {
       if (e.pointerType === 'touch') return;
+      track(e);
       fx.forEach((f) => f.move && f.move(e));
     };
     // Tastatur: nur bei sichtbarem Fokus (Tab), nicht beim Antippen
@@ -3260,6 +3314,7 @@ WFAnim.register('mein-effekt', (el, opts) =&gt; {
     L.forEach(([t, f]) => card.addEventListener(t, f));
     return () => {
       L.forEach(([t, f]) => card.removeEventListener(t, f));
+      endGhost(false);
       fx.forEach((f) => f.cleanup && f.cleanup());
     };
   };
@@ -3889,7 +3944,7 @@ WFAnim.register('mein-effekt', (el, opts) =&gt; {
     else smooth.start(v);
   }
 
-  window.WFAnim = { init, destroy, refresh, register, smoothScroll, config: cfg, animations: A, version: '1.9.1', hover: typeof H === 'object' ? H : {} };
+  window.WFAnim = { init, destroy, refresh, register, smoothScroll, config: cfg, animations: A, version: '1.9.2', hover: typeof H === 'object' ? H : {} };
 
   const start = () => {
     if (!cfg.autoInit) return;
