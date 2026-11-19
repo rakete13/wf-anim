@@ -1,5 +1,5 @@
 /*!
- * WF Anim v1.9.2
+ * WF Anim v1.10.0
  * Attribut-basierte GSAP-Animationen für Webflow
  *
  * Benötigt: gsap + ScrollTrigger
@@ -2231,30 +2231,39 @@
   };
   H['arrow-in'] = (card, x) => {
     let t = hoverTarget(card, 'arrow-in', null);
-    const right = x.get(t, 'Direction', 'left') === 'right';
+    // Markiertes Element mit Text (z. B. Überschrift-Wrapper in einer Card) = Ort für den Pfeil,
+    // markiertes Icon (SVG, Bild oder ein einzelnes Zeichen) = der Pfeil selbst
+    let area = card;
+    if (t && !t.querySelector('svg, img') && t.tagName !== 'svg' && t.textContent.trim().length > 2) {
+      area = t;
+      t = null;
+    }
+    const right = x.get(t || area, 'Direction', 'left') === 'right';
     let injected = false;
+    // Modifier: am eigenen Pfeil, sonst am markierten Bereich, sonst an der Card
+    const g = (k, fb) => x.get(injected ? area : t, k, fb);
     let glyph = null;
     let host = null;
     if (!t) {
       // erstes Element mit eigenem Text (z. B. die Überschrift im Listeneintrag)
-      const walker = document.createTreeWalker(card, NodeFilter.SHOW_TEXT, {
+      const walker = document.createTreeWalker(area, NodeFilter.SHOW_TEXT, {
         acceptNode: (n) => (n.textContent.trim() ? NodeFilter.FILTER_ACCEPT : NodeFilter.FILTER_REJECT),
       });
       const node = walker.nextNode();
-      host = node ? node.parentElement : card;
+      host = node ? node.parentElement : area;
       t = document.createElement('span');
+      injected = true;
       t.setAttribute('aria-hidden', 'true');
       // line-height 0: der Pfeil macht die Zeile nicht höher
       t.setAttribute('style', 'display:inline-block;line-height:0;vertical-align:baseline');
       glyph = document.createElement('span');
       glyph.setAttribute('style', 'position:relative');
-      glyph.textContent = x.get(null, 'Icon', '\u27F6');
+      glyph.textContent = x.get(area, 'Icon', '\u27F6');
       t.append(glyph);
-      const size = x.get(null, 'Size', '');
+      const size = g('Size', '');
       if (size) t.style.fontSize = size;
       if (right) host.append(t);
       else host.prepend(t);
-      injected = true;
     }
     const prev = t.getAttribute('style');
     if (getComputedStyle(t).display === 'inline') t.style.display = 'inline-block';
@@ -2267,7 +2276,7 @@
       if (!glyph) return;
       try {
         const fs = parseFloat(getComputedStyle(t).fontSize) || 16;
-        const ref = x.get(null, 'Align', 'cap') === 'x' ? 'x' : 'H';
+        const ref = g('Align', 'cap') === 'x' ? 'x' : 'H';
         const off = inkMid(glyph.textContent, t) - inkMid(ref, host);
         glyph.style.top = `${off / fs}em`;
       } catch (_) {}
@@ -2277,23 +2286,25 @@
     t.style.width = 'auto';
     const fs = parseFloat(getComputedStyle(t).fontSize) || 16;
     const w = t.getBoundingClientRect().width / fs || 1.2; // unsichtbar beim Start → Schätzwert
-    const gap = x.get(t, 'Gap', '0.3em');
+    const gap = g('Gap', '0.3em');
     const side = right ? 'marginLeft' : 'marginRight';
-    const d = x.reduce ? 0 : toPx(x.get(t, 'Distance', '10px'));
-    const tl = gsap.fromTo(
-      t,
-      { width: 0, [side]: 0, opacity: 0, x: right ? d : -d },
-      {
-        width: `${w}em`,
-        [side]: gap,
-        opacity: 1,
-        x: 0,
-        duration: x.reduce ? 0.01 : x.dur(t, 0.4),
-        ease: x.ease(t, 'power3.out'),
-        paused: true,
-        onStart: center, // Schrift ist dann sicher geladen
-      }
-    );
+    const d = x.reduce ? 0 : toPx(g('Distance', '10px'));
+    const anim = { duration: x.reduce ? 0.01 : num(g('Duration'), 0.4), ease: g('Ease', 'power3.out'), paused: true, onStart: center }; // onStart: Schrift ist dann sicher geladen
+    let tl;
+    if (g('Push', 'true') === 'false') {
+      // Ohne Schieben: Platz fest, aber per negativem Rand neutralisiert – Text und Nachbarn bleiben stehen,
+      // der Pfeil erscheint im Abstand daneben (z. B. in der Navigation)
+      t.style.width = `${w}em`;
+      t.style[side] = gap;
+      t.style[right ? 'marginRight' : 'marginLeft'] = `calc(-${w}em - ${gap})`;
+      tl = gsap.fromTo(t, { opacity: 0, x: right ? -d : d }, Object.assign({ opacity: 1, x: 0 }, anim));
+    } else {
+      tl = gsap.fromTo(
+        t,
+        { width: 0, [side]: 0, opacity: 0, x: right ? d : -d },
+        Object.assign({ width: `${w}em`, [side]: gap, opacity: 1, x: 0 }, anim)
+      );
+    }
     return {
       tl,
       cleanup: () => {
@@ -2710,7 +2721,7 @@
     else smooth.start(v);
   }
 
-  window.WFAnim = { init, destroy, refresh, register, smoothScroll, config: cfg, animations: A, version: '1.9.2', hover: typeof H === 'object' ? H : {} };
+  window.WFAnim = { init, destroy, refresh, register, smoothScroll, config: cfg, animations: A, version: '1.10.0', hover: typeof H === 'object' ? H : {} };
 
   const start = () => {
     if (!cfg.autoInit) return;
