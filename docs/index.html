@@ -344,7 +344,7 @@ td code { white-space: nowrap; }
 
   <main>
     <header class="hero">
-      <div class="eyebrow" data-anim="fade-down" data-anim-intro="load">WF Anim · v1.9.0 · GSAP 3.13</div>
+      <div class="eyebrow" data-anim="fade-down" data-anim-intro="load">WF Anim · v1.9.1 · GSAP 3.13</div>
       <h1 data-anim="split-lines" data-anim-intro>Ein Attribut,<br><em>eine Animation.</em></h1>
       <p>Standard-Animationen für jedes Webflow-Projekt. Element auswählen, unter <em>Custom Attributes</em> <span class="attr">data-anim</span> mit einem Wert aus dieser Liste setzen, fertig. Jede Zeile unten zeigt die Animation live; ein Klick auf das Attribut kopiert es. Was beim Laden schon im Bild ist, bleibt ruhig. Die Überschrift hier oben animiert trotzdem, weil sie <span class="attr">data-anim-intro</span> trägt; die Zeile darüber fährt mit <span class="attr">data-anim-intro="load"</span> beim Laden von oben herein.</p>
       <div class="notice" id="rm-notice" hidden>Dein System hat „Bewegung reduzieren“ aktiviert. Die Library zeigt Inhalte dann bewusst ohne Animation an, genau wie bei deinen Besuchern mit dieser Einstellung.</div>
@@ -384,7 +384,7 @@ setTimeout(function(){if(!window.WFAnim)document.documentElement.classList.remov
         <div>
           <h3>Footer Code</h3>
           <p>Entweder eine Zeile, die die Library aus GitHub lädt. Bequem für eigene und betreute Projekte; die IP-Adresse der Besucher geht dabei an jsDelivr.</p>
-<pre class="code-block" id="code-footer"><code>&lt;script src="https://cdn.jsdelivr.net/gh/rakete13/wf-anim@1.9.0/src/wf-anim.min.js"&gt;&lt;/script&gt;</code></pre>
+<pre class="code-block" id="code-footer"><code>&lt;script src="https://cdn.jsdelivr.net/gh/rakete13/wf-anim@1.9.1/src/wf-anim.min.js"&gt;&lt;/script&gt;</code></pre>
           <button class="copy-block" data-copy-target="code-footer">Footer-Zeile kopieren</button>
           <p>Oder eingebettet: den Inhalt von <code>webflow/footer-code.html</code> aus dem Repo einfügen. Dann hängt das Projekt an keinem fremden Server, ideal bei Übergabe an Kunden.</p>
         </div>
@@ -933,7 +933,7 @@ setTimeout(function(){if(!window.WFAnim)document.documentElement.classList.remov
           <h3>Links & Buttons</h3>
           <p>Für Textlinks, Pfeile und Buttons. Das Attribut sitzt am Link oder Button selbst.</p>
           <button class="copy" data-copy='data-hover="text-roll"'><code>data-hover="text-roll"</code><span class="hint">kopieren</span></button>
-          <ul class="opts"><li><code>underline</code> · <code>arrow</code> · <code>arrow-in</code> · <code>fill</code> · <code>text-roll</code> · <code>magnetic</code></li><li><code>data-hover-color</code> Farbe für fill/underline, auch Variablen</li><li><code>data-hover-text-color</code> Textfarbe bei fill</li><li><code>data-hover-direction="bottom"</code> fill von unten · arrow: <code>up-right</code></li><li><code>data-hover-strength="0.5"</code> für magnetic</li><li><code>data-hover-icon</code> Zeichen für arrow-in (Standard ⟶) · <code>data-hover-size</code> Größe des Zeichens · <code>data-hover-gap</code> Abstand zum Text</li></ul>
+          <ul class="opts"><li><code>underline</code> · <code>arrow</code> · <code>arrow-in</code> · <code>fill</code> · <code>text-roll</code> · <code>magnetic</code></li><li><code>data-hover-color</code> Farbe für fill/underline, auch Variablen</li><li><code>data-hover-text-color</code> Textfarbe bei fill</li><li><code>data-hover-direction="bottom"</code> fill von unten · arrow: <code>up-right</code></li><li><code>data-hover-strength="0.5"</code> für magnetic</li><li><code>data-hover-icon</code> Zeichen für arrow-in (Standard ⟶) · <code>data-hover-size</code> Größe des Zeichens · <code>data-hover-align="x"</code> an Kleinbuchstaben ausrichten · <code>data-hover-gap</code> Abstand zum Text</li></ul>
         </div>
         <div class="stage"><div class="link-grid">
           <a class="tlink" href="#hover" data-hover="underline">Unterstreichen</a>
@@ -1227,7 +1227,7 @@ WFAnim.register('mein-effekt', (el, opts) =&gt; {
 </script>
 <script>
 /*!
- * WF Anim v1.9.0
+ * WF Anim v1.9.1
  * Attribut-basierte GSAP-Animationen für Webflow
  *
  * Benötigt: gsap + ScrollTrigger
@@ -3398,22 +3398,37 @@ WFAnim.register('mein-effekt', (el, opts) =&gt; {
   // Pfeil fährt beim Hover ein und schiebt den Text zur Seite.
   // Ziel: eigenes Element mit data-hover-target="arrow-in" (z. B. SVG) –
   // sonst wird ein Zeichen (data-hover-icon, Standard ⟶) in das erste Textelement eingefügt.
+  let inkCanvas = null;
+  // Mitte der sichtbaren Zeichenfläche über der Grundlinie (in px)
+  const inkMid = (txt, el) => {
+    inkCanvas = inkCanvas || document.createElement('canvas');
+    const c = inkCanvas.getContext('2d');
+    const cs = getComputedStyle(el);
+    c.font = `${cs.fontStyle} ${cs.fontWeight} ${cs.fontSize} ${cs.fontFamily}`;
+    const m = c.measureText(txt);
+    return (m.actualBoundingBoxAscent - m.actualBoundingBoxDescent) / 2;
+  };
   H['arrow-in'] = (card, x) => {
     let t = hoverTarget(card, 'arrow-in', null);
     const right = x.get(t, 'Direction', 'left') === 'right';
     let injected = false;
+    let glyph = null;
+    let host = null;
     if (!t) {
       // erstes Element mit eigenem Text (z. B. die Überschrift im Listeneintrag)
       const walker = document.createTreeWalker(card, NodeFilter.SHOW_TEXT, {
         acceptNode: (n) => (n.textContent.trim() ? NodeFilter.FILTER_ACCEPT : NodeFilter.FILTER_REJECT),
       });
       const node = walker.nextNode();
-      const host = node ? node.parentElement : card;
+      host = node ? node.parentElement : card;
       t = document.createElement('span');
       t.setAttribute('aria-hidden', 'true');
-      t.textContent = x.get(null, 'Icon', '⟶');
-      t.style.display = 'inline-block';
-      t.style.lineHeight = '1';
+      // line-height 0: der Pfeil macht die Zeile nicht höher
+      t.setAttribute('style', 'display:inline-block;line-height:0;vertical-align:baseline');
+      glyph = document.createElement('span');
+      glyph.setAttribute('style', 'position:relative');
+      glyph.textContent = x.get(null, 'Icon', '\u27F6');
+      t.append(glyph);
       const size = x.get(null, 'Size', '');
       if (size) t.style.fontSize = size;
       if (right) host.append(t);
@@ -3422,10 +3437,21 @@ WFAnim.register('mein-effekt', (el, opts) =&gt; {
     }
     const prev = t.getAttribute('style');
     if (getComputedStyle(t).display === 'inline') t.style.display = 'inline-block';
-    t.style.overflow = 'hidden';
+    // Nur seitlich beschneiden (overflow:hidden würde die Grundlinie verschieben)
+    t.style.clipPath = 'inset(-1em 0)';
     t.style.whiteSpace = 'nowrap';
     t.style.flexShrink = '0';
-    t.style.verticalAlign = 'baseline';
+    // Zeichen auf die optische Mitte der Großbuchstaben setzen (data-hover-align="x": Mitte der Kleinbuchstaben)
+    const center = () => {
+      if (!glyph) return;
+      try {
+        const fs = parseFloat(getComputedStyle(t).fontSize) || 16;
+        const ref = x.get(null, 'Align', 'cap') === 'x' ? 'x' : 'H';
+        const off = inkMid(glyph.textContent, t) - inkMid(ref, host);
+        glyph.style.top = `${off / fs}em`;
+      } catch (_) {}
+    };
+    center();
     // Breite in em messen, damit sie mit fluiden Schriftgrößen mitwächst
     t.style.width = 'auto';
     const fs = parseFloat(getComputedStyle(t).fontSize) || 16;
@@ -3444,6 +3470,7 @@ WFAnim.register('mein-effekt', (el, opts) =&gt; {
         duration: x.reduce ? 0.01 : x.dur(t, 0.4),
         ease: x.ease(t, 'power3.out'),
         paused: true,
+        onStart: center, // Schrift ist dann sicher geladen
       }
     );
     return {
@@ -3862,7 +3889,7 @@ WFAnim.register('mein-effekt', (el, opts) =&gt; {
     else smooth.start(v);
   }
 
-  window.WFAnim = { init, destroy, refresh, register, smoothScroll, config: cfg, animations: A, version: '1.9.0', hover: typeof H === 'object' ? H : {} };
+  window.WFAnim = { init, destroy, refresh, register, smoothScroll, config: cfg, animations: A, version: '1.9.1', hover: typeof H === 'object' ? H : {} };
 
   const start = () => {
     if (!cfg.autoInit) return;

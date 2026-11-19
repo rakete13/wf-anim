@@ -1,5 +1,5 @@
 /*!
- * WF Anim v1.9.0
+ * WF Anim v1.9.1
  * Attribut-basierte GSAP-Animationen für Webflow
  *
  * Benötigt: gsap + ScrollTrigger
@@ -2170,22 +2170,37 @@
   // Pfeil fährt beim Hover ein und schiebt den Text zur Seite.
   // Ziel: eigenes Element mit data-hover-target="arrow-in" (z. B. SVG) –
   // sonst wird ein Zeichen (data-hover-icon, Standard ⟶) in das erste Textelement eingefügt.
+  let inkCanvas = null;
+  // Mitte der sichtbaren Zeichenfläche über der Grundlinie (in px)
+  const inkMid = (txt, el) => {
+    inkCanvas = inkCanvas || document.createElement('canvas');
+    const c = inkCanvas.getContext('2d');
+    const cs = getComputedStyle(el);
+    c.font = `${cs.fontStyle} ${cs.fontWeight} ${cs.fontSize} ${cs.fontFamily}`;
+    const m = c.measureText(txt);
+    return (m.actualBoundingBoxAscent - m.actualBoundingBoxDescent) / 2;
+  };
   H['arrow-in'] = (card, x) => {
     let t = hoverTarget(card, 'arrow-in', null);
     const right = x.get(t, 'Direction', 'left') === 'right';
     let injected = false;
+    let glyph = null;
+    let host = null;
     if (!t) {
       // erstes Element mit eigenem Text (z. B. die Überschrift im Listeneintrag)
       const walker = document.createTreeWalker(card, NodeFilter.SHOW_TEXT, {
         acceptNode: (n) => (n.textContent.trim() ? NodeFilter.FILTER_ACCEPT : NodeFilter.FILTER_REJECT),
       });
       const node = walker.nextNode();
-      const host = node ? node.parentElement : card;
+      host = node ? node.parentElement : card;
       t = document.createElement('span');
       t.setAttribute('aria-hidden', 'true');
-      t.textContent = x.get(null, 'Icon', '⟶');
-      t.style.display = 'inline-block';
-      t.style.lineHeight = '1';
+      // line-height 0: der Pfeil macht die Zeile nicht höher
+      t.setAttribute('style', 'display:inline-block;line-height:0;vertical-align:baseline');
+      glyph = document.createElement('span');
+      glyph.setAttribute('style', 'position:relative');
+      glyph.textContent = x.get(null, 'Icon', '\u27F6');
+      t.append(glyph);
       const size = x.get(null, 'Size', '');
       if (size) t.style.fontSize = size;
       if (right) host.append(t);
@@ -2194,10 +2209,21 @@
     }
     const prev = t.getAttribute('style');
     if (getComputedStyle(t).display === 'inline') t.style.display = 'inline-block';
-    t.style.overflow = 'hidden';
+    // Nur seitlich beschneiden (overflow:hidden würde die Grundlinie verschieben)
+    t.style.clipPath = 'inset(-1em 0)';
     t.style.whiteSpace = 'nowrap';
     t.style.flexShrink = '0';
-    t.style.verticalAlign = 'baseline';
+    // Zeichen auf die optische Mitte der Großbuchstaben setzen (data-hover-align="x": Mitte der Kleinbuchstaben)
+    const center = () => {
+      if (!glyph) return;
+      try {
+        const fs = parseFloat(getComputedStyle(t).fontSize) || 16;
+        const ref = x.get(null, 'Align', 'cap') === 'x' ? 'x' : 'H';
+        const off = inkMid(glyph.textContent, t) - inkMid(ref, host);
+        glyph.style.top = `${off / fs}em`;
+      } catch (_) {}
+    };
+    center();
     // Breite in em messen, damit sie mit fluiden Schriftgrößen mitwächst
     t.style.width = 'auto';
     const fs = parseFloat(getComputedStyle(t).fontSize) || 16;
@@ -2216,6 +2242,7 @@
         duration: x.reduce ? 0.01 : x.dur(t, 0.4),
         ease: x.ease(t, 'power3.out'),
         paused: true,
+        onStart: center, // Schrift ist dann sicher geladen
       }
     );
     return {
@@ -2634,7 +2661,7 @@
     else smooth.start(v);
   }
 
-  window.WFAnim = { init, destroy, refresh, register, smoothScroll, config: cfg, animations: A, version: '1.9.0', hover: typeof H === 'object' ? H : {} };
+  window.WFAnim = { init, destroy, refresh, register, smoothScroll, config: cfg, animations: A, version: '1.9.1', hover: typeof H === 'object' ? H : {} };
 
   const start = () => {
     if (!cfg.autoInit) return;
