@@ -348,7 +348,7 @@ td code { white-space: nowrap; }
 
   <main>
     <header class="hero">
-      <div class="eyebrow" data-anim="fade-down" data-anim-intro="load">WF Anim · v1.12.0 · GSAP 3.13</div>
+      <div class="eyebrow" data-anim="fade-down" data-anim-intro="load">WF Anim · v1.13.0 · GSAP 3.13</div>
       <h1 data-anim="split-lines" data-anim-intro>Ein Attribut,<br><em>eine Animation.</em></h1>
       <p>Standard-Animationen für jedes Webflow-Projekt. Element auswählen, unter <em>Custom Attributes</em> <span class="attr">data-anim</span> mit einem Wert aus dieser Liste setzen, fertig. Jede Zeile unten zeigt die Animation live; ein Klick auf das Attribut kopiert es. Was beim Laden schon im Bild ist, bleibt ruhig. Die Überschrift hier oben animiert trotzdem, weil sie <span class="attr">data-anim-intro</span> trägt; die Zeile darüber fährt mit <span class="attr">data-anim-intro="load"</span> beim Laden von oben herein.</p>
       <div class="notice" id="rm-notice" hidden>Dein System hat „Bewegung reduzieren“ aktiviert. Die Library zeigt Inhalte dann bewusst ohne Animation an, genau wie bei deinen Besuchern mit dieser Einstellung.</div>
@@ -388,7 +388,7 @@ setTimeout(function(){if(!window.WFAnim)document.documentElement.classList.remov
         <div>
           <h3>Footer Code</h3>
           <p>Entweder eine Zeile, die die Library aus GitHub lädt. Bequem für eigene und betreute Projekte; die IP-Adresse der Besucher geht dabei an jsDelivr.</p>
-<pre class="code-block" id="code-footer"><code>&lt;script src="https://cdn.jsdelivr.net/gh/rakete13/wf-anim@1.12.0/src/wf-anim.min.js"&gt;&lt;/script&gt;</code></pre>
+<pre class="code-block" id="code-footer"><code>&lt;script src="https://cdn.jsdelivr.net/gh/rakete13/wf-anim@1.13.0/src/wf-anim.min.js"&gt;&lt;/script&gt;</code></pre>
           <button class="copy-block" data-copy-target="code-footer">Footer-Zeile kopieren</button>
           <p>Oder eingebettet: den Inhalt von <code>webflow/footer-code.html</code> aus dem Repo einfügen. Dann hängt das Projekt an keinem fremden Server, ideal bei Übergabe an Kunden.</p>
         </div>
@@ -813,7 +813,7 @@ setTimeout(function(){if(!window.WFAnim)document.documentElement.classList.remov
           <h3>Ring</h3>
           <p>Karten stehen im Kreis und drehen sich im Raum. Ziehen dreht den Ring, die Maus neigt ihn, über einer Karte wird er langsamer. Breite und Höhe der Karten im Designer festlegen.</p>
           <button class="copy" data-copy='data-anim="ring"'><code>data-anim="ring"</code><span class="hint">kopieren</span></button>
-          <ul class="opts"><li><code>data-anim-speed="40"</code> Sekunden pro Umdrehung</li><li><code>data-anim-tilt="-10"</code> Grundneigung · <code>data-anim-tilt-range="14"</code> Neigung durch die Maus</li><li><code>data-anim-slow="0.12"</code> Tempo über einer Karte</li><li><code>data-anim-radius</code> · <code>data-anim-gap</code> · <code>data-anim-direction="right"</code></li></ul>
+          <ul class="opts"><li><code>data-anim-speed="40"</code> Sekunden pro Umdrehung</li><li><code>data-anim-tilt="-10"</code> Grundneigung · <code>data-anim-tilt-range="14"</code> Neigung durch die Maus</li><li><code>data-anim-slow="0.12"</code> Tempo über einer Karte</li><li><code>data-anim-roll="-18"</code> Schräglage, Ring läuft diagonal</li><li><code>data-anim-depth="0.5"</code> holt den Ring nach vorne (1 = auf der Bildebene)</li><li><code>data-anim-radius</code> · <code>data-anim-gap</code> · <code>data-anim-direction="right"</code></li></ul>
         </div>
         <div class="stage"><div class="ring-demo" data-anim="ring">
           <a href="#ring" class="ring-card" style="--h:12">01</a><a href="#ring" class="ring-card" style="--h:48">02</a><a href="#ring" class="ring-card" style="--h:84">03</a><a href="#ring" class="ring-card" style="--h:120">04</a><a href="#ring" class="ring-card" style="--h:156">05</a><a href="#ring" class="ring-card" style="--h:192">06</a><a href="#ring" class="ring-card" style="--h:228">07</a><a href="#ring" class="ring-card" style="--h:264">08</a><a href="#ring" class="ring-card" style="--h:300">09</a><a href="#ring" class="ring-card" style="--h:336">10</a>
@@ -1248,7 +1248,7 @@ WFAnim.register('mein-effekt', (el, opts) =&gt; {
 </script>
 <script>
 /*!
- * WF Anim v1.12.0
+ * WF Anim v1.13.0
  * Attribut-basierte GSAP-Animationen für Webflow
  *
  * Benötigt: gsap + ScrollTrigger
@@ -1780,6 +1780,10 @@ WFAnim.register('mein-effekt', (el, opts) =&gt; {
     const tilt = num(ds.animTilt, -10); // Grundneigung in Grad
     const tiltRange = num(ds.animTiltRange, 14); // zusätzliche Neigung durch die Maus
     const slow = num(ds.animSlow, 0.12); // Tempo über einer Karte
+    const roll = num(ds.animRoll, 0); // Schräglage in Grad: der Ring läuft diagonal durchs Bild
+    // Wie weit der Ring hinter der Bildebene steht: 1 = vorderste Karte auf der Bildebene,
+    // kleiner = Ring kommt nach vorne, vordere Karten werden groß und ragen über den Rand
+    const depth = Math.max(0, Math.min(1, num(ds.animDepth, 1)));
     const saved = [el, track, ...list].map((x) => [x, x.getAttribute('style')]);
 
     el.style.perspective = ds.animPerspective || '1400px';
@@ -1817,7 +1821,8 @@ WFAnim.register('mein-effekt', (el, opts) =&gt; {
     let active = true;
     let drag = null;
     let moved = false;
-    const render = () => (track.style.transform = `translateZ(${-r}px) rotateX(${state.rx}deg) rotateY(${state.ry}deg)`);
+    const render = () =>
+      (track.style.transform = `translateZ(${-r * depth}px) rotateZ(${roll}deg) rotateX(${state.rx}deg) rotateY(${state.ry}deg)`);
 
     const tick = (t, dt) => {
       if (!active) return;
@@ -4203,7 +4208,7 @@ WFAnim.register('mein-effekt', (el, opts) =&gt; {
     else smooth.start(v);
   }
 
-  window.WFAnim = { init, destroy, refresh, register, smoothScroll, config: cfg, animations: A, version: '1.12.0', hover: typeof H === 'object' ? H : {} };
+  window.WFAnim = { init, destroy, refresh, register, smoothScroll, config: cfg, animations: A, version: '1.13.0', hover: typeof H === 'object' ? H : {} };
 
   const start = () => {
     if (!cfg.autoInit) return;
@@ -4213,7 +4218,6 @@ WFAnim.register('mein-effekt', (el, opts) =&gt; {
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start);
   else start();
 })();
-
 </script>
 <script>
   // Kopieren

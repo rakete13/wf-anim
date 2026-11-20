@@ -1,5 +1,5 @@
 /*!
- * WF Anim v1.12.0
+ * WF Anim v1.13.0
  * Attribut-basierte GSAP-Animationen für Webflow
  *
  * Benötigt: gsap + ScrollTrigger
@@ -531,6 +531,10 @@
     const tilt = num(ds.animTilt, -10); // Grundneigung in Grad
     const tiltRange = num(ds.animTiltRange, 14); // zusätzliche Neigung durch die Maus
     const slow = num(ds.animSlow, 0.12); // Tempo über einer Karte
+    const roll = num(ds.animRoll, 0); // Schräglage in Grad: der Ring läuft diagonal durchs Bild
+    // Wie weit der Ring hinter der Bildebene steht: 1 = vorderste Karte auf der Bildebene,
+    // kleiner = Ring kommt nach vorne, vordere Karten werden groß und ragen über den Rand
+    const depth = Math.max(0, Math.min(1, num(ds.animDepth, 1)));
     const saved = [el, track, ...list].map((x) => [x, x.getAttribute('style')]);
 
     el.style.perspective = ds.animPerspective || '1400px';
@@ -568,7 +572,8 @@
     let active = true;
     let drag = null;
     let moved = false;
-    const render = () => (track.style.transform = `translateZ(${-r}px) rotateX(${state.rx}deg) rotateY(${state.ry}deg)`);
+    const render = () =>
+      (track.style.transform = `translateZ(${-r * depth}px) rotateZ(${roll}deg) rotateX(${state.rx}deg) rotateY(${state.ry}deg)`);
 
     const tick = (t, dt) => {
       if (!active) return;
@@ -2954,7 +2959,7 @@
     else smooth.start(v);
   }
 
-  window.WFAnim = { init, destroy, refresh, register, smoothScroll, config: cfg, animations: A, version: '1.12.0', hover: typeof H === 'object' ? H : {} };
+  window.WFAnim = { init, destroy, refresh, register, smoothScroll, config: cfg, animations: A, version: '1.13.0', hover: typeof H === 'object' ? H : {} };
 
   const start = () => {
     if (!cfg.autoInit) return;
