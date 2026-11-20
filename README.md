@@ -18,7 +18,7 @@ Die Library ist komplett in den Footer Code eingebettet. Ein Webflow-Projekt hä
 Statt des langen Footer Codes reicht diese eine Zeile (Head Code und GSAP-Integration bleiben gleich):
 
 ```html
-<script src="https://cdn.jsdelivr.net/gh/rakete13/wf-anim@1.11.1/src/wf-anim.min.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/rakete13/wf-anim@1.12.0/src/wf-anim.min.js"></script>
 ```
 
 Bequem für eigene und betreute Projekte. Die Seite hängt dann aber an diesem Repo und an jsDelivr, und die IP-Adresse der Besucher geht an jsDelivr (in der Datenschutzerklärung erwähnen). Bei Übergabe an einen Kunden besser auf den eingebetteten Footer Code wechseln.
@@ -56,8 +56,10 @@ Der Name beschreibt die Bewegungsrichtung: `fade-left` bewegt sich nach links, k
 | Gruppen | `stagger` `grid-stagger` |
 | Text | `split-lines` `split-words` `split-chars` `scramble` `highlight` `rotate-words` `typewriter` |
 | Scroll | `parallax` `parallax-element` `image-zoom` `image-expand` `image-shrink` `box-expand` `box-shrink` `text-fill` `progress-bar` `pin` `horizontal` `stack` `cover` `scrolly` |
-| Funktional | `counter` `marquee` `draw-svg` `video` `accordion` `menu` |
+| Funktional | `counter` `marquee` `ring` `draw-svg` `video` `accordion` `menu` |
 | Seite & Navigation | `preloader` `nav-hide` `bg-color` `cursor` · Smooth Scroll global über `data-anim-smooth` am body oder `WFAnimConfig.smoothScroll` |
+
+**`ring`**: Karten stehen im Kreis und drehen sich im Raum (z. B. Projekte auf der 404-Seite). An den Wrapper, Karten sind `[data-anim-item]` oder die Collection Items, Breite und Höhe der Karte im Designer festlegen. Ziehen dreht den Ring (mit Schwung), die Mausposition neigt ihn, über einer Karte wird er langsamer, nach dem Ziehen löst kein Link aus. Tastatur-Fokus dreht die Karte nach vorne. Bei „Bewegung reduzieren“ bleibt das Layout aus Webflow (z. B. Flex mit Umbruch). Optionen: `data-anim-speed` (Sekunden pro Umdrehung, 40), `data-anim-direction="right"`, `data-anim-tilt` (Grundneigung, −10), `data-anim-tilt-range` (Neigung durch die Maus, 14), `data-anim-slow` (Tempo über einer Karte, 0.12), `data-anim-radius`, `data-anim-gap` (Abstand der Karten, 1.5rem), `data-anim-height`, `data-anim-perspective` (1400px).
 
 Globale Modifier: `data-anim-intro`, `data-anim-delay`, `data-anim-duration`, `data-anim-ease`, `data-anim-start`, `data-anim-end`, `data-anim-distance`, `data-anim-stagger`, `data-anim-repeat`, `data-anim-scrub`, `data-anim-mobile="false"`. Details und alle Optionen je Animation stehen in der Doku.
 

@@ -1,5 +1,5 @@
 /*!
- * WF Anim v1.11.1
+ * WF Anim v1.12.0
  * Attribut-basierte GSAP-Animationen für Webflow
  *
  * Benötigt: gsap + ScrollTrigger
@@ -508,6 +508,183 @@
     return restore;
   };
 
+  /*@end*/
+
+  /*@block ring*/
+  // 3D-Ring: Karten stehen im Kreis und drehen sich im Raum. Ziehen dreht den Ring,
+  // die Mausposition neigt ihn, über einer Karte wird er langsamer.
+  // An den Wrapper (z. B. Collection List Wrapper). Karten: [data-anim-item] oder die Collection Items.
+  A['ring'] = (el, o, ctx) => {
+    const ds = el.dataset;
+    let list = Array.from(el.querySelectorAll('[data-anim-item]'));
+    if (!list.length) {
+      let box = el;
+      while (box.children.length === 1 && box.firstElementChild.children.length) box = box.firstElementChild;
+      list = Array.from(box.children).filter((c) => !c.classList.contains('w-dyn-empty'));
+    }
+    if (list.length < 3) return show(el);
+    const track = list[0].parentElement;
+    const n = list.length;
+    const step = 360 / n;
+    const speed = num(ds.animSpeed, 40); // Sekunden pro Umdrehung
+    const dir = ds.animDirection === 'right' ? -1 : 1;
+    const tilt = num(ds.animTilt, -10); // Grundneigung in Grad
+    const tiltRange = num(ds.animTiltRange, 14); // zusätzliche Neigung durch die Maus
+    const slow = num(ds.animSlow, 0.12); // Tempo über einer Karte
+    const saved = [el, track, ...list].map((x) => [x, x.getAttribute('style')]);
+
+    el.style.perspective = ds.animPerspective || '1400px';
+    el.style.position = getComputedStyle(el).position === 'static' ? 'relative' : el.style.position;
+    el.style.touchAction = 'pan-y';
+    el.style.userSelect = 'none';
+    Object.assign(track.style, { position: 'relative', transformStyle: 'preserve-3d', margin: '0 auto', display: 'block' });
+    list.forEach((it) => {
+      it.style.position = 'absolute';
+      it.style.left = '0';
+      it.style.top = '0';
+      it.style.margin = '0';
+      it.style.backfaceVisibility = 'visible';
+    });
+
+    let r = 0;
+    const layout = () => {
+      const w = list[0].offsetWidth || 200;
+      const h = list[0].offsetHeight || w;
+      const gap = toPx(ds.animGap || '1.5rem');
+      r = ds.animRadius ? toPx(ds.animRadius) : Math.max(w, ((w + gap) * n) / (2 * Math.PI));
+      track.style.width = w + 'px';
+      track.style.height = h + 'px';
+      // Platz nach oben und unten, damit gekippte Karten nicht über den Rand ragen
+      el.style.height = ds.animHeight || Math.round(h * 1.7) + 'px';
+      track.style.top = (el.clientHeight - h) / 2 + 'px';
+      list.forEach((it, i) => (it.style.transform = `rotateY(${i * step}deg) translateZ(${r}px)`));
+    };
+    layout();
+
+    const state = { ry: 0, rx: tilt, tx: tilt, factor: 1, vel: 0 };
+    let targetFactor = 1;
+    let hovered = null;
+    let focused = false;
+    let active = true;
+    let drag = null;
+    let moved = false;
+    const render = () => (track.style.transform = `translateZ(${-r}px) rotateX(${state.rx}deg) rotateY(${state.ry}deg)`);
+
+    const tick = (t, dt) => {
+      if (!active) return;
+      const s = Math.min(dt || 16.7, 50) / 1000;
+      state.factor += (targetFactor - state.factor) * Math.min(1, s * 6);
+      if (!drag && !focused) state.ry += dir * (360 / speed) * state.factor * s + state.vel * s;
+      state.vel *= Math.pow(0.04, s); // Schwung nach dem Loslassen klingt aus
+      state.rx += (state.tx - state.rx) * Math.min(1, s * 5);
+      render();
+    };
+    gsap.ticker.add(tick);
+    render();
+
+    // Maus neigt den Ring um die zweite Achse
+    const onMove = (e) => {
+      if (e.pointerType === 'touch') return;
+      const b = el.getBoundingClientRect();
+      const ny = (e.clientY - b.top) / b.height - 0.5;
+      state.tx = tilt - ny * tiltRange * 2;
+      if (drag) {
+        const dx = e.clientX - drag.x;
+        if (Math.abs(dx) > 4) moved = true;
+        state.ry = drag.ry + dx * 0.25;
+        drag.vx = (e.clientX - drag.lx) / Math.max(1, e.timeStamp - drag.lt) * 1000 * 0.25;
+        drag.lx = e.clientX;
+        drag.lt = e.timeStamp;
+      }
+    };
+    const onLeave = () => (state.tx = tilt);
+    const onDown = (e) => {
+      if (e.button) return;
+      drag = { x: e.clientX, ry: state.ry, lx: e.clientX, lt: e.timeStamp, vx: 0 };
+      moved = false;
+      state.vel = 0;
+    };
+    const onUp = () => {
+      if (!drag) return;
+      state.vel = Math.max(-400, Math.min(400, drag.vx));
+      drag = null;
+    };
+    // Touch: waagerechtes Wischen dreht den Ring (senkrecht scrollt die Seite)
+    const onTouchMove = (e) => {
+      if (e.pointerType !== 'touch' || !drag) return;
+      const dx = e.clientX - drag.x;
+      if (Math.abs(dx) > 4) moved = true;
+      state.ry = drag.ry + dx * 0.35;
+      drag.vx = (e.clientX - drag.lx) / Math.max(1, e.timeStamp - drag.lt) * 1000 * 0.35;
+      drag.lx = e.clientX;
+      drag.lt = e.timeStamp;
+    };
+    // Nach dem Ziehen kein versehentlicher Klick auf eine Karte
+    const onClick = (e) => {
+      if (moved) {
+        e.preventDefault();
+        e.stopPropagation();
+        moved = false;
+      }
+    };
+    const onOver = (e) => {
+      const it = list.find((x) => x.contains(e.target));
+      if (it === hovered) return;
+      hovered = it || null;
+      targetFactor = hovered ? slow : 1;
+    };
+    const onOut = (e) => {
+      if (!el.contains(e.relatedTarget)) {
+        hovered = null;
+        targetFactor = 1;
+      }
+    };
+    // Tastatur: fokussierte Karte nach vorne drehen und anhalten
+    const onFocus = (e) => {
+      const i = list.findIndex((x) => x.contains(e.target));
+      if (i < 0) return;
+      focused = true;
+      const goal = -i * step;
+      const cur = state.ry;
+      const diff = ((((goal - cur) % 360) + 540) % 360) - 180; // kürzester Weg
+      gsap.to(state, { ry: cur + diff, duration: 0.6, ease: 'power3.out', onUpdate: render, overwrite: true });
+    };
+    const onBlur = (e) => {
+      if (!el.contains(e.relatedTarget)) focused = false;
+    };
+    const L = [
+      [el, 'pointermove', onMove],
+      [el, 'pointermove', onTouchMove],
+      [el, 'pointerleave', onLeave],
+      [el, 'pointerdown', onDown],
+      [window, 'pointerup', onUp],
+      [window, 'pointercancel', onUp],
+      [el, 'click', onClick, true],
+      [el, 'pointerover', onOver],
+      [el, 'pointerout', onOut],
+      [el, 'focusin', onFocus],
+      [el, 'focusout', onBlur],
+      [el, 'dragstart', (e) => e.preventDefault()],
+    ];
+    L.forEach(([t, ev, f, c]) => t.addEventListener(ev, f, c || false));
+
+    // Außerhalb des Bildschirms anhalten
+    ScrollTrigger.create({ trigger: el, start: 'top bottom', end: 'bottom top', onToggle: (self) => (active = self.isActive) });
+    let ro = null;
+    if (window.ResizeObserver) {
+      ro = new ResizeObserver(() => layout());
+      ro.observe(el);
+    }
+    unhide(el);
+
+    return () => {
+      gsap.ticker.remove(tick);
+      gsap.killTweensOf(state);
+      if (ro) ro.disconnect();
+      L.forEach(([t, ev, f, c]) => t.removeEventListener(ev, f, c || false));
+      saved.forEach(([x, s]) => (s === null ? x.removeAttribute('style') : x.setAttribute('style', s)));
+    };
+  };
   /*@end*/
 
   /*@block marquee*/
@@ -2777,7 +2954,7 @@
     else smooth.start(v);
   }
 
-  window.WFAnim = { init, destroy, refresh, register, smoothScroll, config: cfg, animations: A, version: '1.11.1', hover: typeof H === 'object' ? H : {} };
+  window.WFAnim = { init, destroy, refresh, register, smoothScroll, config: cfg, animations: A, version: '1.12.0', hover: typeof H === 'object' ? H : {} };
 
   const start = () => {
     if (!cfg.autoInit) return;
