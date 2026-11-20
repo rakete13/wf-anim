@@ -1,5 +1,5 @@
 /*!
- * WF Anim v1.10.1
+ * WF Anim v1.11.0
  * Attribut-basierte GSAP-Animationen für Webflow
  *
  * Benötigt: gsap + ScrollTrigger
@@ -2326,12 +2326,6 @@
   H['fill'] = (card, x) => {
     const t = hoverTarget(card, 'fill', 'self');
     const color = x.get(t, 'Color', 'rgba(0, 0, 0, 0.12)');
-    // CSS-Variablen (z. B. Webflow Variables) für die Farbanimation auflösen
-    const resolve = (c) => {
-      const m = c && /^var\((--[^),\s]+)/.exec(c);
-      return m ? getComputedStyle(t).getPropertyValue(m[1]).trim() || c : c;
-    };
-    const textColor = resolve(x.get(t, 'TextColor', null));
     const dir = x.get(t, 'Direction', 'left');
     const cs = getComputedStyle(t);
     const prev = { position: t.style.position, isolation: t.style.isolation, overflow: t.style.overflow };
@@ -2347,12 +2341,23 @@
     const tl = gsap.timeline({ paused: true, defaults: { duration: x.dur(t, 0.45), ease: x.ease(t) } });
     if (x.reduce) tl.fromTo(span, { opacity: 0 }, { opacity: 1 });
     else tl.fromTo(span, { [axis]: 0, transformOrigin: origin }, { [axis]: 1 });
-    if (textColor) tl.fromTo(t, { color: cs.color }, { color: textColor }, 0);
+    // Textfarbe: an Elementen mit data-hover-target="fill-text" (z. B. Text über einem Overlay),
+    // sonst am Ziel selbst. Farbe pro Element überschreibbar mit data-hover-text-color.
+    const texts = Array.from(card.querySelectorAll('[data-hover-target="fill-text"]'));
+    const painted = [];
+    (texts.length ? texts : [t]).forEach((el) => {
+      const c = texts.length ? x.get(el, 'TextColor', null) : x.get(t, 'TextColor', null);
+      const to = c && resolveColor(c, el); // CSS-Variablen auflösen, GSAP kann var() nicht animieren
+      if (!to) return;
+      painted.push([el, el.style.color]);
+      tl.fromTo(el, { color: getComputedStyle(el).color }, { color: to }, 0);
+    });
     return {
       tl,
       cleanup: () => {
         span.remove();
         Object.assign(t.style, prev);
+        painted.forEach(([el, c]) => (el.style.color = c));
       },
     };
   };
@@ -2726,7 +2731,7 @@
     else smooth.start(v);
   }
 
-  window.WFAnim = { init, destroy, refresh, register, smoothScroll, config: cfg, animations: A, version: '1.10.1', hover: typeof H === 'object' ? H : {} };
+  window.WFAnim = { init, destroy, refresh, register, smoothScroll, config: cfg, animations: A, version: '1.11.0', hover: typeof H === 'object' ? H : {} };
 
   const start = () => {
     if (!cfg.autoInit) return;
