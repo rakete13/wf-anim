@@ -1,5 +1,5 @@
 /*!
- * WF Anim v1.10.0
+ * WF Anim v1.10.1
  * Attribut-basierte GSAP-Animationen für Webflow
  *
  * Benötigt: gsap + ScrollTrigger
@@ -2274,6 +2274,11 @@
     // Zeichen auf die optische Mitte der Großbuchstaben setzen (data-hover-align="x": Mitte der Kleinbuchstaben)
     const center = () => {
       if (!glyph) return;
+      // Text wurde nachträglich ersetzt (z. B. per textContent durch ein anderes Skript): Pfeil wieder einsetzen
+      if (!t.isConnected && host.isConnected) {
+        if (right) host.append(t);
+        else host.prepend(t);
+      }
       try {
         const fs = parseFloat(getComputedStyle(t).fontSize) || 16;
         const ref = g('Align', 'cap') === 'x' ? 'x' : 'H';
@@ -2721,7 +2726,7 @@
     else smooth.start(v);
   }
 
-  window.WFAnim = { init, destroy, refresh, register, smoothScroll, config: cfg, animations: A, version: '1.10.0', hover: typeof H === 'object' ? H : {} };
+  window.WFAnim = { init, destroy, refresh, register, smoothScroll, config: cfg, animations: A, version: '1.10.1', hover: typeof H === 'object' ? H : {} };
 
   const start = () => {
     if (!cfg.autoInit) return;

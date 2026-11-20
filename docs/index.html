@@ -346,7 +346,7 @@ td code { white-space: nowrap; }
 
   <main>
     <header class="hero">
-      <div class="eyebrow" data-anim="fade-down" data-anim-intro="load">WF Anim · v1.10.0 · GSAP 3.13</div>
+      <div class="eyebrow" data-anim="fade-down" data-anim-intro="load">WF Anim · v1.10.1 · GSAP 3.13</div>
       <h1 data-anim="split-lines" data-anim-intro>Ein Attribut,<br><em>eine Animation.</em></h1>
       <p>Standard-Animationen für jedes Webflow-Projekt. Element auswählen, unter <em>Custom Attributes</em> <span class="attr">data-anim</span> mit einem Wert aus dieser Liste setzen, fertig. Jede Zeile unten zeigt die Animation live; ein Klick auf das Attribut kopiert es. Was beim Laden schon im Bild ist, bleibt ruhig. Die Überschrift hier oben animiert trotzdem, weil sie <span class="attr">data-anim-intro</span> trägt; die Zeile darüber fährt mit <span class="attr">data-anim-intro="load"</span> beim Laden von oben herein.</p>
       <div class="notice" id="rm-notice" hidden>Dein System hat „Bewegung reduzieren“ aktiviert. Die Library zeigt Inhalte dann bewusst ohne Animation an, genau wie bei deinen Besuchern mit dieser Einstellung.</div>
@@ -386,7 +386,7 @@ setTimeout(function(){if(!window.WFAnim)document.documentElement.classList.remov
         <div>
           <h3>Footer Code</h3>
           <p>Entweder eine Zeile, die die Library aus GitHub lädt. Bequem für eigene und betreute Projekte; die IP-Adresse der Besucher geht dabei an jsDelivr.</p>
-<pre class="code-block" id="code-footer"><code>&lt;script src="https://cdn.jsdelivr.net/gh/rakete13/wf-anim@1.10.0/src/wf-anim.min.js"&gt;&lt;/script&gt;</code></pre>
+<pre class="code-block" id="code-footer"><code>&lt;script src="https://cdn.jsdelivr.net/gh/rakete13/wf-anim@1.10.1/src/wf-anim.min.js"&gt;&lt;/script&gt;</code></pre>
           <button class="copy-block" data-copy-target="code-footer">Footer-Zeile kopieren</button>
           <p>Oder eingebettet: den Inhalt von <code>webflow/footer-code.html</code> aus dem Repo einfügen. Dann hängt das Projekt an keinem fremden Server, ideal bei Übergabe an Kunden.</p>
         </div>
@@ -1234,7 +1234,7 @@ WFAnim.register('mein-effekt', (el, opts) =&gt; {
 </script>
 <script>
 /*!
- * WF Anim v1.10.0
+ * WF Anim v1.10.1
  * Attribut-basierte GSAP-Animationen für Webflow
  *
  * Benötigt: gsap + ScrollTrigger
@@ -3509,6 +3509,11 @@ WFAnim.register('mein-effekt', (el, opts) =&gt; {
     // Zeichen auf die optische Mitte der Großbuchstaben setzen (data-hover-align="x": Mitte der Kleinbuchstaben)
     const center = () => {
       if (!glyph) return;
+      // Text wurde nachträglich ersetzt (z. B. per textContent durch ein anderes Skript): Pfeil wieder einsetzen
+      if (!t.isConnected && host.isConnected) {
+        if (right) host.append(t);
+        else host.prepend(t);
+      }
       try {
         const fs = parseFloat(getComputedStyle(t).fontSize) || 16;
         const ref = g('Align', 'cap') === 'x' ? 'x' : 'H';
@@ -3956,7 +3961,7 @@ WFAnim.register('mein-effekt', (el, opts) =&gt; {
     else smooth.start(v);
   }
 
-  window.WFAnim = { init, destroy, refresh, register, smoothScroll, config: cfg, animations: A, version: '1.10.0', hover: typeof H === 'object' ? H : {} };
+  window.WFAnim = { init, destroy, refresh, register, smoothScroll, config: cfg, animations: A, version: '1.10.1', hover: typeof H === 'object' ? H : {} };
 
   const start = () => {
     if (!cfg.autoInit) return;

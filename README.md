@@ -18,7 +18,7 @@ Die Library ist komplett in den Footer Code eingebettet. Ein Webflow-Projekt hä
 Statt des langen Footer Codes reicht diese eine Zeile (Head Code und GSAP-Integration bleiben gleich):
 
 ```html
-<script src="https://cdn.jsdelivr.net/gh/rakete13/wf-anim@1.10.0/src/wf-anim.min.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/rakete13/wf-anim@1.10.1/src/wf-anim.min.js"></script>
 ```
 
 Bequem für eigene und betreute Projekte. Die Seite hängt dann aber an diesem Repo und an jsDelivr, und die IP-Adresse der Besucher geht an jsDelivr (in der Datenschutzerklärung erwähnen). Bei Übergabe an einen Kunden besser auf den eingebetteten Footer Code wechseln.
