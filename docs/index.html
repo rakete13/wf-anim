@@ -346,7 +346,7 @@ td code { white-space: nowrap; }
 
   <main>
     <header class="hero">
-      <div class="eyebrow" data-anim="fade-down" data-anim-intro="load">WF Anim · v1.11.0 · GSAP 3.13</div>
+      <div class="eyebrow" data-anim="fade-down" data-anim-intro="load">WF Anim · v1.11.1 · GSAP 3.13</div>
       <h1 data-anim="split-lines" data-anim-intro>Ein Attribut,<br><em>eine Animation.</em></h1>
       <p>Standard-Animationen für jedes Webflow-Projekt. Element auswählen, unter <em>Custom Attributes</em> <span class="attr">data-anim</span> mit einem Wert aus dieser Liste setzen, fertig. Jede Zeile unten zeigt die Animation live; ein Klick auf das Attribut kopiert es. Was beim Laden schon im Bild ist, bleibt ruhig. Die Überschrift hier oben animiert trotzdem, weil sie <span class="attr">data-anim-intro</span> trägt; die Zeile darüber fährt mit <span class="attr">data-anim-intro="load"</span> beim Laden von oben herein.</p>
       <div class="notice" id="rm-notice" hidden>Dein System hat „Bewegung reduzieren“ aktiviert. Die Library zeigt Inhalte dann bewusst ohne Animation an, genau wie bei deinen Besuchern mit dieser Einstellung.</div>
@@ -386,7 +386,7 @@ setTimeout(function(){if(!window.WFAnim)document.documentElement.classList.remov
         <div>
           <h3>Footer Code</h3>
           <p>Entweder eine Zeile, die die Library aus GitHub lädt. Bequem für eigene und betreute Projekte; die IP-Adresse der Besucher geht dabei an jsDelivr.</p>
-<pre class="code-block" id="code-footer"><code>&lt;script src="https://cdn.jsdelivr.net/gh/rakete13/wf-anim@1.11.0/src/wf-anim.min.js"&gt;&lt;/script&gt;</code></pre>
+<pre class="code-block" id="code-footer"><code>&lt;script src="https://cdn.jsdelivr.net/gh/rakete13/wf-anim@1.11.1/src/wf-anim.min.js"&gt;&lt;/script&gt;</code></pre>
           <button class="copy-block" data-copy-target="code-footer">Footer-Zeile kopieren</button>
           <p>Oder eingebettet: den Inhalt von <code>webflow/footer-code.html</code> aus dem Repo einfügen. Dann hängt das Projekt an keinem fremden Server, ideal bei Übergabe an Kunden.</p>
         </div>
@@ -1234,7 +1234,7 @@ WFAnim.register('mein-effekt', (el, opts) =&gt; {
 </script>
 <script>
 /*!
- * WF Anim v1.11.0
+ * WF Anim v1.11.1
  * Attribut-basierte GSAP-Animationen für Webflow
  *
  * Benötigt: gsap + ScrollTrigger
@@ -3790,6 +3790,40 @@ WFAnim.register('mein-effekt', (el, opts) =&gt; {
     });
   };
   let focusBound = false;
+
+  // Bilder, die noch laden und (mangels fester Höhe) noch keinen Platz einnehmen
+  const collapsedImages = () =>
+    Array.from(document.images).filter((i) => !i.complete && i.offsetParent !== null && i.offsetHeight < 2);
+  const layoutPending = () => collapsedImages().length > 0;
+  let layoutPromise = null;
+  const layoutReady = () =>
+    layoutPromise ||
+    (layoutPromise = new Promise((resolve) => {
+      const imgs = collapsedImages();
+      let left = imgs.length;
+      const done = () => {
+        clearTimeout(timer);
+        requestAnimationFrame(() => {
+          refresh();
+          resolve();
+        });
+      };
+      const timer = setTimeout(done, num(cfg.imageWait, 2500)); // höchstens so lange warten (ms)
+      if (!left) return done();
+      imgs.forEach((i) => {
+        const one = () => --left <= 0 && done();
+        i.addEventListener('load', one, { once: true });
+        i.addEventListener('error', one, { once: true });
+      });
+    }));
+  // Später geladene Bilder (lazy) verschieben das Layout: Scroll-Positionen neu berechnen
+  let imgRefresh = 0;
+  const onImageLoad = (e) => {
+    if (!e.target || e.target.tagName !== 'IMG') return;
+    clearTimeout(imgRefresh);
+    imgRefresh = setTimeout(refresh, 150);
+  };
+  let imgBound = false;
   let smoothMM = null;
 
   const done = new WeakSet();
@@ -3826,6 +3860,10 @@ WFAnim.register('mein-effekt', (el, opts) =&gt; {
     if (!focusBound) {
       document.addEventListener('focusin', onFocus);
       focusBound = true;
+    }
+    if (!imgBound) {
+      document.addEventListener('load', onImageLoad, true); // load bubbelt nicht – Capture
+      imgBound = true;
     }
 
     const collect = (sel) => {
@@ -3912,13 +3950,21 @@ WFAnim.register('mein-effekt', (el, opts) =&gt; {
           // data-anim-intro ergibt nur bei Einblende-Animationen Sinn – sonst nicht versteckt lassen
           if (isIntro(el) && !ENTRY.has(type)) unhide(el);
           // Startbildschirm: ruhig lassen, wie in Webflow gestaltet
-          const still = cfg.staticOnLoad && ENTRY.has(type) && !isIntro(el) && onScreen(el);
-          if (still && type !== 'highlight') {
-            if (dbg) debugInspect(type, el, 'Startbildschirm, ruht');
-            show(el);
+          const decide = () => {
+            const still = cfg.staticOnLoad && ENTRY.has(type) && !isIntro(el) && onScreen(el);
+            if (still && type !== 'highlight') {
+              if (dbg) debugInspect(type, el, 'Startbildschirm, ruht');
+              show(el);
+              return;
+            }
+            if (run() && still) finish(el); // highlight: Markierung direkt fertig zeigen
+          };
+          // Bilder ohne feste Höhe sind beim Start noch 0 px hoch – erst nach dem Laden stimmt die Position
+          if (cfg.staticOnLoad && ENTRY.has(type) && !isIntro(el) && layoutPending()) {
+            layoutReady().then(() => ctx.add(decide));
             return;
           }
-          if (run() && still) finish(el); // highlight: Markierung direkt fertig zeigen
+          decide();
         });
         if (dbgAll || fresh.some((el) => el.hasAttribute('data-anim-debug'))) showDebugBadge();
         return () => cleanups.forEach((c) => c());
@@ -3966,7 +4012,7 @@ WFAnim.register('mein-effekt', (el, opts) =&gt; {
     else smooth.start(v);
   }
 
-  window.WFAnim = { init, destroy, refresh, register, smoothScroll, config: cfg, animations: A, version: '1.11.0', hover: typeof H === 'object' ? H : {} };
+  window.WFAnim = { init, destroy, refresh, register, smoothScroll, config: cfg, animations: A, version: '1.11.1', hover: typeof H === 'object' ? H : {} };
 
   const start = () => {
     if (!cfg.autoInit) return;

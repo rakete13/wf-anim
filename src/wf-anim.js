@@ -1,5 +1,5 @@
 /*!
- * WF Anim v1.11.0
+ * WF Anim v1.11.1
  * Attribut-basierte GSAP-Animationen für Webflow
  *
  * Benötigt: gsap + ScrollTrigger
@@ -2555,6 +2555,40 @@
     });
   };
   let focusBound = false;
+
+  // Bilder, die noch laden und (mangels fester Höhe) noch keinen Platz einnehmen
+  const collapsedImages = () =>
+    Array.from(document.images).filter((i) => !i.complete && i.offsetParent !== null && i.offsetHeight < 2);
+  const layoutPending = () => collapsedImages().length > 0;
+  let layoutPromise = null;
+  const layoutReady = () =>
+    layoutPromise ||
+    (layoutPromise = new Promise((resolve) => {
+      const imgs = collapsedImages();
+      let left = imgs.length;
+      const done = () => {
+        clearTimeout(timer);
+        requestAnimationFrame(() => {
+          refresh();
+          resolve();
+        });
+      };
+      const timer = setTimeout(done, num(cfg.imageWait, 2500)); // höchstens so lange warten (ms)
+      if (!left) return done();
+      imgs.forEach((i) => {
+        const one = () => --left <= 0 && done();
+        i.addEventListener('load', one, { once: true });
+        i.addEventListener('error', one, { once: true });
+      });
+    }));
+  // Später geladene Bilder (lazy) verschieben das Layout: Scroll-Positionen neu berechnen
+  let imgRefresh = 0;
+  const onImageLoad = (e) => {
+    if (!e.target || e.target.tagName !== 'IMG') return;
+    clearTimeout(imgRefresh);
+    imgRefresh = setTimeout(refresh, 150);
+  };
+  let imgBound = false;
   let smoothMM = null;
 
   const done = new WeakSet();
@@ -2591,6 +2625,10 @@
     if (!focusBound) {
       document.addEventListener('focusin', onFocus);
       focusBound = true;
+    }
+    if (!imgBound) {
+      document.addEventListener('load', onImageLoad, true); // load bubbelt nicht – Capture
+      imgBound = true;
     }
 
     const collect = (sel) => {
@@ -2677,13 +2715,21 @@
           // data-anim-intro ergibt nur bei Einblende-Animationen Sinn – sonst nicht versteckt lassen
           if (isIntro(el) && !ENTRY.has(type)) unhide(el);
           // Startbildschirm: ruhig lassen, wie in Webflow gestaltet
-          const still = cfg.staticOnLoad && ENTRY.has(type) && !isIntro(el) && onScreen(el);
-          if (still && type !== 'highlight') {
-            if (dbg) debugInspect(type, el, 'Startbildschirm, ruht');
-            show(el);
+          const decide = () => {
+            const still = cfg.staticOnLoad && ENTRY.has(type) && !isIntro(el) && onScreen(el);
+            if (still && type !== 'highlight') {
+              if (dbg) debugInspect(type, el, 'Startbildschirm, ruht');
+              show(el);
+              return;
+            }
+            if (run() && still) finish(el); // highlight: Markierung direkt fertig zeigen
+          };
+          // Bilder ohne feste Höhe sind beim Start noch 0 px hoch – erst nach dem Laden stimmt die Position
+          if (cfg.staticOnLoad && ENTRY.has(type) && !isIntro(el) && layoutPending()) {
+            layoutReady().then(() => ctx.add(decide));
             return;
           }
-          if (run() && still) finish(el); // highlight: Markierung direkt fertig zeigen
+          decide();
         });
         if (dbgAll || fresh.some((el) => el.hasAttribute('data-anim-debug'))) showDebugBadge();
         return () => cleanups.forEach((c) => c());
@@ -2731,7 +2777,7 @@
     else smooth.start(v);
   }
 
-  window.WFAnim = { init, destroy, refresh, register, smoothScroll, config: cfg, animations: A, version: '1.11.0', hover: typeof H === 'object' ? H : {} };
+  window.WFAnim = { init, destroy, refresh, register, smoothScroll, config: cfg, animations: A, version: '1.11.1', hover: typeof H === 'object' ? H : {} };
 
   const start = () => {
     if (!cfg.autoInit) return;
