@@ -764,11 +764,11 @@ setTimeout(function(){if(!window.WFAnim)document.documentElement.classList.remov
           <h3>Deck-Grid</h3>
           <p>Projekte kommen nacheinander im Vollbild von unten und legen sich federnd in ein Raster, das sich Karte für Karte aufbaut. Attribut an die Section, sie wird gepinnt. Das Raster (z. B. Collection List mit 3 Spalten) gestaltest du normal in Webflow. Bewegt wird das einzige Kind jedes Items, z. B. der Link Block; Bilder darin mit <code>height: 100%</code> und <code>object-fit: cover</code>. Unter 768 px und bei „Bewegung reduzieren“ bleibt das Raster stehen.</p>
           <button class="copy" data-copy='data-anim="deck-grid"'><code>data-anim="deck-grid"</code><span class="hint">kopieren</span></button>
-          <ul class="opts"><li><code>data-anim-full</code> in der Karte: nur im Vollbild sichtbar · <code>data-anim-grid</code>: erst im Raster</li><li><code>data-anim-max="9"</code> Anzahl Karten</li><li><code>data-anim-length="80"</code> Scrollweg pro Karte in vh · <code>data-anim-hold="0.15"</code> Pause im Vollbild</li><li><code>data-anim-ease="elastic"</code> Ablegen (oder jedes GSAP-Ease) · <code>data-anim-ease-in</code> Hochfahren</li><li><code>data-anim-lag="1"</code> Nachlauf in Sekunden, <code>0</code> = direkt</li><li><code>data-anim-inset="2rem"</code> Rand im Vollbild · <code>data-anim-radius</code> Ecken dabei</li><li><code>data-anim-shift</code> an ein Element, das statt des Rasters mitrückt</li></ul>
+          <ul class="opts"><li><code>data-anim-full</code> in der Karte: nur im Vollbild sichtbar · <code>data-anim-grid</code>: erst im Raster</li><li><code>data-anim-max="9"</code> Anzahl Karten</li><li><code>data-anim-length="100"</code> Scrollweg pro Karte in vh · <code>data-anim-hold="0.1"</code> Pause im Vollbild</li><li><code>data-anim-ease="elastic"</code> Ablegen (oder jedes GSAP-Ease) · <code>data-anim-ease-in</code> Hochfahren</li><li><code>data-anim-lag="1.5"</code> Nachlauf in Sekunden, <code>0</code> = direkt</li><li><code>data-anim-inset="2rem"</code> Rand im Vollbild · <code>data-anim-radius</code> Ecken dabei</li><li><code>data-anim-shift</code> an ein Element, das statt des Rasters mitrückt</li></ul>
         </div>
         <div class="stage" style="min-height:120px"><p style="margin:0;color:var(--muted)">↓ Demo direkt darunter</p></div>
       </div>
-      <div class="deck-demo" data-anim="deck-grid" data-anim-length="60">
+      <div class="deck-demo" data-anim="deck-grid" data-anim-length="80">
         <div class="deck-head"><small style="font-family:var(--font-mono);color:var(--muted)">Ausgewählte Projekte</small></div>
         <div class="deck-grid" data-anim-track>
             <div class="deck-item"><a href="#deck-grid" class="deck-card" style="--h:212" aria-label="KERN – Unternehmensnachfolge"><span class="deck-big" data-anim-full aria-hidden="true"><small>01 · Unternehmensnachfolge</small>KERN</span><span class="deck-cap" data-anim-grid>KERN<small>Unternehmensnachfolge</small></span></a></div>
@@ -2238,8 +2238,9 @@ WFAnim.register('mein-effekt', (el, opts) =&gt; {
   // An die Section (wird gepinnt). Raster: [data-anim-track] oder die Collection List,
   // Karten: [data-anim-item] oder die Collection Items. Das Raster gestaltest du in Webflow.
   // In der Karte: [data-anim-full] nur im Vollbild sichtbar, [data-anim-grid] erst im Raster.
-  const DECK_SOFT_IN = gsap.parseEase('sine.in');
-  const DECK_ELASTIC = gsap.parseEase('elastic.out(1, 0.75)');
+  // Standard-Landung: langsam anlaufen, weich gleiten, sanft über das Ziel hinaus und zurück
+  const DECK_GLIDE = gsap.parseEase('sine.inOut');
+  const DECK_SETTLE = gsap.parseEase('back.out(1.3)');
   // Ohne Effekt: Raster wie gestaltet, Vollbild-Texte aus
   const deckOff = (el) => {
     show(el);
@@ -2265,15 +2266,15 @@ WFAnim.register('mein-effekt', (el, opts) =&gt; {
     const n = list.length;
     const grid = list[0].parentElement;
     const shift = el.querySelector('[data-anim-shift]') || grid;
-    const len = Math.max(0.2, num(ds.animLength, 80) / 100); // Bildschirmhöhen pro Karte
-    const RISE = 0.35;
-    const hold = Math.max(0, Math.min(0.5, num(ds.animHold, 0.15)));
+    const len = Math.max(0.2, num(ds.animLength, 100) / 100); // Bildschirmhöhen pro Karte
+    const RISE = 0.3;
+    const hold = Math.max(0, Math.min(0.5, num(ds.animHold, 0.1)));
     const landAt = RISE + hold;
     const tail = 0.4; // etwas Scrollweg, nachdem die letzte Karte liegt
-    const lag = ds.animLag === undefined ? 1 : num(ds.animLag, 1);
+    const lag = ds.animLag === undefined ? 1.5 : num(ds.animLag, 1.5);
     const easeName = ds.animEase || 'elastic';
-    const land = easeName === 'elastic' ? (u) => DECK_ELASTIC(DECK_SOFT_IN(u)) : gsap.parseEase(easeName);
-    const rise = gsap.parseEase(ds.animEaseIn || 'back.out(1.15)');
+    const land = easeName === 'elastic' ? (u) => DECK_SETTLE(DECK_GLIDE(u)) : gsap.parseEase(easeName);
+    const rise = gsap.parseEase(ds.animEaseIn || 'power2.out');
     const glide = gsap.parseEase('sine.inOut');
 
     // Karte = das, was sich bewegt: [data-anim-card], sonst das einzige Kind, sonst ein Wrapper

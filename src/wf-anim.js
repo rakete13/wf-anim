@@ -958,8 +958,9 @@
   // An die Section (wird gepinnt). Raster: [data-anim-track] oder die Collection List,
   // Karten: [data-anim-item] oder die Collection Items. Das Raster gestaltest du in Webflow.
   // In der Karte: [data-anim-full] nur im Vollbild sichtbar, [data-anim-grid] erst im Raster.
-  const DECK_SOFT_IN = gsap.parseEase('sine.in');
-  const DECK_ELASTIC = gsap.parseEase('elastic.out(1, 0.75)');
+  // Standard-Landung: langsam anlaufen, weich gleiten, sanft über das Ziel hinaus und zurück
+  const DECK_GLIDE = gsap.parseEase('sine.inOut');
+  const DECK_SETTLE = gsap.parseEase('back.out(1.3)');
   // Ohne Effekt: Raster wie gestaltet, Vollbild-Texte aus
   const deckOff = (el) => {
     show(el);
@@ -985,15 +986,15 @@
     const n = list.length;
     const grid = list[0].parentElement;
     const shift = el.querySelector('[data-anim-shift]') || grid;
-    const len = Math.max(0.2, num(ds.animLength, 80) / 100); // Bildschirmhöhen pro Karte
-    const RISE = 0.35;
-    const hold = Math.max(0, Math.min(0.5, num(ds.animHold, 0.15)));
+    const len = Math.max(0.2, num(ds.animLength, 100) / 100); // Bildschirmhöhen pro Karte
+    const RISE = 0.3;
+    const hold = Math.max(0, Math.min(0.5, num(ds.animHold, 0.1)));
     const landAt = RISE + hold;
     const tail = 0.4; // etwas Scrollweg, nachdem die letzte Karte liegt
-    const lag = ds.animLag === undefined ? 1 : num(ds.animLag, 1);
+    const lag = ds.animLag === undefined ? 1.5 : num(ds.animLag, 1.5);
     const easeName = ds.animEase || 'elastic';
-    const land = easeName === 'elastic' ? (u) => DECK_ELASTIC(DECK_SOFT_IN(u)) : gsap.parseEase(easeName);
-    const rise = gsap.parseEase(ds.animEaseIn || 'back.out(1.15)');
+    const land = easeName === 'elastic' ? (u) => DECK_SETTLE(DECK_GLIDE(u)) : gsap.parseEase(easeName);
+    const rise = gsap.parseEase(ds.animEaseIn || 'power2.out');
     const glide = gsap.parseEase('sine.inOut');
 
     // Karte = das, was sich bewegt: [data-anim-card], sonst das einzige Kind, sonst ein Wrapper
