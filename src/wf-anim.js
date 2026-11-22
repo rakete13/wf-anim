@@ -1,5 +1,5 @@
 /*!
- * WF Anim v1.16.0
+ * WF Anim v1.16.1
  * Attribut-basierte GSAP-Animationen für Webflow
  *
  * Benötigt: gsap + ScrollTrigger
@@ -3116,7 +3116,7 @@
           });
         }
         fresh.forEach((el) => {
-          const type = el.dataset.anim;
+          const type = (el.dataset.anim || '').trim(); // Leerzeichen aus Webflow ignorieren
           const fn = A[type];
           if (!fn) {
             warn(`Unbekannte Animation "${type}"`, el);
@@ -3210,7 +3210,7 @@
     else smooth.start(v);
   }
 
-  window.WFAnim = { init, destroy, refresh, register, smoothScroll, config: cfg, animations: A, version: '1.16.0', hover: typeof H === 'object' ? H : {} };
+  window.WFAnim = { init, destroy, refresh, register, smoothScroll, config: cfg, animations: A, version: '1.16.1', hover: typeof H === 'object' ? H : {} };
 
   const start = () => {
     if (!cfg.autoInit) return;
