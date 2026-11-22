@@ -1,5 +1,5 @@
 /*!
- * WF Anim v1.13.0
+ * WF Anim v1.14.0
  * Attribut-basierte GSAP-Animationen für Webflow
  *
  * Benötigt: gsap + ScrollTrigger
@@ -950,6 +950,210 @@
       invalidateOnRefresh: true,
     };
     gsap.fromTo(el, from, to);
+  };
+  /*@end*/
+
+  /*@block deck-grid*/
+  // Projekte kommen nacheinander im Vollbild von unten und legen sich in ein Raster.
+  // An die Section (wird gepinnt). Raster: [data-anim-track] oder die Collection List,
+  // Karten: [data-anim-item] oder die Collection Items. Das Raster gestaltest du in Webflow.
+  // In der Karte: [data-anim-full] nur im Vollbild sichtbar, [data-anim-grid] erst im Raster.
+  const DECK_SOFT_IN = gsap.parseEase('sine.in');
+  const DECK_ELASTIC = gsap.parseEase('elastic.out(1, 0.75)');
+  // Ohne Effekt: Raster wie gestaltet, Vollbild-Texte aus
+  const deckOff = (el) => {
+    show(el);
+    const f = el.querySelectorAll('[data-anim-full]');
+    if (f.length) gsap.set(f, { display: 'none' });
+  };
+  A['deck-grid'] = (el, o, ctx) => {
+    const ds = el.dataset;
+    const cond = (ctx && ctx.conditions) || {};
+    // Auf dem Handy wirkt Vollbild → Raster kaum: dort aus, außer data-anim-mobile="true"
+    if (cond.mobile && ds.animMobile !== 'true') return deckOff(el);
+
+    let list = Array.from(el.querySelectorAll('[data-anim-item]'));
+    if (!list.length) {
+      const box = el.querySelector('[data-anim-track]') || el.querySelector('.w-dyn-items');
+      list = box ? Array.from(box.children) : items(el);
+    }
+    list = list.filter((c) => !c.classList.contains('w-dyn-empty'));
+    const max = Math.max(2, num(ds.animMax, 9));
+    const extra = list.slice(max);
+    list = list.slice(0, max);
+    if (list.length < 2) return show(el);
+    const n = list.length;
+    const grid = list[0].parentElement;
+    const shift = el.querySelector('[data-anim-shift]') || grid;
+    const len = Math.max(0.2, num(ds.animLength, 80) / 100); // Bildschirmhöhen pro Karte
+    const RISE = 0.35;
+    const hold = Math.max(0, Math.min(0.5, num(ds.animHold, 0.15)));
+    const landAt = RISE + hold;
+    const tail = 0.4; // etwas Scrollweg, nachdem die letzte Karte liegt
+    const lag = ds.animLag === undefined ? 1 : num(ds.animLag, 1);
+    const easeName = ds.animEase || 'elastic';
+    const land = easeName === 'elastic' ? (u) => DECK_ELASTIC(DECK_SOFT_IN(u)) : gsap.parseEase(easeName);
+    const rise = gsap.parseEase(ds.animEaseIn || 'back.out(1.15)');
+    const glide = gsap.parseEase('sine.inOut');
+
+    // Karte = das, was sich bewegt: [data-anim-card], sonst das einzige Kind, sonst ein Wrapper
+    const wrapped = [];
+    const cards = list.map((it) => {
+      const own = it.querySelector('[data-anim-card]');
+      if (own) return own;
+      if (it.children.length === 1) return it.firstElementChild;
+      const w = document.createElement('div');
+      while (it.firstChild) w.appendChild(it.firstChild);
+      it.appendChild(w);
+      wrapped.push([it, w]);
+      return w;
+    });
+    const fulls = cards.map((c) => Array.from(c.querySelectorAll('[data-anim-full]')));
+    const grids = cards.map((c) => Array.from(c.querySelectorAll('[data-anim-grid]')));
+    const imgs = cards.flatMap((c) => Array.from(c.querySelectorAll('img[srcset]')));
+    const texts = fulls.flat().concat(grids.flat());
+    const saved = [el, shift, ...list, ...cards, ...extra, ...texts].map((x) => [x, x.getAttribute('style')]);
+    const savedSizes = imgs.map((i) => [i, i.getAttribute('sizes')]);
+    // Im Vollbild braucht es die große Bildversion
+    imgs.forEach((i) => i.setAttribute('sizes', '100vw'));
+    extra.forEach((x) => (x.style.display = 'none'));
+
+    el.style.height = '100vh';
+    el.style.overflow = 'hidden';
+    if (getComputedStyle(el).position === 'static') el.style.position = 'relative';
+
+    let slots = [];
+    let G = [];
+    let radius = [];
+    let p = 0;
+    let vw = 0;
+    let vh = 0;
+    let fx = 0;
+    let fy = 0;
+    let fr = 0;
+
+    // Zielplätze aus dem echten Layout messen (Karten dafür kurz zurück ins Raster)
+    const layout = () => {
+      shift.style.transform = '';
+      list.forEach((it) => (it.style.height = ''));
+      cards.forEach((c) => {
+        c.style.position = c.style.left = c.style.top = c.style.width = c.style.height = c.style.borderRadius = '';
+      });
+      const e = el.getBoundingClientRect();
+      slots = list.map((it) => {
+        const r = it.getBoundingClientRect();
+        return { x: r.left - e.left, y: r.top - e.top, w: r.width, h: r.height };
+      });
+      radius = cards.map((c) => parseFloat(getComputedStyle(c).borderTopLeftRadius) || 0);
+      vw = document.documentElement.clientWidth;
+      vh = window.innerHeight;
+      const inset = ds.animInset ? toPx(ds.animInset) : 0;
+      fx = inset - e.left; // Vollbild in Koordinaten der Section (sie ist beim Pinnen oben)
+      fy = inset;
+      fr = inset ? toPx(ds.animRadius || '12px') : 0;
+      vw -= inset * 2;
+      vh -= inset * 2;
+      // Raster so weit hochschieben, dass die Zeile der aktuellen Karte ganz sichtbar ist
+      const pad = toPx(ds.animPad || '2rem');
+      let g = 0;
+      G = slots.map((s) => (g = Math.min(g, window.innerHeight - pad - (s.y + s.h))));
+      list.forEach((it, i) => {
+        if (getComputedStyle(it).position === 'static') it.style.position = 'relative';
+        it.style.height = slots[i].h + 'px';
+      });
+      cards.forEach((c) => {
+        c.style.position = 'absolute';
+        c.style.margin = '0';
+        c.style.boxSizing = 'border-box';
+      });
+    };
+
+    const clamp01 = (v) => Math.max(0, Math.min(1, v));
+    const render = () => {
+      const i = Math.max(0, Math.min(n - 1, Math.floor(p)));
+      const gy = (i > 0 ? G[i - 1] : 0) + (G[i] - (i > 0 ? G[i - 1] : 0)) * glide(clamp01((p - i) / RISE));
+      shift.style.transform = gy ? `translate3d(0, ${gy}px, 0)` : '';
+      cards.forEach((c, j) => {
+        const t = p - j;
+        const s = slots[j];
+        const it = list[j];
+        if (t <= 0) {
+          c.style.opacity = '0';
+          c.style.pointerEvents = 'none';
+          return;
+        }
+        c.style.opacity = '';
+        c.style.pointerEvents = t < 1 ? 'none' : '';
+        it.style.zIndex = t < 1 ? '5' : '';
+        // Vollbild, umgerechnet in Koordinaten des Rasterplatzes
+        let x = fx;
+        let y = fy - gy;
+        let w = vw;
+        let h = vh;
+        let r = fr;
+        let u = 0;
+        if (t < RISE) {
+          y += window.innerHeight * (1 - rise(t / RISE));
+        } else if (t >= landAt) {
+          u = clamp01((t - landAt) / (1 - landAt));
+          const k = land(u);
+          x += (s.x - x) * k;
+          y += (s.y - y) * k;
+          w = Math.max(10, w + (s.w - w) * k);
+          h = Math.max(10, h + (s.h - h) * k);
+          r += (radius[j] - r) * clamp01(k);
+        }
+        c.style.left = x - s.x + 'px';
+        c.style.top = y - s.y + 'px';
+        c.style.width = w + 'px';
+        c.style.height = h + 'px';
+        c.style.borderRadius = r + 'px';
+        const fo = 1 - clamp01(u * 2.2);
+        const go = clamp01((u - 0.6) / 0.4);
+        fulls[j].forEach((f) => (f.style.opacity = fo));
+        grids[j].forEach((f) => (f.style.opacity = go));
+      });
+    };
+
+    layout();
+    const trig = ScrollTrigger.create({
+      trigger: el,
+      start: 'top top',
+      end: () => '+=' + (n * len + tail) * window.innerHeight,
+      pin: true,
+      scrub: lag > 0 ? lag : true,
+      invalidateOnRefresh: true,
+      onRefresh: () => {
+        layout();
+        render();
+      },
+      onUpdate: (self) => {
+        p = self.progress * (n + tail);
+        render();
+      },
+    });
+    render();
+
+    // Tastatur: eine fokussierte Karte direkt ablegen lassen
+    const onFocus = (e) => {
+      const j = cards.findIndex((c) => c.contains(e.target));
+      if (j < 0 || p >= j + 1) return;
+      const y = trig.start + ((j + 1) / (n + tail)) * (trig.end - trig.start);
+      window.scrollTo({ top: y + 2, behavior: 'instant' });
+    };
+    el.addEventListener('focusin', onFocus);
+    unhide(el);
+
+    return () => {
+      el.removeEventListener('focusin', onFocus);
+      trig.kill(true);
+      saved.forEach(([x, s]) => (s === null ? x.removeAttribute('style') : x.setAttribute('style', s)));
+      savedSizes.forEach(([i, s]) => (s === null ? i.removeAttribute('sizes') : i.setAttribute('sizes', s)));
+      wrapped.forEach(([it, w]) => {
+        while (w.firstChild) it.insertBefore(w.firstChild, w);
+        w.remove();
+      });
+    };
   };
   /*@end*/
 
@@ -2594,6 +2798,7 @@
       resolvePre();
     },
     accordion: (el) => el.querySelectorAll('[data-accordion-content]').forEach((c) => gsap.set(c, { height: 'auto' })),
+    'deck-grid': (el) => (typeof deckOff === 'function' ? deckOff(el) : show(el)),
   };
   const turnOff = (type, el) => (OFF[type] ? OFF[type](el) : show(el));
 
@@ -2959,7 +3164,7 @@
     else smooth.start(v);
   }
 
-  window.WFAnim = { init, destroy, refresh, register, smoothScroll, config: cfg, animations: A, version: '1.13.0', hover: typeof H === 'object' ? H : {} };
+  window.WFAnim = { init, destroy, refresh, register, smoothScroll, config: cfg, animations: A, version: '1.14.0', hover: typeof H === 'object' ? H : {} };
 
   const start = () => {
     if (!cfg.autoInit) return;
