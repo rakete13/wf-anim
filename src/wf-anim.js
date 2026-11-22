@@ -1,5 +1,5 @@
 /*!
- * WF Anim v1.15.0
+ * WF Anim v1.16.0
  * Attribut-basierte GSAP-Animationen für Webflow
  *
  * Benötigt: gsap + ScrollTrigger
@@ -995,9 +995,13 @@
     // data-anim-once: nur einmal nach unten abspielen, danach ein normales Raster
     const once = bool(ds.animOnce);
     let finished = false;
-    const state = { p: 0 };
-    let goal = 0;
-    const easeName = ds.animEase || 'elastic';
+    // Die erste Karte fährt nicht extra hoch: sie liegt im Vollbild oben in der Section
+    // und scrollt mit der Seite herein. Der Ablauf beginnt deshalb nach ihrer Hochfahr-Phase.
+    const P0 = RISE;
+    const span = n + tail - P0;
+    const state = { p: P0 };
+    let goal = P0;
+    const easeName = ds.animEase || 'sine.inOut';
     const land = easeName === 'elastic' ? (u) => DECK_SETTLE(DECK_GLIDE(u)) : gsap.parseEase(easeName);
     const rise = gsap.parseEase(ds.animEaseIn || 'power2.out');
     const glide = gsap.parseEase('sine.inOut');
@@ -1031,7 +1035,7 @@
     let slots = [];
     let G = [];
     let radius = [];
-    let p = 0;
+    let p = P0;
     let vw = 0;
     let vh = 0;
     let fx = 0;
@@ -1134,7 +1138,7 @@
     const trig = ScrollTrigger.create({
       trigger: el,
       start: 'top top',
-      end: () => '+=' + (n * len + tail) * window.innerHeight,
+      end: () => '+=' + ((n - P0) * len + tail) * window.innerHeight,
       pin: true,
       invalidateOnRefresh: true,
       onRefresh: () => {
@@ -1142,7 +1146,7 @@
         render();
       },
       onUpdate: (self) => {
-        const g = self.progress * (n + tail);
+        const g = P0 + self.progress * span;
         goal = once ? Math.max(goal, g) : g; // once: beim Hochscrollen bleibt der erreichte Stand
         // Nachlauf: die Karten folgen dem Scroll weich hinterher
         if (lag > 0) gsap.to(state, { p: goal, duration: lag, ease: 'power3.out', overwrite: true, onUpdate: step });
@@ -1175,7 +1179,7 @@
     const onFocus = (e) => {
       const j = cards.findIndex((c) => c.contains(e.target));
       if (finished || j < 0 || p >= j + 1) return;
-      const y = trig.start + ((j + 1) / (n + tail)) * (trig.end - trig.start);
+      const y = trig.start + ((j + 1 - P0) / span) * (trig.end - trig.start);
       window.scrollTo({ top: y + 2, behavior: 'instant' });
     };
     el.addEventListener('focusin', onFocus);
@@ -3206,7 +3210,7 @@
     else smooth.start(v);
   }
 
-  window.WFAnim = { init, destroy, refresh, register, smoothScroll, config: cfg, animations: A, version: '1.15.0', hover: typeof H === 'object' ? H : {} };
+  window.WFAnim = { init, destroy, refresh, register, smoothScroll, config: cfg, animations: A, version: '1.16.0', hover: typeof H === 'object' ? H : {} };
 
   const start = () => {
     if (!cfg.autoInit) return;

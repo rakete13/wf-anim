@@ -47,7 +47,7 @@ if (used) {
 kept.splice(0, kept.length, ...new Set(kept));
 
 // Lizenzkopf behalten, Rest minimieren
-const header = '/*! WF Anim v1.15.0 · ' + (used ? 'Auswahl: ' + kept.join(', ') : 'Vollversion') + ' */';
+const header = '/*! WF Anim v1.16.0 · ' + (used ? 'Auswahl: ' + kept.join(', ') : 'Vollversion') + ' */';
 if (esbuild) {
   code = esbuild.transformSync(code, { minify: true, target: 'es2020', legalComments: 'none' }).code.trim();
 } else {

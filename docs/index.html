@@ -358,7 +358,7 @@ td code { white-space: nowrap; }
 
   <main>
     <header class="hero">
-      <div class="eyebrow" data-anim="fade-down" data-anim-intro="load">WF Anim · v1.15.0 · GSAP 3.13</div>
+      <div class="eyebrow" data-anim="fade-down" data-anim-intro="load">WF Anim · v1.16.0 · GSAP 3.13</div>
       <h1 data-anim="split-lines" data-anim-intro>Ein Attribut,<br><em>eine Animation.</em></h1>
       <p>Standard-Animationen für jedes Webflow-Projekt. Element auswählen, unter <em>Custom Attributes</em> <span class="attr">data-anim</span> mit einem Wert aus dieser Liste setzen, fertig. Jede Zeile unten zeigt die Animation live; ein Klick auf das Attribut kopiert es. Was beim Laden schon im Bild ist, bleibt ruhig. Die Überschrift hier oben animiert trotzdem, weil sie <span class="attr">data-anim-intro</span> trägt; die Zeile darüber fährt mit <span class="attr">data-anim-intro="load"</span> beim Laden von oben herein.</p>
       <div class="notice" id="rm-notice" hidden>Dein System hat „Bewegung reduzieren“ aktiviert. Die Library zeigt Inhalte dann bewusst ohne Animation an, genau wie bei deinen Besuchern mit dieser Einstellung.</div>
@@ -398,7 +398,7 @@ setTimeout(function(){if(!window.WFAnim)document.documentElement.classList.remov
         <div>
           <h3>Footer Code</h3>
           <p>Entweder eine Zeile, die die Library aus GitHub lädt. Bequem für eigene und betreute Projekte; die IP-Adresse der Besucher geht dabei an jsDelivr.</p>
-<pre class="code-block" id="code-footer"><code>&lt;script src="https://cdn.jsdelivr.net/gh/rakete13/wf-anim@1.15.0/src/wf-anim.min.js"&gt;&lt;/script&gt;</code></pre>
+<pre class="code-block" id="code-footer"><code>&lt;script src="https://cdn.jsdelivr.net/gh/rakete13/wf-anim@1.16.0/src/wf-anim.min.js"&gt;&lt;/script&gt;</code></pre>
           <button class="copy-block" data-copy-target="code-footer">Footer-Zeile kopieren</button>
           <p>Oder eingebettet: den Inhalt von <code>webflow/footer-code.html</code> aus dem Repo einfügen. Dann hängt das Projekt an keinem fremden Server, ideal bei Übergabe an Kunden.</p>
         </div>
@@ -764,7 +764,7 @@ setTimeout(function(){if(!window.WFAnim)document.documentElement.classList.remov
           <h3>Deck-Grid</h3>
           <p>Projekte kommen nacheinander im Vollbild von unten und legen sich federnd in ein Raster, das sich Karte für Karte aufbaut. Attribut an die Section, sie wird gepinnt. Das Raster (z. B. Collection List mit 3 Spalten) gestaltest du normal in Webflow. Bewegt wird das einzige Kind jedes Items, z. B. der Link Block; Bilder darin mit <code>height: 100%</code> und <code>object-fit: cover</code>. Unter 768 px und bei „Bewegung reduzieren“ bleibt das Raster stehen.</p>
           <button class="copy" data-copy='data-anim="deck-grid"'><code>data-anim="deck-grid"</code><span class="hint">kopieren</span></button>
-          <ul class="opts"><li><code>data-anim-full</code> in der Karte: nur im Vollbild sichtbar · <code>data-anim-grid</code>: erst im Raster</li><li><code>data-anim-max="9"</code> Anzahl Karten</li><li><code>data-anim-length="100"</code> Scrollweg pro Karte in vh · <code>data-anim-hold="0.1"</code> Pause im Vollbild</li><li><code>data-anim-ease="elastic"</code> Ablegen (oder jedes GSAP-Ease) · <code>data-anim-ease-in</code> Hochfahren</li><li><code>data-anim-lag="1.5"</code> Nachlauf in Sekunden, <code>0</code> = direkt</li><li><code>data-anim-inset="2rem"</code> Rand im Vollbild · <code>data-anim-radius</code> Ecken dabei</li><li><code>data-anim-shift</code> an ein Element, das statt des Rasters mitrückt</li><li><code>data-anim-once</code> nur einmal beim Runterscrollen, danach normales Raster</li></ul>
+          <ul class="opts"><li><code>data-anim-full</code> in der Karte: nur im Vollbild sichtbar · <code>data-anim-grid</code>: erst im Raster</li><li><code>data-anim-max="9"</code> Anzahl Karten</li><li><code>data-anim-length="100"</code> Scrollweg pro Karte in vh · <code>data-anim-hold="0.1"</code> Pause im Vollbild</li><li><code>data-anim-ease="sine.inOut"</code> Ablegen (jedes GSAP-Ease, <code>elastic</code> schwingt nach) · <code>data-anim-ease-in</code> Hochfahren</li><li><code>data-anim-lag="1.5"</code> Nachlauf in Sekunden, <code>0</code> = direkt</li><li><code>data-anim-inset="2rem"</code> Rand im Vollbild · <code>data-anim-radius</code> Ecken dabei</li><li><code>data-anim-shift</code> an ein Element, das statt des Rasters mitrückt</li><li><code>data-anim-once</code> nur einmal beim Runterscrollen, danach normales Raster</li></ul>
         </div>
         <div class="stage" style="min-height:120px"><p style="margin:0;color:var(--muted)">↓ Demo direkt darunter</p></div>
       </div>
@@ -1279,7 +1279,7 @@ WFAnim.register('mein-effekt', (el, opts) =&gt; {
 </script>
 <script>
 /*!
- * WF Anim v1.15.0
+ * WF Anim v1.16.0
  * Attribut-basierte GSAP-Animationen für Webflow
  *
  * Benötigt: gsap + ScrollTrigger
@@ -2275,9 +2275,13 @@ WFAnim.register('mein-effekt', (el, opts) =&gt; {
     // data-anim-once: nur einmal nach unten abspielen, danach ein normales Raster
     const once = bool(ds.animOnce);
     let finished = false;
-    const state = { p: 0 };
-    let goal = 0;
-    const easeName = ds.animEase || 'elastic';
+    // Die erste Karte fährt nicht extra hoch: sie liegt im Vollbild oben in der Section
+    // und scrollt mit der Seite herein. Der Ablauf beginnt deshalb nach ihrer Hochfahr-Phase.
+    const P0 = RISE;
+    const span = n + tail - P0;
+    const state = { p: P0 };
+    let goal = P0;
+    const easeName = ds.animEase || 'sine.inOut';
     const land = easeName === 'elastic' ? (u) => DECK_SETTLE(DECK_GLIDE(u)) : gsap.parseEase(easeName);
     const rise = gsap.parseEase(ds.animEaseIn || 'power2.out');
     const glide = gsap.parseEase('sine.inOut');
@@ -2311,7 +2315,7 @@ WFAnim.register('mein-effekt', (el, opts) =&gt; {
     let slots = [];
     let G = [];
     let radius = [];
-    let p = 0;
+    let p = P0;
     let vw = 0;
     let vh = 0;
     let fx = 0;
@@ -2414,7 +2418,7 @@ WFAnim.register('mein-effekt', (el, opts) =&gt; {
     const trig = ScrollTrigger.create({
       trigger: el,
       start: 'top top',
-      end: () => '+=' + (n * len + tail) * window.innerHeight,
+      end: () => '+=' + ((n - P0) * len + tail) * window.innerHeight,
       pin: true,
       invalidateOnRefresh: true,
       onRefresh: () => {
@@ -2422,7 +2426,7 @@ WFAnim.register('mein-effekt', (el, opts) =&gt; {
         render();
       },
       onUpdate: (self) => {
-        const g = self.progress * (n + tail);
+        const g = P0 + self.progress * span;
         goal = once ? Math.max(goal, g) : g; // once: beim Hochscrollen bleibt der erreichte Stand
         // Nachlauf: die Karten folgen dem Scroll weich hinterher
         if (lag > 0) gsap.to(state, { p: goal, duration: lag, ease: 'power3.out', overwrite: true, onUpdate: step });
@@ -2455,7 +2459,7 @@ WFAnim.register('mein-effekt', (el, opts) =&gt; {
     const onFocus = (e) => {
       const j = cards.findIndex((c) => c.contains(e.target));
       if (finished || j < 0 || p >= j + 1) return;
-      const y = trig.start + ((j + 1) / (n + tail)) * (trig.end - trig.start);
+      const y = trig.start + ((j + 1 - P0) / span) * (trig.end - trig.start);
       window.scrollTo({ top: y + 2, behavior: 'instant' });
     };
     el.addEventListener('focusin', onFocus);
@@ -4486,7 +4490,7 @@ WFAnim.register('mein-effekt', (el, opts) =&gt; {
     else smooth.start(v);
   }
 
-  window.WFAnim = { init, destroy, refresh, register, smoothScroll, config: cfg, animations: A, version: '1.15.0', hover: typeof H === 'object' ? H : {} };
+  window.WFAnim = { init, destroy, refresh, register, smoothScroll, config: cfg, animations: A, version: '1.16.0', hover: typeof H === 'object' ? H : {} };
 
   const start = () => {
     if (!cfg.autoInit) return;
