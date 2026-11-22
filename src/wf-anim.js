@@ -960,7 +960,7 @@
   // In der Karte: [data-anim-full] nur im Vollbild sichtbar, [data-anim-grid] erst im Raster.
   // Standard-Landung: langsam anlaufen, weich gleiten, sanft über das Ziel hinaus und zurück
   const DECK_GLIDE = gsap.parseEase('sine.inOut');
-  const DECK_SETTLE = gsap.parseEase('back.out(1.3)');
+  const DECK_SETTLE = gsap.parseEase('back.out(1.1)');
   // Ohne Effekt: Raster wie gestaltet, Vollbild-Texte aus
   const deckOff = (el) => {
     show(el);
