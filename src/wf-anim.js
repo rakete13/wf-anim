@@ -992,6 +992,9 @@
     const landAt = RISE + hold;
     const tail = 0.4; // etwas Scrollweg, nachdem die letzte Karte liegt
     const lag = ds.animLag === undefined ? 1.5 : num(ds.animLag, 1.5);
+    // data-anim-once: nur einmal nach unten abspielen, danach ein normales Raster
+    const once = bool(ds.animOnce);
+    let finished = false;
     const easeName = ds.animEase || 'elastic';
     const land = easeName === 'elastic' ? (u) => DECK_SETTLE(DECK_GLIDE(u)) : gsap.parseEase(easeName);
     const rise = gsap.parseEase(ds.animEaseIn || 'power2.out');
@@ -1129,16 +1132,38 @@
         render();
       },
       onUpdate: (self) => {
-        p = self.progress * (n + tail);
+        const np = self.progress * (n + tail);
+        p = once ? Math.max(p, np) : np; // once: beim Hochscrollen bleibt der erreichte Stand
         render();
+        if (once && !finished && self.progress > 0.999) {
+          finished = true;
+          gsap.delayedCall(0, finish);
+        }
       },
     });
     render();
 
+    const restore = () => {
+      saved.forEach(([x, s]) => (s === null ? x.removeAttribute('style') : x.setAttribute('style', s)));
+      savedSizes.forEach(([i, s]) => (s === null ? i.removeAttribute('sizes') : i.setAttribute('sizes', s)));
+    };
+    // once: Pin und Scrollweg entfernen, Raster bleibt wie gestaltet stehen – ohne Sprung
+    const finish = () => {
+      const top0 = el.getBoundingClientRect().top;
+      const y0 = window.scrollY;
+      trig.kill(true);
+      restore();
+      extra.forEach((x) => (x.style.display = 'none'));
+      fulls.flat().forEach((f) => (f.style.opacity = '0'));
+      window.scrollTo({ top: y0 + (el.getBoundingClientRect().top - top0), behavior: 'instant' });
+      if (typeof smooth === 'object' && smooth.sync) smooth.sync();
+      ScrollTrigger.refresh();
+    };
+
     // Tastatur: eine fokussierte Karte direkt ablegen lassen
     const onFocus = (e) => {
       const j = cards.findIndex((c) => c.contains(e.target));
-      if (j < 0 || p >= j + 1) return;
+      if (finished || j < 0 || p >= j + 1) return;
       const y = trig.start + ((j + 1) / (n + tail)) * (trig.end - trig.start);
       window.scrollTo({ top: y + 2, behavior: 'instant' });
     };
@@ -1147,9 +1172,8 @@
 
     return () => {
       el.removeEventListener('focusin', onFocus);
-      trig.kill(true);
-      saved.forEach(([x, s]) => (s === null ? x.removeAttribute('style') : x.setAttribute('style', s)));
-      savedSizes.forEach(([i, s]) => (s === null ? i.removeAttribute('sizes') : i.setAttribute('sizes', s)));
+      if (!finished) trig.kill(true);
+      restore();
       wrapped.forEach(([it, w]) => {
         while (w.firstChild) it.insertBefore(w.firstChild, w);
         w.remove();
@@ -1500,6 +1524,11 @@
         window.removeEventListener('scroll', onScroll);
         window.removeEventListener('keydown', onKey);
         gsap.ticker.remove(loop);
+      },
+      // Nach einem Sprung der Seite (z. B. deck-grid mit once): Ziel an die neue Position setzen
+      sync() {
+        moving = false;
+        cur = target = window.scrollY;
       },
       get active() {
         return on;
