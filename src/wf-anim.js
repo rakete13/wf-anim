@@ -1126,7 +1126,7 @@
       render();
       if (once && !finished && p >= n + tail - 0.001) {
         finished = true;
-        gsap.delayedCall(0, finish);
+        gsap.delayedCall(0, () => finish());
       }
     };
 
