@@ -995,6 +995,8 @@
     // data-anim-once: nur einmal nach unten abspielen, danach ein normales Raster
     const once = bool(ds.animOnce);
     let finished = false;
+    const state = { p: 0 };
+    let goal = 0;
     const easeName = ds.animEase || 'elastic';
     const land = easeName === 'elastic' ? (u) => DECK_SETTLE(DECK_GLIDE(u)) : gsap.parseEase(easeName);
     const rise = gsap.parseEase(ds.animEaseIn || 'power2.out');
@@ -1119,25 +1121,34 @@
       });
     };
 
+    const step = () => {
+      p = state.p;
+      render();
+      if (once && !finished && p >= n + tail - 0.001) {
+        finished = true;
+        gsap.delayedCall(0, finish);
+      }
+    };
+
     layout();
     const trig = ScrollTrigger.create({
       trigger: el,
       start: 'top top',
       end: () => '+=' + (n * len + tail) * window.innerHeight,
       pin: true,
-      scrub: lag > 0 ? lag : true,
       invalidateOnRefresh: true,
       onRefresh: () => {
         layout();
         render();
       },
       onUpdate: (self) => {
-        const np = self.progress * (n + tail);
-        p = once ? Math.max(p, np) : np; // once: beim Hochscrollen bleibt der erreichte Stand
-        render();
-        if (once && !finished && self.progress > 0.999) {
-          finished = true;
-          gsap.delayedCall(0, finish);
+        const g = self.progress * (n + tail);
+        goal = once ? Math.max(goal, g) : g; // once: beim Hochscrollen bleibt der erreichte Stand
+        // Nachlauf: die Karten folgen dem Scroll weich hinterher
+        if (lag > 0) gsap.to(state, { p: goal, duration: lag, ease: 'power3.out', overwrite: true, onUpdate: step });
+        else {
+          state.p = goal;
+          step();
         }
       },
     });
@@ -1172,6 +1183,7 @@
 
     return () => {
       el.removeEventListener('focusin', onFocus);
+      gsap.killTweensOf(state);
       if (!finished) trig.kill(true);
       restore();
       wrapped.forEach(([it, w]) => {
